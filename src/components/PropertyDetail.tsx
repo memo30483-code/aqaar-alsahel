@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { cities } from "@/data/properties";
 import { Property } from "@/types/property";
 import { formatArea, formatPrice } from "@/lib/format";
 import ImageSlider from "./ImageSlider";
@@ -12,6 +13,14 @@ interface Props {
 }
 
 export default function PropertyDetail({ property }: Props) {
+  const pricePerMeter =
+    property.area > 0 ? Math.round(property.price / property.area) : 0;
+  const badge =
+    property.type === "فيلا" || property.price >= 3_000_000
+      ? "مميز"
+      : "استلام فوري";
+  const isApprovedCity = (cities as readonly string[]).includes(property.city);
+
   const specs = [
     { label: "المساحة", value: formatArea(property.area) },
     {
@@ -31,6 +40,7 @@ export default function PropertyDetail({ property }: Props) {
     { label: "النوع", value: property.type },
     { label: "المنطقة", value: property.district },
     { label: "المدينة", value: property.city },
+    { label: "سعر المتر", value: `${formatPrice(pricePerMeter)} ج.م` },
     { label: "البائع", value: property.sellerType },
   ];
 
@@ -61,6 +71,9 @@ export default function PropertyDetail({ property }: Props) {
         <div className="space-y-6">
           <header className="rounded-2xl border border-ocean-100 bg-white p-5 shadow-soft sm:p-6">
             <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-lg bg-black px-2.5 py-1 text-xs font-bold text-white">
+                {badge}
+              </span>
               <span className="rounded-lg bg-ocean-100 px-2.5 py-1 text-xs font-bold text-ocean-800">
                 {property.type}
               </span>
@@ -76,6 +89,12 @@ export default function PropertyDetail({ property }: Props) {
             </p>
             <p className="mt-3 text-lg font-bold text-ocean-700 lg:hidden">
               {formatPrice(property.price)} ج.م
+            </p>
+            <p className="mt-1 text-xs text-ocean-500 lg:hidden">
+              سعر المتر التقديري{" "}
+              <span className="font-bold text-ocean-700">
+                {formatPrice(pricePerMeter)} ج.م
+              </span>
             </p>
           </header>
 
@@ -94,6 +113,52 @@ export default function PropertyDetail({ property }: Props) {
                     {s.value}
                   </p>
                 </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-ocean-100 bg-white p-5 shadow-soft sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-lg font-bold text-ocean-900">
+                المدينة والمنطقة
+              </h2>
+              {isApprovedCity && (
+                <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                  مدينة معتمدة
+                </span>
+              )}
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-ocean-50 bg-ocean-50/40 px-4 py-3">
+                <p className="text-xs font-semibold text-ocean-500">المدينة</p>
+                <p className="mt-1 text-sm font-bold text-ocean-900">
+                  {property.city}
+                </p>
+              </div>
+              <div className="rounded-xl border border-ocean-50 bg-ocean-50/40 px-4 py-3">
+                <p className="text-xs font-semibold text-ocean-500">المنطقة</p>
+                <p className="mt-1 text-sm font-bold text-ocean-900">
+                  {property.district}
+                </p>
+              </div>
+            </div>
+
+            <p className="mt-4 text-xs font-semibold text-ocean-500">
+              المدن المعتمدة
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {cities.map((city) => (
+                <span
+                  key={city}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    city === property.city
+                      ? "bg-ocean-700 text-white"
+                      : "bg-ocean-50 text-ocean-600"
+                  }`}
+                >
+                  {city}
+                </span>
               ))}
             </div>
           </section>

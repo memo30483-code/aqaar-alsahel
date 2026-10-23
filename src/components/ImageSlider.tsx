@@ -30,8 +30,8 @@ export default function ImageSlider({ images, title }: Props) {
   if (total === 0) return null;
 
   return (
-    <div className="overflow-hidden rounded-2xl bg-ocean-900">
-      <div className="relative aspect-[16/10] w-full sm:aspect-[21/9]">
+    <div className="overflow-hidden rounded-3xl bg-ocean-900 shadow-soft">
+      <div className="relative aspect-[4/3] w-full sm:aspect-[16/9] lg:aspect-[21/9]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={images[index]}
@@ -47,7 +47,7 @@ export default function ImageSlider({ images, title }: Props) {
                   key={src}
                   type="button"
                   onClick={() => setIndex(i)}
-                  className={`relative h-14 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition ${
+                  className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition ${
                     i === index
                       ? "border-white"
                       : "border-transparent opacity-70 hover:opacity-100"

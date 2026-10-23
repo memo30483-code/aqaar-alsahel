@@ -1,13 +1,14 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { FormEvent, Fragment, useEffect, useMemo, useState } from "react";
 import Filters, {
   CityOption,
   cities,
   matchesCity,
 } from "@/components/Filters";
+import PropertyCard from "@/components/PropertyCard";
 import PropertyMapDynamic from "@/components/PropertyMapDynamic";
+import { FeaturedAdSlot } from "@/components/FeaturedAds";
 import {
   filterProperties,
   mockProperties,
@@ -18,7 +19,7 @@ import {
   Property,
   PropertyFilters,
 } from "@/types/property";
-import { formatArea, formatPrice } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 
 const HERO_IMAGE =
   "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2000&q=80";
@@ -31,8 +32,13 @@ export default function HomePage() {
   const [userProperties, setUserProperties] = useState<Property[]>([]);
 
   useEffect(() => {
-    const stored = localStorage.getItem(USER_PROPERTIES_KEY);
-    if (stored) setUserProperties(JSON.parse(stored));
+    try {
+      const stored = localStorage.getItem(USER_PROPERTIES_KEY);
+      const parsed = stored ? JSON.parse(stored) : [];
+      if (Array.isArray(parsed)) setUserProperties(parsed);
+    } catch {
+      setUserProperties([]);
+    }
   }, []);
 
   const allProperties = useMemo(
@@ -137,8 +143,19 @@ export default function HomePage() {
                 </div>
               ) : (
                 <div className="grid gap-5 sm:grid-cols-2">
-                  {visible.map((property) => (
-                    <PropertyCardItem key={property.id} property={property} />
+                  {visible.map((property, index) => (
+                    <Fragment key={property.id}>
+                      <PropertyCard property={property} />
+                      {index === 1 && (
+                        <FeaturedAdSlot className="sm:col-span-2" />
+                      )}
+                      {index === 5 && (
+                        <FeaturedAdSlot
+                          variant="bold"
+                          className="sm:col-span-2"
+                        />
+                      )}
+                    </Fragment>
                   ))}
                 </div>
               )}
@@ -171,48 +188,5 @@ export default function HomePage() {
         </section>
       </div>
     </>
-  );
-}
-
-function PropertyCardItem({ property }: { property: Property }) {
-  const pricePerMeter = Math.round(property.price / property.area);
-
-  return (
-    <Link
-      href={`/property/${property.id}`}
-      className="group block overflow-hidden rounded-3xl border border-gray-200 bg-white transition hover:-translate-y-1 hover:shadow-xl"
-    >
-      <div className="relative h-56 overflow-hidden bg-gray-100">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={property.image}
-          alt={property.title}
-          loading="lazy"
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-        />
-        <span className="absolute right-3 top-3 rounded-full bg-black px-3 py-1 text-xs font-bold text-white">
-          استلام فوري
-        </span>
-        <span className="absolute bottom-3 right-3 rounded-full bg-white/90 px-3 py-1 text-sm font-extrabold text-gray-900 backdrop-blur">
-          {formatPrice(property.price)} ج.م
-        </span>
-      </div>
-
-      <div className="p-4">
-        <h3 className="line-clamp-1 text-base font-bold text-gray-900">
-          {property.title}
-        </h3>
-        <p className="mt-1 text-sm text-gray-500">
-          {property.city} • {formatArea(property.area)} •{" "}
-          {property.rooms > 0 ? `${property.rooms} غرف` : "بدون غرف"}
-        </p>
-        <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
-          <span className="text-xs text-gray-500">سعر المتر</span>
-          <span className="text-sm font-bold text-gray-900">
-            {formatPrice(pricePerMeter)} ج.م
-          </span>
-        </div>
-      </div>
-    </Link>
   );
 }

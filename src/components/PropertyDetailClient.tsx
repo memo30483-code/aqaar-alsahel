@@ -19,8 +19,14 @@ export default function PropertyDetailClient({ id, initialProperty }: Props) {
 
   useEffect(() => {
     if (loaded) return;
-    const stored = localStorage.getItem(USER_PROPERTIES_KEY);
-    const userProperties: Property[] = stored ? JSON.parse(stored) : [];
+    let userProperties: Property[] = [];
+    try {
+      const stored = localStorage.getItem(USER_PROPERTIES_KEY);
+      const parsed = stored ? JSON.parse(stored) : [];
+      if (Array.isArray(parsed)) userProperties = parsed;
+    } catch {
+      userProperties = [];
+    }
     setProperty(userProperties.find((p) => p.id === id));
     setLoaded(true);
   }, [id, loaded]);

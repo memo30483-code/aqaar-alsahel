@@ -10,12 +10,18 @@ export default function Footer() {
             سوق عقاري مفتوح لمدن الساحل الجديدة
           </p>
         </div>
-        <div className="flex gap-4 text-sm">
+        <div className="flex flex-wrap gap-4 text-sm">
           <Link href="/" className="hover:text-white">
             الرئيسية
           </Link>
+          <Link href="/market-guide" className="hover:text-white">
+            البوصلة العقارية
+          </Link>
           <Link href="/add-property" className="hover:text-white">
             أضف عقار
+          </Link>
+          <Link href="/legal-consultational" className="hover:text-white">
+            الاستشارات القانونية
           </Link>
         </div>
       </div>

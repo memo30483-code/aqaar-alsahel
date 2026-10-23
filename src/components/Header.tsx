@@ -27,15 +27,29 @@ export default function Header() {
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
-          {cities.map((city) => (
-            <Link
-              key={city.name}
-              href={city.href}
-              className="rounded-lg px-3 py-2 text-sm font-medium text-ocean-700 transition hover:bg-ocean-50 hover:text-ocean-900"
-            >
-              {city.name}
-            </Link>
-          ))}
+          <span className="hidden items-center gap-1 lg:flex">
+            {cities.map((city) => (
+              <Link
+                key={city.name}
+                href={city.href}
+                className="rounded-lg px-3 py-2 text-sm font-medium text-ocean-700 transition hover:bg-ocean-50 hover:text-ocean-900"
+              >
+                {city.name}
+              </Link>
+            ))}
+          </span>
+          <Link
+            href="/market-guide"
+            className="rounded-lg px-3 py-2 text-sm font-medium text-ocean-700 transition hover:bg-ocean-50 hover:text-ocean-900"
+          >
+            البوصلة العقارية
+          </Link>
+          <Link
+            href="/legal-consultational"
+            className="rounded-lg px-3 py-2 text-sm font-medium text-ocean-700 transition hover:bg-ocean-50 hover:text-ocean-900"
+          >
+            الاستشارات القانونية
+          </Link>
           <Link
             href="/add-property"
             className="mr-2 rounded-xl bg-ocean-700 px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-ocean-800"
@@ -88,6 +102,20 @@ export default function Header() {
                 {city.name}
               </Link>
             ))}
+            <Link
+              href="/market-guide"
+              className="rounded-lg px-3 py-2.5 text-sm font-medium text-ocean-700 hover:bg-ocean-50"
+              onClick={() => setOpen(false)}
+            >
+              البوصلة العقارية
+            </Link>
+            <Link
+              href="/legal-consultational"
+              className="rounded-lg px-3 py-2.5 text-sm font-medium text-ocean-700 hover:bg-ocean-50"
+              onClick={() => setOpen(false)}
+            >
+              الاستشارات القانونية
+            </Link>
             <Link
               href="/add-property"
               className="mt-2 rounded-xl bg-ocean-700 px-4 py-2.5 text-center text-sm font-semibold text-white"

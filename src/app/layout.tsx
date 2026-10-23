@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cairo } from "next/font/google";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import FeaturedAds from "@/components/FeaturedAds";
 import "./globals.css";
 
 const cairo = Cairo({
@@ -27,6 +28,7 @@ export default function RootLayout({
         <Header />
         <main>{children}</main>
         <Footer />
+        <FeaturedAds />
       </body>
     </html>
   );
