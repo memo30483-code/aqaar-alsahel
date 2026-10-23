@@ -12,7 +12,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Property } from "@/types/property";
 import { formatPrice } from "@/lib/format";
-import { CITY_CENTERS } from "@/data/properties";
+import { CityOption, cities } from "./Filters";
 
 const markerIcon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -25,47 +25,56 @@ const markerIcon = L.icon({
   shadowSize: [41, 41],
 });
 
-function FitBounds({ properties }: { properties: Property[] }) {
+/** يحرّك الخريطة للمدينة المختارة بـ flyTo، ويلائم حدود النتائج عند "كل المدن" */
+function FlyToCity({
+  city,
+  properties,
+}: {
+  city: CityOption;
+  properties: Property[];
+}) {
   const map = useMap();
 
   useEffect(() => {
-    if (properties.length === 0) {
-      const c = CITY_CENTERS["دمياط الجديدة"];
-      map.setView([c.lat, c.lng], 13);
+    if (city.id === "all") {
+      if (properties.length === 1) {
+        map.setView([properties[0].lat, properties[0].lng], 13);
+      } else if (properties.length > 1) {
+        const bounds = L.latLngBounds(
+          properties.map((p) => [p.lat, p.lng] as [number, number])
+        );
+        map.fitBounds(bounds, { padding: [40, 40] });
+      }
       return;
     }
-    if (properties.length === 1) {
-      map.setView([properties[0].lat, properties[0].lng], 14);
-      return;
-    }
-    const bounds = L.latLngBounds(
-      properties.map((p) => [p.lat, p.lng] as [number, number])
-    );
-    map.fitBounds(bounds, { padding: [40, 40] });
-  }, [map, properties]);
+
+    map.flyTo(city.coords, city.zoom, { duration: 1.5 });
+  }, [map, city, properties]);
 
   return null;
 }
 
 interface Props {
   properties: Property[];
+  selectedCity?: CityOption;
 }
 
-export default function PropertyMap({ properties }: Props) {
-  const center = CITY_CENTERS["دمياط الجديدة"];
-
+export default function PropertyMap({
+  properties,
+  selectedCity = cities[0],
+}: Props) {
   return (
     <MapContainer
-      center={[center.lat, center.lng]}
-      zoom={13}
+      center={selectedCity.coords}
+      zoom={selectedCity.zoom}
       scrollWheelZoom={false}
       className="h-full w-full"
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
       />
-      <FitBounds properties={properties} />
+      <FlyToCity city={selectedCity} properties={properties} />
       {properties.map((p) => (
         <Marker key={p.id} position={[p.lat, p.lng]} icon={markerIcon}>
           <Popup>
@@ -74,7 +83,7 @@ export default function PropertyMap({ properties }: Props) {
             {formatPrice(p.price)} ج.م
             <br />
             <span className="text-xs">
-              {p.district} · {p.type}
+              {p.city} · {p.area} م²
             </span>
           </Popup>
         </Marker>
