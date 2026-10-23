@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Property</title>
+</head>
+<body>
+    <h1>Property</h1>
+    <div id="property-details"></div>
+    <script>
+        function getPropertyDetails() {
+            let propertyId = getParameterByName("propertyId");
+            if(propertyId) {
+                fetchWebContent("https://example.com/properties/${propertyId}");
+            }
+        }
+        function fetchWebContent(url) {
+            fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                let propertyDetails = document.getElementById("property-details");
+                propertyDetails.innerHTML = `<h2>${data.city}, ${data.price}</h2><p>${data.description}</p><p>${data.images}</p>`;
+            });
+        }
+        function getParameterByName(name) {
+            let url = window.location.href;
+            let params = url.split("?");
+            if(params.length > 1) {
+                let paramsMap = params[1].split("&");
+                for(let param of paramsMap) {
+                    let paramName = param.split("=")[0];
+                    if(paramName == name) {
+                        return param.split("=")[1];
+                    }
+                }
+            }
+            return null;
+        }
+        getPropertyDetails();
+    </script>
+</body>
+</html>

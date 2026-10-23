@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Index</title>
+</head>
+<body>
+    <h1>Properties</h1>
+    <div id="properties-list"></div>
+    <script>
+        fetchWebContent("https://example.com/properties");
+        function fetchWebContent(url) {
+            fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                let propertiesList = document.getElementById("properties-list");
+                data.forEach(property => {
+                    let propertyElement = document.createElement("div");
+                    propertyElement.innerHTML = `<h2>${property.city}, ${property.price}</h2><p>${property.description}</p><p>${property.images}</p>`;
+                    propertiesList.appendChild(propertyElement);
+                });
+            });
+        }
+    </script>
+</body>
+</html>

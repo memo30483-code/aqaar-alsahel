@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ocean-deep: #0b3348;
+  --ocean-mid: #0e5a7a;
+  --ocean-light: #3d93c0;
+  --sand: #f5f9fc;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--ocean-deep);
+  background: var(--sand);
+  min-height: 100vh;
+}
+
+/* Leaflet overrides for RTL / rounded map */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  font-family: inherit;
+  border-radius: 1rem;
+  z-index: 0;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 24px rgba(7, 34, 49, 0.15);
+}
+
+.leaflet-popup-content {
+  margin: 0.75rem 1rem;
+  font-family: inherit;
+  text-align: right;
+  direction: rtl;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
