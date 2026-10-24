@@ -3,19 +3,27 @@
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { sellerTypes, USER_PROPERTIES_KEY } from "@/data/properties";
 import {
-  cities,
-  CITY_CENTERS,
-  propertyTypes,
-  sellerTypes,
-  USER_PROPERTIES_KEY,
-} from "@/data/properties";
-import { City, Property, PropertyType, SellerType } from "@/types/property";
-import { formatPrice } from "@/lib/format";
+  City,
+  Property,
+  PropertyType,
+  Purpose,
+  SellerType,
+} from "@/types/property";
+import { useT, type MessageKey } from "@/lib/i18n";
+import { CITY_NAMES, cityCenter, cityLabel } from "@/lib/i18n/cities";
+import {
+  PROPERTY_TYPES,
+  propertyTypeLabel,
+  sellerTypeLabel,
+} from "@/lib/i18n/taxonomy";
+import { useCurrency } from "@/lib/currency";
 import LocationPickerDynamic from "@/components/LocationPickerDynamic";
 
 interface FormState {
   title: string;
+  purpose: Purpose;
   city: City | "";
   district: string;
   area: string;
@@ -31,8 +39,11 @@ interface FormState {
   imagePreview: string;
 }
 
+const START_CENTER = cityCenter("دمياط الجديدة");
+
 const initial: FormState = {
   title: "",
+  purpose: "بيع",
   city: "",
   district: "",
   area: "",
@@ -42,24 +53,24 @@ const initial: FormState = {
   whatsapp: "",
   description: "",
   type: "",
-  lat: CITY_CENTERS["دمياط الجديدة"].lat,
-  lng: CITY_CENTERS["دمياط الجديدة"].lng,
+  lat: START_CENTER.lat,
+  lng: START_CENTER.lng,
   imageName: "",
   imagePreview: "",
 };
 
 export default function AddPropertyPage() {
   const router = useRouter();
+  const t = useT();
+  const { formatWithSymbol } = useCurrency();
   const [form, setForm] = useState<FormState>(initial);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<MessageKey | "">("");
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    if (form.city && CITY_CENTERS[form.city]) {
-      const c = CITY_CENTERS[form.city];
-      setForm((prev) => ({ ...prev, lat: c.lat, lng: c.lng }));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!form.city) return;
+    const center = cityCenter(form.city);
+    setForm((prev) => ({ ...prev, lat: center.lat, lng: center.lng }));
   }, [form.city]);
 
   const set =
@@ -102,11 +113,11 @@ export default function AddPropertyPage() {
       !form.whatsapp.trim() ||
       !form.description.trim()
     ) {
-      setError("من فضلك أكمل كل الحقول المطلوبة.");
+      setError("addProperty.errorRequired");
       return;
     }
     if (Number(form.area) <= 0 || Number(form.price) <= 0) {
-      setError("المساحة والسعر يجب أن يكونا أكبر من صفر.");
+      setError("addProperty.errorPositive");
       return;
     }
 
@@ -119,6 +130,7 @@ export default function AddPropertyPage() {
     const property: Property = {
       id,
       title: form.title.trim(),
+      purpose: form.purpose,
       city: form.city,
       district: form.district.trim(),
       type: form.type,
@@ -155,21 +167,20 @@ export default function AddPropertyPage() {
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
       <div className="mb-8">
         <span className="inline-flex rounded-full bg-black px-3 py-1.5 text-[11px] font-bold text-white">
-          نشر مجاني في النسخة التجريبية
+          {t("addProperty.badge")}
         </span>
         <h1 className="mt-4 text-3xl font-black text-gray-900 sm:text-4xl">
-          أضف عقارك
+          {t("addProperty.title")}
         </h1>
         <p className="mt-3 text-sm leading-7 text-gray-600">
-          املأ بيانات العرض وسيظهر العقار فوراً في الصفحة الرئيسية والنتائج
-          والخريطة.
+          {t("addProperty.subtitle")}
         </p>
       </div>
 
       {saved && (
         <div className="mb-5 rounded-3xl border border-green-200 bg-green-50 px-5 py-4">
           <p className="text-sm font-bold text-green-800">
-            تم حفظ العقار بنجاح — جاري تحويلك للصفحة الرئيسية...
+            {t("addProperty.saved")}
           </p>
         </div>
       )}
@@ -180,44 +191,68 @@ export default function AddPropertyPage() {
       >
         {/* بيانات الإعلان */}
         <section className="space-y-4">
-          <h2 className="text-sm font-bold text-gray-900">بيانات الإعلان</h2>
+          <h2 className="text-sm font-bold text-gray-900">
+            {t("addProperty.sectionListing")}
+          </h2>
 
           <label className="block">
-            <span className={labelClass}>عنوان الإعلان *</span>
+            <span className={labelClass}>{t("addProperty.fieldTitle")}</span>
             <input
               required
               value={form.title}
               onChange={set("title")}
-              placeholder="مثال: شقة فاخرة مطلّة على البحر"
+              placeholder={t("addProperty.titlePlaceholder")}
               className={fieldClass}
             />
           </label>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <label className="block">
-              <span className={labelClass}>المدينة *</span>
+              <span className={labelClass}>
+                {t("addProperty.fieldPurpose")}
+              </span>
+              <select
+                required
+                value={form.purpose}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    purpose: e.target.value as Purpose,
+                  }))
+                }
+                className={fieldClass}
+              >
+                <option value="بيع">{t("purpose.buy")}</option>
+                <option value="إيجار">{t("purpose.rent")}</option>
+              </select>
+            </label>
+
+            <label className="block">
+              <span className={labelClass}>{t("addProperty.fieldCity")}</span>
               <select
                 required
                 value={form.city}
                 onChange={set("city")}
                 className={fieldClass}
               >
-                <option value="">اختر المدينة</option>
-                {cities.map((c) => (
+                <option value="">{t("addProperty.cityPlaceholder")}</option>
+                {CITY_NAMES.map((c) => (
                   <option key={c} value={c}>
-                    {c}
+                    {cityLabel(c, t)}
                   </option>
                 ))}
               </select>
             </label>
 
             <label className="block">
-              <span className={labelClass}>الحي *</span>
+              <span className={labelClass}>
+                {t("addProperty.fieldDistrict")}
+              </span>
               <input
                 required
                 value={form.district}
                 onChange={set("district")}
-                placeholder="مثال: الحي الأول"
+                placeholder={t("addProperty.districtPlaceholder")}
                 className={fieldClass}
               />
             </label>
@@ -226,28 +261,30 @@ export default function AddPropertyPage() {
 
         {/* تفاصيل العقار */}
         <section className="space-y-4 border-t border-gray-100 pt-6">
-          <h2 className="text-sm font-bold text-gray-900">تفاصيل العقار</h2>
+          <h2 className="text-sm font-bold text-gray-900">
+            {t("addProperty.sectionDetails")}
+          </h2>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <label className="block">
-              <span className={labelClass}>نوع العقار *</span>
+              <span className={labelClass}>{t("addProperty.fieldType")}</span>
               <select
                 required
                 value={form.type}
                 onChange={set("type")}
                 className={fieldClass}
               >
-                <option value="">اختر</option>
-                {propertyTypes.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
+                <option value="">{t("addProperty.select")}</option>
+                {PROPERTY_TYPES.map((pt) => (
+                  <option key={pt} value={pt}>
+                    {propertyTypeLabel(pt, t)}
                   </option>
                 ))}
               </select>
             </label>
 
             <label className="block">
-              <span className={labelClass}>المساحة (م²) *</span>
+              <span className={labelClass}>{t("addProperty.fieldArea")}</span>
               <input
                 required
                 type="number"
@@ -259,7 +296,7 @@ export default function AddPropertyPage() {
             </label>
 
             <label className="block">
-              <span className={labelClass}>السعر (ج.م) *</span>
+              <span className={labelClass}>{t("addProperty.fieldPrice")}</span>
               <input
                 required
                 type="number"
@@ -271,7 +308,7 @@ export default function AddPropertyPage() {
             </label>
 
             <label className="block">
-              <span className={labelClass}>عدد الغرف *</span>
+              <span className={labelClass}>{t("addProperty.fieldRooms")}</span>
               <input
                 required
                 type="number"
@@ -285,18 +322,22 @@ export default function AddPropertyPage() {
 
           {pricePerMeter !== null && (
             <p className="rounded-2xl bg-blue-50 px-4 py-3 text-xs font-bold text-gray-800">
-              سعر المتر المحسوب: {formatPrice(pricePerMeter)} ج.م
+              {t("addProperty.pricePerMeter", {
+                price: formatWithSymbol(pricePerMeter),
+              })}
             </p>
           )}
 
           <label className="block">
-            <span className={labelClass}>وصف العقار *</span>
+            <span className={labelClass}>
+              {t("addProperty.fieldDescription")}
+            </span>
             <textarea
               required
               rows={4}
               value={form.description}
               onChange={set("description")}
-              placeholder="اكتب وصفاً واضحاً للعقار والمميزات..."
+              placeholder={t("addProperty.descriptionPlaceholder")}
               className={fieldClass}
             />
           </label>
@@ -304,28 +345,34 @@ export default function AddPropertyPage() {
 
         {/* بيانات التواصل */}
         <section className="space-y-4 border-t border-gray-100 pt-6">
-          <h2 className="text-sm font-bold text-gray-900">بيانات التواصل</h2>
+          <h2 className="text-sm font-bold text-gray-900">
+            {t("addProperty.sectionContact")}
+          </h2>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
-              <span className={labelClass}>نوع البائع *</span>
+              <span className={labelClass}>
+                {t("addProperty.fieldSellerType")}
+              </span>
               <select
                 required
                 value={form.sellerType}
                 onChange={set("sellerType")}
                 className={fieldClass}
               >
-                <option value="">اختر</option>
+                <option value="">{t("addProperty.select")}</option>
                 {sellerTypes.map((s) => (
                   <option key={s} value={s}>
-                    {s}
+                    {sellerTypeLabel(s, t)}
                   </option>
                 ))}
               </select>
             </label>
 
             <label className="block">
-              <span className={labelClass}>رقم الواتساب *</span>
+              <span className={labelClass}>
+                {t("addProperty.fieldWhatsapp")}
+              </span>
               <input
                 required
                 type="tel"
@@ -342,7 +389,7 @@ export default function AddPropertyPage() {
         {/* الصورة والموقع */}
         <section className="space-y-5 border-t border-gray-100 pt-6">
           <label className="block">
-            <span className={labelClass}>صورة العقار</span>
+            <span className={labelClass}>{t("addProperty.fieldImage")}</span>
             <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4">
               <input
                 type="file"
@@ -355,7 +402,7 @@ export default function AddPropertyPage() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={form.imagePreview}
-                    alt="معاينة"
+                    alt={t("addProperty.imageAlt")}
                     className="h-40 w-full object-cover"
                   />
                   <p className="mt-2 text-xs text-gray-500">
@@ -367,9 +414,9 @@ export default function AddPropertyPage() {
           </label>
 
           <div>
-            <span className={labelClass}>الموقع على الخريطة *</span>
+            <span className={labelClass}>{t("addProperty.fieldLocation")}</span>
             <p className="mb-2 text-xs text-gray-500">
-              اضغط على الخريطة أو اسحب العلامة لتحديد الموقع بدقة
+              {t("addProperty.locationHint")}
             </p>
             <div className="overflow-hidden rounded-2xl border border-gray-200 shadow-sm">
               <LocationPickerDynamic
@@ -389,7 +436,7 @@ export default function AddPropertyPage() {
 
         {error && (
           <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
-            {error}
+            {t(error)}
           </p>
         )}
 
@@ -399,13 +446,13 @@ export default function AddPropertyPage() {
             disabled={saved}
             className="rounded-full bg-black px-8 py-3.5 text-sm font-bold text-white transition hover:bg-gray-800 disabled:opacity-60"
           >
-            {saved ? "جاري الحفظ..." : "حفظ العقار ونشره"}
+            {saved ? t("addProperty.saving") : t("addProperty.submit")}
           </button>
           <Link
             href="/"
             className="rounded-full border border-gray-200 px-6 py-3.5 text-sm font-bold text-gray-700 transition hover:bg-gray-50"
           >
-            إلغاء
+            {t("addProperty.cancel")}
           </Link>
         </div>
       </form>

@@ -4,8 +4,10 @@ import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
 import { cities } from "@/components/Filters";
 import { PropertyType } from "@/types/property";
-
-const PROPERTY_TYPES: PropertyType[] = ["شقة", "فيلا", "محل", "أرض"];
+import { useT, type MessageKey } from "@/lib/i18n";
+import { cityLabel } from "@/lib/i18n/cities";
+import { PROPERTY_TYPES, propertyTypeLabel } from "@/lib/i18n/taxonomy";
+import { useCurrency } from "@/lib/currency";
 
 interface Lawyer {
   name: string;
@@ -52,38 +54,35 @@ const LAWYERS: Lawyer[] = [
   },
 ];
 
-const REVIEW_POINTS = [
-  {
-    title: "تأكيد ملكية البائع",
-    text: "مراجعة عقد الملكية والمستندات الأصلية والتأكد من عدم وجود شريك أو ورثة شركاء في العقار.",
-  },
-  {
-    title: "فحص الرهون والحجوزات",
-    text: "الاستعلام عن أي رهن أو حجز إداري أو نزاع قضائي على الوحدة قبل توقيع العقد أو دفع المقدم.",
-  },
-  {
-    title: "مراجعة بنود العقد",
-    text: "ضبط مواعيد التسليم، الغرامات، المواصفات المتفق عليها، وشروط التقسيط وفسخ العقد.",
-  },
-  {
-    title: "تراخيص ورسوم المطور",
-    text: "التحقق من تراخيص المشروع ورخصة البناء ومطابقة الوحدة للرخصة قبل الشراء على الخريطة.",
-  },
+/** حقول بيانات المحامي النصية التي تحتاج ترجمة */
+type LawyerTextField = "name" | "specialty" | "experience" | "coverage";
+
+/** مفتاح ترجمة لحقل نصي من بيانات محامٍ معيّن */
+const lawyerTextKey = (index: number, field: LawyerTextField): MessageKey =>
+  `legal.lawyer.${index}.${field}` as MessageKey;
+
+const REVIEW_POINTS: { title: MessageKey; text: MessageKey }[] = [
+  { title: "legal.review.0.title", text: "legal.review.0.text" },
+  { title: "legal.review.1.title", text: "legal.review.1.text" },
+  { title: "legal.review.2.title", text: "legal.review.2.text" },
+  { title: "legal.review.3.title", text: "legal.review.3.text" },
 ];
 
-const STEPS = [
-  "املأ بيانات الطلب وحدد نوع العقار والمدينة",
-  "يتم تعيين محامٍ معتمد من نفس المنطقة",
-  "ترسل صورة العقد والمستندات للمراجعة",
-  "مكالمة استشارية 30 دقيقة مع تقرير مكتوب",
+const STEPS: MessageKey[] = [
+  "legal.steps.0",
+  "legal.steps.1",
+  "legal.steps.2",
+  "legal.steps.3",
 ];
 
 export default function LegalConsultationalPage() {
+  const t = useT();
+  const { formatWithSymbol } = useCurrency();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [propertyType, setPropertyType] = useState<PropertyType | "">("");
   const [city, setCity] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState<MessageKey | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   const legalCities = useMemo(
@@ -95,15 +94,15 @@ export default function LegalConsultationalPage() {
     e.preventDefault();
 
     if (!name.trim() || !phone.trim() || !propertyType || !city) {
-      setError("من فضلك أكمل كل الحقول المطلوبة.");
+      setError("legal.form.errorRequired");
       return;
     }
     if (phone.replace(/\D/g, "").length < 10) {
-      setError("رقم الهاتف غير صحيح، اكتب 11 رقماً مثل 01xxxxxxxxx.");
+      setError("legal.form.errorPhone");
       return;
     }
 
-    setError("");
+    setError(null);
     setSubmitted(true);
   };
 
@@ -112,7 +111,7 @@ export default function LegalConsultationalPage() {
     setPhone("");
     setPropertyType("");
     setCity("");
-    setError("");
+    setError(null);
     setSubmitted(false);
   };
 
@@ -123,15 +122,13 @@ export default function LegalConsultationalPage() {
         <div className="pointer-events-none absolute -left-24 top-0 h-72 w-72 rounded-full bg-gradient-to-br from-blue-600/30 to-transparent blur-3xl" />
         <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-bold text-blue-200">
-            مراجعة قانونية قبل الدفع
+            {t("legal.badge")}
           </span>
           <h1 className="mt-5 max-w-3xl text-4xl font-black leading-tight text-white sm:text-5xl">
-            الاستشارات القانونية والمحامين المعتمدين
+            {t("legal.hero.title")}
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-8 text-gray-300 sm:text-lg">
-            قبل ما تدفع مقدم أي عقار، خلّي عقدك يتفحص. ساعة مراجعة قانونية توفر
-            عليك سنوات من النزاعات: بنتحقق من الملكية، الرهون، تراخيص المطور،
-            وبنود العقد والغرامات.
+            {t("legal.hero.subtitle")}
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
@@ -139,21 +136,24 @@ export default function LegalConsultationalPage() {
               href="#consult-form"
               className="rounded-full bg-white px-6 py-3 text-sm font-bold text-gray-900 transition hover:bg-gray-100"
             >
-              احجز استشارة قانونية
+              {t("legal.hero.book")}
             </a>
             <Link
               href="/#properties"
               className="rounded-full border border-white/20 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10"
             >
-              تصفح العقارات
+              {t("legal.hero.browse")}
             </Link>
           </div>
 
           <div className="mt-10 grid gap-4 sm:grid-cols-3">
             {[
-              { value: "4", label: "محامون معتمدون" },
-              { value: "5", label: "مدن مغطاة" },
-              { value: "24 ساعة", label: "متوسط الرد على الطلب" },
+              { value: "4", label: t("legal.stat.lawyers") },
+              {
+                value: String(legalCities.length),
+                label: t("legal.stat.cities"),
+              },
+              { value: t("legal.stat.responseValue"), label: t("legal.stat.response") },
             ].map((stat) => (
               <div
                 key={stat.label}
@@ -170,12 +170,10 @@ export default function LegalConsultationalPage() {
       {/* أهمية المراجعة القانونية */}
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
         <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-          لماذا المراجعة القانونية قبل الشراء؟
+          {t("legal.why.title")}
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-gray-600">
-          أغلب مشاكل العقارات في الساحل لا تظهر في الصور، بل في الأوراق: عقد غير
-          مسجل، وارث لم يوقّع، أو حجز على الوحدة. المراجعة القانونية تكشف هذا
-          قبل ما تتحرك فلوسك.
+          {t("legal.why.subtitle")}
         </p>
 
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -188,10 +186,10 @@ export default function LegalConsultationalPage() {
                 {index + 1}
               </span>
               <h3 className="mt-4 text-base font-bold text-gray-900">
-                {point.title}
+                {t(point.title)}
               </h3>
               <p className="mt-2 text-sm leading-6 text-gray-600">
-                {point.text}
+                {t(point.text)}
               </p>
             </div>
           ))}
@@ -206,38 +204,47 @@ export default function LegalConsultationalPage() {
         <div className="mx-auto grid max-w-6xl gap-8 px-4 sm:px-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <h2 className="text-2xl font-bold text-gray-900">
-              احجز استشارتك القانونية
+              {t("legal.form.title")}
             </h2>
             <p className="mt-2 text-sm text-gray-600">
-              ابعت بياناتك ويتم التواصل معاك لتحديد الموعد مع محامٍ معتمد.
+              {t("legal.form.subtitle")}
             </p>
 
             {submitted ? (
               <div className="mt-6 rounded-3xl border border-green-200 bg-white p-6">
                 <p className="text-lg font-bold text-green-700">
-                  تم استلام طلبك بنجاح
+                  {t("legal.form.successTitle")}
                 </p>
                 <p className="mt-2 text-sm leading-7 text-gray-600">
-                  أهلاً {name}، تم تسجيل طلب استشارة لـ«{propertyType}» في{" "}
-                  {city} على رقم {phone}. سيتم التواصل معاك خلال 24 ساعة.
+                  {t("legal.form.successBody", {
+                    name,
+                    propertyType: propertyTypeLabel(propertyType, t),
+                    city: cityLabel(city, t),
+                    phone,
+                  })}
                 </p>
                 <div className="mt-5 flex flex-wrap gap-3">
                   <a
                     href={`https://wa.me/201000000001?text=${encodeURIComponent(
-                      `طلب استشارة قانونية — ${name} — ${propertyType} في ${city} — ${phone}`
+                      t("legal.form.whatsappText", {
+                        name,
+                        propertyType: propertyTypeLabel(propertyType, t),
+                        city: cityLabel(city, t),
+                        phone,
+                      })
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="rounded-full bg-green-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-green-700"
                   >
-                    تواصل فوري على واتساب
+                    {t("legal.form.whatsappNow")}
                   </a>
                   <button
                     type="button"
                     onClick={resetForm}
                     className="rounded-full border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold text-gray-700 transition hover:bg-gray-50"
                   >
-                    طلب جديد
+                    {t("legal.form.newRequest")}
                   </button>
                 </div>
               </div>
@@ -252,13 +259,13 @@ export default function LegalConsultationalPage() {
                       htmlFor="legal-name"
                       className="mb-1.5 block text-xs font-bold text-gray-700"
                     >
-                      الاسم بالكامل
+                      {t("legal.form.name")}
                     </label>
                     <input
                       id="legal-name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="مثال: محمد أحمد"
+                      placeholder={t("legal.form.namePlaceholder")}
                       className="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-black"
                     />
                   </div>
@@ -268,7 +275,7 @@ export default function LegalConsultationalPage() {
                       htmlFor="legal-phone"
                       className="mb-1.5 block text-xs font-bold text-gray-700"
                     >
-                      رقم الهاتف
+                      {t("legal.form.phone")}
                     </label>
                     <input
                       id="legal-phone"
@@ -285,7 +292,7 @@ export default function LegalConsultationalPage() {
                       htmlFor="legal-type"
                       className="mb-1.5 block text-xs font-bold text-gray-700"
                     >
-                      نوع العقار
+                      {t("legal.form.propertyType")}
                     </label>
                     <select
                       id="legal-type"
@@ -295,10 +302,12 @@ export default function LegalConsultationalPage() {
                       }
                       className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-black"
                     >
-                      <option value="">اختر نوع العقار</option>
+                      <option value="">
+                        {t("legal.form.propertyTypePlaceholder")}
+                      </option>
                       {PROPERTY_TYPES.map((type) => (
                         <option key={type} value={type}>
-                          {type}
+                          {propertyTypeLabel(type, t)}
                         </option>
                       ))}
                     </select>
@@ -309,7 +318,7 @@ export default function LegalConsultationalPage() {
                       htmlFor="legal-city"
                       className="mb-1.5 block text-xs font-bold text-gray-700"
                     >
-                      المدينة
+                      {t("legal.form.city")}
                     </label>
                     <select
                       id="legal-city"
@@ -317,10 +326,10 @@ export default function LegalConsultationalPage() {
                       onChange={(e) => setCity(e.target.value)}
                       className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-black"
                     >
-                      <option value="">اختر المدينة</option>
+                      <option value="">{t("legal.form.cityPlaceholder")}</option>
                       {legalCities.map((option) => (
                         <option key={option.id} value={option.name}>
-                          {option.name}
+                          {cityLabel(option.name, t)}
                         </option>
                       ))}
                     </select>
@@ -329,7 +338,7 @@ export default function LegalConsultationalPage() {
 
                 {error && (
                   <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
-                    {error}
+                    {t(error)}
                   </p>
                 )}
 
@@ -337,10 +346,10 @@ export default function LegalConsultationalPage() {
                   type="submit"
                   className="mt-6 w-full rounded-full bg-black px-6 py-3.5 text-sm font-bold text-white transition hover:bg-gray-800 sm:w-auto"
                 >
-                  إرسال طلب الاستشارة
+                  {t("legal.form.submit")}
                 </button>
                 <p className="mt-3 text-xs text-gray-500">
-                  بياناتك تُستخدم للتواصل بشأن الطلب فقط.
+                  {t("legal.form.privacy")}
                 </p>
               </form>
             )}
@@ -349,7 +358,7 @@ export default function LegalConsultationalPage() {
           <aside className="lg:col-span-1">
             <div className="rounded-3xl border border-gray-200 bg-white p-5">
               <h3 className="text-base font-bold text-gray-900">
-                كيف تعمل الخدمة؟
+                {t("legal.steps.title")}
               </h3>
               <ol className="mt-4 space-y-4">
                 {STEPS.map((step, index) => (
@@ -358,7 +367,7 @@ export default function LegalConsultationalPage() {
                       {index + 1}
                     </span>
                     <span className="text-sm leading-6 text-gray-600">
-                      {step}
+                      {t(step)}
                     </span>
                   </li>
                 ))}
@@ -367,12 +376,13 @@ export default function LegalConsultationalPage() {
 
             <div className="mt-4 rounded-3xl bg-blue-50 p-5">
               <p className="text-sm font-bold text-gray-900">
-                تكلفة المراجعة
+                {t("legal.cost.title")}
               </p>
-              <p className="mt-1 text-2xl font-black text-gray-900">750 ج.م</p>
+              <p className="mt-1 text-2xl font-black text-gray-900">
+                {formatWithSymbol(750)}
+              </p>
               <p className="mt-2 text-xs leading-6 text-gray-600">
-                لمراجعة عقد واحد وتقرير مكتوب — تُخصم من أتعاب التوثيق لو أكملت
-                الشراء.
+                {t("legal.cost.note")}
               </p>
             </div>
           </aside>
@@ -384,72 +394,78 @@ export default function LegalConsultationalPage() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-              المحامون المعتمدون
+              {t("legal.lawyers.title")}
             </h2>
             <p className="mt-2 text-sm text-gray-600">
-              محامون مرخصون يغطون مدن الساحل الخمس، وتقدر تتواصل معاهم مباشرة.
+              {t("legal.lawyers.subtitle")}
             </p>
           </div>
           <span className="rounded-full bg-black px-3 py-1.5 text-xs font-bold text-white">
-            محامي معتمد
+            {t("legal.lawyers.badge")}
           </span>
         </div>
 
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {LAWYERS.map((lawyer) => (
+          {LAWYERS.map((lawyer, index) => (
             <div
               key={lawyer.license}
               className="flex flex-col rounded-3xl border border-gray-200 bg-white p-5 transition hover:-translate-y-1 hover:shadow-xl"
             >
               <div className="flex items-start justify-between gap-2">
                 <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-ocean-600 to-ocean-900 text-lg font-bold text-white">
-                  {lawyer.name.replace("أ. ", "").charAt(0)}
+                  {t(lawyerTextKey(index, "name"))
+                    .replace("أ. ", "")
+                    .charAt(0)}
                 </span>
                 <span className="rounded-full bg-green-50 px-2.5 py-1 text-[10px] font-bold text-green-700">
-                  محامي معتمد
+                  {t("legal.lawyers.badge")}
                 </span>
               </div>
 
               <h3 className="mt-4 text-base font-bold text-gray-900">
-                {lawyer.name}
+                {t(lawyerTextKey(index, "name"))}
               </h3>
               <p className="mt-1 text-xs leading-5 text-gray-600">
-                {lawyer.specialty}
+                {t(lawyerTextKey(index, "specialty"))}
               </p>
 
               <dl className="mt-4 space-y-1.5 text-xs text-gray-500">
                 <div className="flex justify-between gap-2">
-                  <dt>رقم الكارنيه</dt>
+                  <dt>{t("legal.lawyers.license")}</dt>
                   <dd className="font-bold text-gray-800">{lawyer.license}</dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt>الخبرة</dt>
+                  <dt>{t("legal.lawyers.experience")}</dt>
                   <dd className="font-semibold text-gray-800">
-                    {lawyer.experience}
+                    {t(lawyerTextKey(index, "experience"))}
                   </dd>
                 </div>
               </dl>
 
               <p className="mt-3 text-[11px] text-gray-500">
-                يغطي: {lawyer.coverage}
+                {t("legal.lawyers.coverage", {
+                  coverage: t(lawyerTextKey(index, "coverage")),
+                })}
               </p>
 
               <a
                 href={`https://wa.me/${lawyer.whatsapp}?text=${encodeURIComponent(
-                  `السلام عليكم ${lawyer.name}، أرغب في استشارة قانونية بخصوص عقد عقار.`
+                  t("legal.lawyers.whatsappText", {
+                    name: t(lawyerTextKey(index, "name")),
+                  })
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-4 rounded-full bg-green-600 px-4 py-2.5 text-center text-sm font-bold text-white transition hover:bg-green-700"
               >
-                تواصل عبر واتساب
+                {t("legal.lawyers.whatsapp")}
               </a>
             </div>
           ))}
         </div>
 
         <p className="mt-6 text-xs text-gray-400">
-          بيانات المحامين وأرقام التواصل تجريبية لأغراض العرض في نسخة الـ MVP.
+          {t("legal.lawyers.note")}
         </p>
       </section>
     </>

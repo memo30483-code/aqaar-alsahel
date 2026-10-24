@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getPropertyById, mockProperties } from "@/data/properties";
 import PropertyDetailClient from "@/components/PropertyDetailClient";
-import { formatPrice } from "@/lib/format";
+import { DEFAULT_CURRENCY, formatConvertedPrice } from "@/lib/currency-data";
 
 interface PageProps {
   params: { id: string };
@@ -16,9 +16,15 @@ export function generateMetadata({ params }: PageProps): Metadata {
   if (!property) {
     return { title: "تفاصيل العقار | عقار الساحل" };
   }
+  /* التوليد على السيرفر لا يملك وصولاً لتفضيل العملة المحفوظ محلياً، لذا تُستخدم EGP كعملة افتراضية */
+  const price = formatConvertedPrice(
+    property.price,
+    DEFAULT_CURRENCY,
+    "ar"
+  );
   return {
     title: `${property.title} | عقار الساحل`,
-    description: `${property.title} في ${property.district}، ${property.city} — ${formatPrice(property.price)} ج.م`,
+    description: `${property.title} في ${property.district}، ${property.city} — ${price}`,
   };
 }
 

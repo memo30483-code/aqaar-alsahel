@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { Property } from "@/types/property";
+import { useI18n } from "@/lib/i18n";
 import { CityOption, cities } from "./Filters";
 
 /** سيرفرات بلاطات OpenStreetMap — تُسخّن مسبقاً لتظهر الخريطة أسرع */
@@ -11,13 +12,19 @@ const TILE_ORIGINS = [
   "https://c.tile.openstreetmap.org",
 ];
 
+/** هيكل تحميل الخريطة أثناء جلب مكوّن Leaflet */
+function MapLoading() {
+  const { t } = useI18n();
+  return (
+    <div className="flex h-full min-h-[400px] w-full animate-pulse items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+      <span className="text-sm font-medium">{t("property.mapLoading")}</span>
+    </div>
+  );
+}
+
 const PropertyMap = dynamic(() => import("./PropertyMap"), {
   ssr: false,
-  loading: () => (
-    <div className="flex h-full min-h-[400px] w-full animate-pulse items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-      <span className="text-sm font-medium">جاري تحميل خريطة العقارات...</span>
-    </div>
-  ),
+  loading: () => <MapLoading />,
 });
 
 interface Props {

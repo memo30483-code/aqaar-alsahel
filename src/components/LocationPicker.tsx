@@ -10,7 +10,7 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { CITY_CENTERS } from "@/data/properties";
+import { cityCenter } from "@/lib/i18n/cities";
 import { City } from "@/types/property";
 
 const markerIcon = L.icon({
@@ -53,10 +53,7 @@ interface Props {
 }
 
 export default function LocationPicker({ city, lat, lng, onChange }: Props) {
-  const center =
-    city && CITY_CENTERS[city]
-      ? CITY_CENTERS[city]
-      : CITY_CENTERS["دمياط الجديدة"];
+  const center = cityCenter(city);
 
   const positionLat = lat || center.lat;
   const positionLng = lng || center.lng;

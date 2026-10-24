@@ -1,0 +1,62 @@
+/** رسائل العقارات: الكروت، التفاصيل، الخريطة، حاسبة الأقساط */
+export const propertyMessages = {
+  "property.badge.featured": { ar: "مميز", en: "Premium" },
+  "property.badge.ready": { ar: "استلام فوري", en: "Ready to move" },
+  "property.pricePerMeter": { ar: "سعر المتر", en: "Price per meter" },
+  "property.pricePerMeterEstimated": {
+    ar: "سعر المتر التقديري",
+    en: "Estimated price per meter",
+  },
+  "property.area": { ar: "المساحة", en: "Area" },
+  "property.rooms": { ar: "غرف", en: "Rooms" },
+  "property.bathrooms": { ar: "حمامات", en: "Bathrooms" },
+  "property.type": { ar: "النوع", en: "Type" },
+  "property.district": { ar: "المنطقة", en: "District" },
+  "property.city": { ar: "المدينة", en: "City" },
+  "property.seller": { ar: "البائع", en: "Seller" },
+  "property.roomsCount": { ar: "{count} غرف", en: "{count} rooms" },
+  "property.totalPrice": { ar: "السعر الإجمالي", en: "Total price" },
+  "property.whatsappCta": { ar: "تواصل واتساب", en: "Chat on WhatsApp" },
+  "property.call": { ar: "اتصال", en: "Call" },
+  "property.details": { ar: "التفاصيل", en: "Details" },
+  "property.description": { ar: "الوصف", en: "Description" },
+  "property.location": { ar: "الموقع على الخريطة", en: "Location on the map" },
+  "property.cityAndDistrict": {
+    ar: "المدينة والمنطقة",
+    en: "City and district",
+  },
+  "property.approvedCity": { ar: "مدينة معتمدة", en: "Approved city" },
+  "property.approvedCities": { ar: "المدن المعتمدة", en: "Approved cities" },
+  "property.mapLoading": {
+    ar: "جاري تحميل خريطة العقارات...",
+    en: "Loading the properties map...",
+  },
+  "property.mapLoadingShort": {
+    ar: "جاري تحميل الخريطة...",
+    en: "Loading the map...",
+  },
+  "property.installments.title": { ar: "حاسبة الأقساط", en: "Installment calculator" },
+  "property.installments.down": { ar: "المقدم", en: "Down payment" },
+  "property.installments.years": { ar: "عدد السنوات", en: "Number of years" },
+  "property.installments.monthly": { ar: "القسط الشهري", en: "Monthly installment" },
+  "property.installments.formula": {
+    ar: "(السعر − المقدم) ÷ (السنوات × 12)",
+    en: "(Price − down payment) ÷ (years × 12)",
+  },
+  "property.years.one": { ar: "سنة", en: "year" },
+  "property.years.many": { ar: "سنوات", en: "years" },
+  "property.whatsappMessage": {
+    ar: "مرحباً، أنا مهتم بعقار «{title}» في {district} - {city} بسعر {price}. أرجو تزويدي بالتفاصيل وموعد المعاينة.",
+    en: "Hello, I am interested in “{title}” in {district} - {city} priced at {price}. Please share the details and a viewing time.",
+  },
+  "property.whatsappMessageShort": {
+    ar: "مرحباً، مهتم بعقار: {title}",
+    en: "Hello, I am interested in: {title}",
+  },
+  "property.imageAlt": {
+    ar: "{title} — صورة {index}",
+    en: "{title} — image {index}",
+  },
+  "property.prevImage": { ar: "السابق", en: "Previous" },
+  "property.nextImage": { ar: "التالي", en: "Next" },
+};

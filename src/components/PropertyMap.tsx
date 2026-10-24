@@ -11,7 +11,9 @@ import {
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Property } from "@/types/property";
-import { formatPrice } from "@/lib/format";
+import { useI18n } from "@/lib/i18n";
+import { cityLabel } from "@/lib/i18n/cities";
+import { useCurrency } from "@/lib/currency";
 import { CityOption, cities } from "./Filters";
 
 /**
@@ -28,9 +30,10 @@ const markerIcon = L.divIcon({
 
 /** هيكل تحميل الخريطة — يظهر فقط قبل جهوزية المتصفح */
 function MapSkeleton() {
+  const { t } = useI18n();
   return (
     <div className="flex h-full min-h-[400px] w-full animate-pulse items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-      <span className="text-sm font-medium">جاري تحميل خريطة العقارات...</span>
+      <span className="text-sm font-medium">{t("property.mapLoading")}</span>
     </div>
   );
 }
@@ -80,6 +83,11 @@ export default function PropertyMap({
   properties,
   selectedCity = cities[0],
 }: Props) {
+  const { t, locale } = useI18n();
+  const { formatWithSymbol } = useCurrency();
+  const numberFormat = new Intl.NumberFormat(
+    locale === "ar" ? "ar-EG" : "en-US"
+  );
   const [mounted, setMounted] = useState(false);
   // معرّف فريد لكل نسخة من الخريطة: يضمن أن Leaflet ينشئ الخريطة على عنصر DOM
   // جديد تماماً في كل مرة، فلا يظهر خطأ "Map container is already initialized"
@@ -114,10 +122,11 @@ export default function PropertyMap({
           <Popup>
             <strong>{p.title}</strong>
             <br />
-            {formatPrice(p.price)} ج.م
+            {formatWithSymbol(p.price)}
             <br />
             <span className="text-xs">
-              {p.city} · {p.area} م²
+              {cityLabel(p.city, t)} · {numberFormat.format(p.area)}{" "}
+              {t("common.sqm")}
             </span>
           </Popup>
         </Marker>

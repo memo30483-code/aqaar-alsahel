@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useI18n } from "@/lib/i18n";
 
 interface Props {
   images: string[];
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export default function ImageSlider({ images, title }: Props) {
+  const { t } = useI18n();
   const [index, setIndex] = useState(0);
   const total = images.length;
 
@@ -35,7 +37,7 @@ export default function ImageSlider({ images, title }: Props) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={images[index]}
-          alt={`${title} — صورة ${index + 1}`}
+          alt={t("property.imageAlt", { title, index: index + 1 })}
           className="h-full w-full object-cover transition-opacity duration-300"
         />
 
@@ -73,7 +75,7 @@ export default function ImageSlider({ images, title }: Props) {
             <button
               type="button"
               onClick={() => go(-1)}
-              aria-label="السابق"
+              aria-label={t("property.prevImage")}
               className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-ocean-900 shadow-soft transition hover:bg-white"
             >
               ‹
@@ -81,7 +83,7 @@ export default function ImageSlider({ images, title }: Props) {
             <button
               type="button"
               onClick={() => go(1)}
-              aria-label="التالي"
+              aria-label={t("property.nextImage")}
               className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-ocean-900 shadow-soft transition hover:bg-white"
             >
               ›

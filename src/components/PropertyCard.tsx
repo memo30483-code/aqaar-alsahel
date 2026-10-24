@@ -1,86 +1,157 @@
+"use client";
+
 import Link from "next/link";
 import { Property } from "@/types/property";
-import { formatArea, formatPrice } from "@/lib/format";
+import { useI18n } from "@/lib/i18n";
+import { cityLabel } from "@/lib/i18n/cities";
+import { propertyTypeLabel } from "@/lib/i18n/taxonomy";
+import { useCurrency } from "@/lib/currency";
+import { VerifiedSeal } from "@/components/Ornaments";
 
 /** رقم واتساب تجريبي يُستخدم عند عدم توفر رقم للعقار */
 const DEMO_WHATSAPP = "201012345678";
 
-function whatsappHref(property: Property): string {
-  const number = property.whatsapp?.replace(/\D/g, "") || DEMO_WHATSAPP;
-  const message = encodeURIComponent(
-    `مرحباً، أنا مهتم بعقار «${property.title}» في ${property.district} - ${property.city} بسعر ${formatPrice(
-      property.price
-    )} ج.م. أرجو تزويدي بالتفاصيل وموعد المعاينة.`
-  );
-  return `https://wa.me/${number}?text=${message}`;
-}
-
 interface Props {
   property: Property;
+  /** نسخة مصغّرة (Compact Card) لعرض أكبر عدد من العقارات في التغذية الوسطى */
+  compact?: boolean;
 }
 
-export default function PropertyCard({ property }: Props) {
+export default function PropertyCard({ property, compact = false }: Props) {
+  const { t, locale } = useI18n();
+  const { formatWithSymbol } = useCurrency();
+
   const pricePerMeter =
     property.area > 0 ? Math.round(property.price / property.area) : 0;
   const badge =
     property.type === "فيلا" || property.price >= 3_000_000
-      ? "مميز"
-      : "استلام فوري";
+      ? t("property.badge.featured")
+      : t("property.badge.ready");
+  const areaValue = new Intl.NumberFormat(
+    locale === "ar" ? "ar-EG" : "en-US"
+  ).format(property.area);
+
+  const whatsappHref = () => {
+    const number = property.whatsapp?.replace(/\D/g, "") || DEMO_WHATSAPP;
+    const message = encodeURIComponent(
+      t("property.whatsappMessage", {
+        title: property.title,
+        district: property.district,
+        city: cityLabel(property.city, t),
+        price: formatWithSymbol(property.price),
+      })
+    );
+    return `https://wa.me/${number}?text=${message}`;
+  };
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-3xl border border-gray-200 bg-white transition hover:-translate-y-1 hover:shadow-xl">
+    <article className="group flex h-full flex-col transition duration-300 hover:-translate-y-1 hover:[filter:drop-shadow(0_16px_24px_rgba(30,38,73,0.18))]">
       <Link href={`/property/${property.id}`} className="block">
-        <div className="relative h-56 overflow-hidden bg-gray-100">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={property.image}
-            alt={property.title}
-            loading="lazy"
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-          />
-          <span className="absolute right-3 top-3 rounded-full bg-black/85 px-3 py-1 text-xs font-bold text-white backdrop-blur">
+        {/* قوس إسلامي مدبّب (Pointed Arch) يحتضن صورة العقار داخل إطار ذهبي */}
+        <div
+          className={`clip-arch relative bg-gradient-to-b from-gold-400 via-gold-500 to-gold-600 ${
+            compact ? "h-32" : "h-56"
+          }`}
+        >
+          <div className="clip-arch absolute inset-px overflow-hidden bg-sand-100">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={property.image}
+              alt={property.title}
+              loading="lazy"
+              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+            />
+            {/* خط ذهبي رفيع يفصل الصورة عن جسم الكارت */}
+            <span className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-l from-transparent via-gold-400/70 to-transparent" />
+          </div>
+          <span
+            title={t("seal.title")}
+            className={`absolute bottom-3 right-3 inline-flex items-center gap-1 rounded-full border border-gold-300/80 bg-gradient-to-br from-gold-100 via-gold-200 to-gold-400 font-bold text-gold-900 shadow-sm ${
+              compact ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-1 text-[11px]"
+            }`}
+          >
+            <VerifiedSeal
+              title={t("seal.title")}
+              className={compact ? "h-3 w-3" : "h-3.5 w-3.5"}
+            />
             {badge}
           </span>
-          <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-gray-900 backdrop-blur">
-            {property.type}
+          <span
+            className={`absolute bottom-3 left-3 rounded-full border border-sand-200 bg-white/90 font-bold text-ocean-900 backdrop-blur ${
+              compact ? "px-2 py-0.5 text-[10px]" : "px-3 py-1 text-xs"
+            }`}
+          >
+            {propertyTypeLabel(property.type, t)}
           </span>
         </div>
       </Link>
 
-      <div className="flex flex-1 flex-col p-4">
-        <Link href={`/property/${property.id}`} className="block">
-          <h3 className="line-clamp-1 text-base font-bold text-gray-900 transition group-hover:text-gray-600">
-            {property.title}
-          </h3>
-        </Link>
+      <div className="relative flex flex-1 flex-col overflow-hidden rounded-b-2xl border-x border-sand-300 bg-white">
+        <div className={`flex flex-1 flex-col ${compact ? "p-3" : "p-4"}`}>
+          <Link href={`/property/${property.id}`} className="block">
+            <h3
+              className={`line-clamp-1 font-bold text-ocean-900 transition group-hover:text-ocean-600 ${
+                compact ? "text-sm" : "text-base"
+              }`}
+            >
+              {property.title}
+            </h3>
+          </Link>
 
-        <p className="mt-1 text-sm text-gray-500">
-          {property.district} · {property.city} · {formatArea(property.area)}
-          {property.rooms > 0 ? ` · ${property.rooms} غرف` : ""}
-        </p>
+          <p
+            className={`mt-1 text-sand-700 ${
+              compact ? "text-[11px]" : "text-sm"
+            }`}
+          >
+            {property.district} · {cityLabel(property.city, t)} · {areaValue}{" "}
+            {t("common.sqm")}
+            {property.rooms > 0
+              ? ` · ${t("property.roomsCount", { count: property.rooms })}`
+              : ""}
+          </p>
 
-        <div className="mt-3 border-t border-gray-100 pt-3">
-          <p className="text-xl font-black tracking-tight text-gray-900">
-            {formatPrice(property.price)}{" "}
-            <span className="text-sm font-bold text-gray-600">ج.م</span>
-          </p>
-          <p className="mt-1 text-xs text-gray-500">
-            سعر المتر التقديري{" "}
-            <span className="font-bold text-gray-700">
-              {formatPrice(pricePerMeter)} ج.م
-            </span>
-          </p>
+          <div
+            className={`mt-2 border-t border-sand-200 ${
+              compact ? "pt-2" : "pt-3"
+            }`}
+          >
+            <p
+              className={`font-black tracking-tight text-ocean-900 ${
+                compact ? "text-lg" : "text-xl"
+              }`}
+            >
+              {formatWithSymbol(property.price)}
+            </p>
+            <p
+              className={`mt-0.5 text-sand-600 ${
+                compact ? "text-[10px]" : "text-xs"
+              }`}
+            >
+              {t("property.pricePerMeterEstimated")}{" "}
+              <span className="font-bold text-sand-800">
+                {formatWithSymbol(pricePerMeter)}
+              </span>
+            </p>
+          </div>
+
+          <a
+            href={whatsappHref()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`mt-auto flex items-center justify-center gap-2 rounded-xl bg-[#25D366] font-bold text-white transition hover:bg-[#1ebe57] ${
+              compact ? "pt-2 pb-2 px-3 text-xs" : "pt-2.5 pb-3 px-4 text-sm"
+            }`}
+          >
+            <WhatsAppIcon />
+            {t("property.whatsappCta")}
+          </a>
         </div>
 
-        <a
-          href={whatsappHref(property)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#1ebe57]"
-        >
-          <WhatsAppIcon />
-          تواصل واتساب
-        </a>
+        {/* قاعدة فرعونية: خط سفلي متين بلمسة ذهبية ونحاسية عريضة */}
+        <span
+          aria-hidden
+          className="block h-1.5 w-full shrink-0 bg-gradient-to-l from-gold-700 via-gold-400 to-gold-700"
+        />
       </div>
     </article>
   );

@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { formatPrice } from "@/lib/format";
+import { useI18n } from "@/lib/i18n";
+import { CURRENCIES, useCurrency } from "@/lib/currency";
 
 interface Props {
   price: number;
@@ -10,6 +11,10 @@ interface Props {
 }
 
 export default function InstallmentCard({ price, whatsapp, title }: Props) {
+  const { t, locale } = useI18n();
+  const { formatWithSymbol } = useCurrency();
+  const egpSymbol = CURRENCIES[0].symbol[locale];
+
   const defaultDown = Math.round(price * 0.2);
   const [downPayment, setDownPayment] = useState(String(defaultDown));
   const [years, setYears] = useState("5");
@@ -26,25 +31,28 @@ export default function InstallmentCard({ price, whatsapp, title }: Props) {
     : whatsapp;
   const telHref = `tel:+${whatsapp.replace(/^\+/, "")}`;
   const waHref = `https://wa.me/${whatsapp}?text=${encodeURIComponent(
-    `مرحباً، مهتم بعقار: ${title}`
+    t("property.whatsappMessageShort", { title })
   )}`;
 
   return (
     <aside className="sticky top-24 space-y-5 rounded-2xl border border-ocean-100 bg-white p-5 shadow-soft sm:p-6">
       <div>
-        <p className="text-xs font-semibold text-ocean-500">السعر الإجمالي</p>
+        <p className="text-xs font-semibold text-ocean-500">
+          {t("property.totalPrice")}
+        </p>
         <p className="mt-1 text-3xl font-extrabold tracking-tight text-ocean-900">
-          {formatPrice(price)}
-          <span className="mr-1 text-base font-bold text-ocean-600">ج.م</span>
+          {formatWithSymbol(price)}
         </p>
       </div>
 
       <div className="rounded-xl border border-ocean-100 bg-ocean-50/60 p-4">
-        <h3 className="mb-3 text-sm font-bold text-ocean-900">حاسبة الأقساط</h3>
+        <h3 className="mb-3 text-sm font-bold text-ocean-900">
+          {t("property.installments.title")}
+        </h3>
         <div className="space-y-3">
           <label className="block">
             <span className="mb-1 block text-xs font-semibold text-ocean-600">
-              المقدم (ج.م)
+              {t("property.installments.down")} ({egpSymbol})
             </span>
             <input
               type="number"
@@ -57,7 +65,7 @@ export default function InstallmentCard({ price, whatsapp, title }: Props) {
           </label>
           <label className="block">
             <span className="mb-1 block text-xs font-semibold text-ocean-600">
-              عدد السنوات
+              {t("property.installments.years")}
             </span>
             <select
               value={years}
@@ -66,7 +74,10 @@ export default function InstallmentCard({ price, whatsapp, title }: Props) {
             >
               {[1, 2, 3, 4, 5, 7, 10].map((y) => (
                 <option key={y} value={y}>
-                  {y} {y === 1 ? "سنة" : "سنوات"}
+                  {y}{" "}
+                  {y === 1
+                    ? t("property.years.one")
+                    : t("property.years.many")}
                 </option>
               ))}
             </select>
@@ -74,15 +85,14 @@ export default function InstallmentCard({ price, whatsapp, title }: Props) {
         </div>
         <div className="mt-4 flex items-end justify-between border-t border-ocean-100 pt-3">
           <span className="text-xs font-semibold text-ocean-600">
-            القسط الشهري
+            {t("property.installments.monthly")}
           </span>
           <p className="text-xl font-extrabold text-ocean-700">
-            {formatPrice(Math.max(0, Math.round(installment)))}
-            <span className="mr-1 text-xs font-bold">ج.م</span>
+            {formatWithSymbol(Math.max(0, Math.round(installment)))}
           </p>
         </div>
         <p className="mt-1 text-[11px] text-ocean-400">
-          (السعر − المقدم) ÷ (السنوات × 12)
+          {t("property.installments.formula")}
         </p>
       </div>
 
@@ -94,14 +104,14 @@ export default function InstallmentCard({ price, whatsapp, title }: Props) {
           className="flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#1ebe57]"
         >
           <WhatsAppIcon />
-          تواصل واتساب
+          {t("property.whatsappCta")}
         </a>
         <a
           href={telHref}
           className="flex items-center justify-center gap-2 rounded-xl border border-ocean-200 bg-white px-4 py-3.5 text-sm font-bold text-ocean-800 transition hover:bg-ocean-50"
         >
           <PhoneIcon />
-          اتصال {phoneDisplay}
+          {t("property.call")} {phoneDisplay}
         </a>
       </div>
     </aside>
