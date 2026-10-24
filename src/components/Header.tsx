@@ -36,7 +36,7 @@ const PREF_TRIGGER =
 
 /** نمط موحّد لعناصر لوحات القوائم — ملموم، بشادوه ناعم وحدّ خفيف، ولا يمتد طولاً زائداً */
 const PANEL =
-  "absolute start-0 top-full z-50 mt-2 max-h-72 min-w-[230px] overflow-y-auto overscroll-contain rounded-2xl border border-slate-100 bg-white/95 p-1.5 shadow-xl backdrop-blur-md";
+  "absolute start-0 top-full z-[100] mt-2 max-h-72 min-w-[230px] overflow-y-auto overscroll-contain rounded-2xl border border-slate-100 bg-white/95 p-1.5 shadow-xl backdrop-blur-md";
 
 /** نمط موحّد لعناصر القائمة داخل اللوحات */
 const MENU_ITEM =
@@ -78,7 +78,10 @@ function Dropdown({
   }, [open]);
 
   return (
-    <div ref={ref} className="relative">
+    <div
+      ref={ref}
+      className={`relative ${open ? "z-[100]" : "z-10"}`}
+    >
       <button
         type="button"
         aria-haspopup="menu"
@@ -124,10 +127,10 @@ export default function Header() {
   const closeMobile = () => setOpen(false);
 
   return (
-    <header className="sticky top-0 z-50 overflow-hidden border-b border-white/60 bg-white/70 shadow-[0_10px_30px_-20px_rgba(7,34,49,0.55)] backdrop-blur-xl supports-[backdrop-filter]:bg-white/60">
+    <header className="sticky top-0 z-50 border-b border-white/60 bg-white/70 shadow-[0_10px_30px_-20px_rgba(7,34,49,0.55)] backdrop-blur-xl supports-[backdrop-filter]:bg-white/60">
       {/* خلفية النقوش الإسلامية الهندسية (شفافة خفيفة جداً) */}
       <MashrabiyaLayer tone="light" className="opacity-[0.05]" />
-      <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:py-3.5">
+      <div className="relative mx-auto flex w-full max-w-[1440px] items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:py-3.5">
         {/* الشعار */}
         <Link href="/" className="group flex shrink-0 items-center gap-2.5">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-ocean-600 to-ocean-800 text-lg font-bold text-white shadow-soft transition duration-200 group-hover:scale-105 group-hover:shadow-lg">

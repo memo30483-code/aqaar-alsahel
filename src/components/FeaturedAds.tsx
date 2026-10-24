@@ -324,10 +324,10 @@ export function MainDeveloperAds({ className = "" }: { className?: string }) {
           href="/#properties"
           className="group block transition duration-300 hover:-translate-y-0.5 hover:[filter:drop-shadow(0_14px_20px_rgba(30,38,73,0.18))]"
         >
-          {/* قوس إسلامي مدبّب لرأس كرت المطور مع نقشة مشربية ذهبية */}
-          <div className="clip-arch relative h-24 bg-gradient-to-b from-gold-400 via-gold-500 to-gold-600">
+          {/* انحناءة علوية هادئة لرأس كرت المطور مع نقشة مشربية ذهبية */}
+          <div className="relative h-24 overflow-hidden rounded-t-2xl bg-gradient-to-b from-gold-400 via-gold-500 to-gold-600 p-px">
             <div
-              className={`clip-arch absolute inset-px overflow-hidden bg-gradient-to-br ${
+              className={`relative h-full w-full overflow-hidden rounded-t-[15px] bg-gradient-to-br ${
                 AD_GRADIENTS[index % AD_GRADIENTS.length]
               }`}
             >

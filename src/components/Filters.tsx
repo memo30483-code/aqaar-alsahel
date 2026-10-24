@@ -118,9 +118,11 @@ export default function Filters({ applied, onApply, onClear }: Props) {
   };
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-sand-300 bg-white p-4 shadow-soft sm:p-5">
-      {/* رأس القائمة الجانبية: نقشة إسلامية شفافة */}
-      <MashrabiyaLayer tone="light" className="opacity-[0.05]" />
+    <section className="relative rounded-3xl border border-sand-300 bg-white p-4 shadow-soft sm:p-5">
+      {/* رأس القائمة الجانبية: نقشة إسلامية شفافة (مقصوصة داخل حواف الكارت دون قصّ القوائم المنسدلة) */}
+      <span className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
+        <MashrabiyaLayer tone="light" className="opacity-[0.05]" />
+      </span>
       <span className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-l from-transparent via-gold-400/60 to-transparent" />
       <div className="relative mb-4 flex items-center justify-between gap-2">
         <h2 className="text-base font-bold text-ocean-900">

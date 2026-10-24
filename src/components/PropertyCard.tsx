@@ -47,13 +47,13 @@ export default function PropertyCard({ property, compact = false }: Props) {
   return (
     <article className="group flex h-full flex-col transition duration-300 hover:-translate-y-1 hover:[filter:drop-shadow(0_16px_24px_rgba(30,38,73,0.18))]">
       <Link href={`/property/${property.id}`} className="block">
-        {/* قوس إسلامي مدبّب (Pointed Arch) يحتضن صورة العقار داخل إطار ذهبي */}
+        {/* انحناءة علوية هادئة (Soft Curve) تحتضن صورة العقار داخل إطار ذهبي رقيق */}
         <div
-          className={`clip-arch relative bg-gradient-to-b from-gold-400 via-gold-500 to-gold-600 ${
-            compact ? "h-32" : "h-56"
+          className={`relative overflow-hidden rounded-t-2xl bg-gradient-to-b from-gold-400 via-gold-500 to-gold-600 p-px ${
+            compact ? "h-40" : "h-56"
           }`}
         >
-          <div className="clip-arch absolute inset-px overflow-hidden bg-sand-100">
+          <div className="relative h-full w-full overflow-hidden rounded-t-[15px] bg-sand-100">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={property.image}

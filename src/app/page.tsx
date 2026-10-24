@@ -183,7 +183,7 @@ export default function HomePage() {
       {/* بانر علوي مضغوط (شريط رفيع) */}
       <section className="relative overflow-hidden border-b border-sand-300 bg-gradient-to-l from-sand-100 via-white to-white">
         <MashrabiyaLayer tone="light" className="opacity-[0.05]" />
-        <div className="relative mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-6">
+        <div className="relative mx-auto flex w-full max-w-[1440px] flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-6">
           <div className="flex items-center gap-2">
             <h1 className="text-base font-black text-ocean-900 sm:text-lg">
               {t("brand.name")}
@@ -203,10 +203,10 @@ export default function HomePage() {
       </section>
 
       {/* الهيكلة الثلاثية: عمود أيمن (بحث + فلاتر) / تغذية وسطى / عمود أيسر (إعلانات) */}
-      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6">
-        <div className="grid gap-5 lg:grid-cols-4">
+      <div className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 lg:gap-6">
           {/* العمود الأيمن: البحث ثم الفلاتر ثم المساحة الإعلانية الثانوية */}
-          <aside className="lg:col-span-1">
+          <aside className="lg:col-span-3">
             <div className="space-y-4 lg:sticky lg:top-20">
               <form
                 onSubmit={handleSearch}
@@ -263,7 +263,7 @@ export default function HomePage() {
           </aside>
 
           {/* التغذية الوسطى: قائمة العقارات المتحركة */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-6">
             {/* الشريط العلوي: النتائج + الفلاتر النشطة + الترتيب */}
             <section className="mb-4 rounded-3xl border border-sand-300 bg-white p-4 shadow-soft">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -387,7 +387,7 @@ export default function HomePage() {
           </div>
 
           {/* العمود الأيسر: المساحة الإعلانية الرئيسية للمطورين والشركات */}
-          <aside className="lg:col-span-1">
+          <aside className="lg:col-span-3">
             <div className="lg:sticky lg:top-20">
               <MainDeveloperAds />
             </div>
