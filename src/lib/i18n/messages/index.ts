@@ -6,6 +6,7 @@ import { addPropertyMessages } from "./addProperty";
 import { marketGuideMessages } from "./marketGuide";
 import { legalMessages } from "./legal";
 import { registerMessages } from "./register";
+import { adminMessages } from "./admin";
 
 /** قاموس الرسائل الموحّد لكل المنصة */
 export const messages = {
@@ -17,6 +18,7 @@ export const messages = {
   ...marketGuideMessages,
   ...legalMessages,
   ...registerMessages,
+  ...adminMessages,
 };
 
 /** كل مفاتيح الترجمة المتاحة — مضمونة النوع عند وقت البناء */

@@ -22,6 +22,40 @@ export const commonMessages = {
   "nav.sectionCities": { ar: "المدن", en: "Cities" },
   "nav.sectionSections": { ar: "الأقسام", en: "Sections" },
 
+  /* ---------- صفحة تسجيل الدخول ---------- */
+  "login.title": { ar: "تسجيل الدخول", en: "Sign in" },
+  "login.hero.desc": {
+    ar: "أدخل بياناتك للدخول إلى حسابك على منصة عقار الساحل.",
+    en: "Enter your credentials to sign in to your Aqaar Alsahel account.",
+  },
+  "login.email": { ar: "البريد الإلكتروني", en: "Email" },
+  "login.password": { ar: "كلمة السر", en: "Password" },
+  "login.loginButton": { ar: "دخول", en: "Login" },
+  "login.createAccount": {
+    ar: "مستخدم جديد؟ إنشاء حساب",
+    en: "New user? Create account",
+  },
+  "login.demoAdminHint": {
+    ar: "حساب تجريبي: admin@aqaar.com / admin123",
+    en: "Demo account: admin@aqaar.com / admin123",
+  },
+  "login.error.invalid": {
+    ar: "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+    en: "Invalid email or password",
+  },
+  "login.error.required": {
+    ar: "البريد الإلكتروني وكلمة المرور مطلوبان",
+    en: "Email and password are required",
+  },
+  "login.success": {
+    ar: "تم تسجيل الدخول بنجاح",
+    en: "Signed in successfully",
+  },
+  "login.redirecting": {
+    ar: "جارٍ التوجيه...",
+    en: "Redirecting...",
+  },
+
   /* ---------- قائمة الشركات العقارية ---------- */
   "companies.heading": {
     ar: "الشركات العقارية في الساحل",
@@ -103,11 +137,22 @@ export const commonMessages = {
     en: "An open real-estate market for the new coastal cities",
   },
   "footer.home": { ar: "الرئيسية", en: "Home" },
-  "footer.addProperty": { ar: "أضف عقار", en: "List a property" },
-  "footer.register": { ar: "توثيق الحساب", en: "Verify account" },
   "footer.rights": {
     ar: "© {year} عقار الساحل — MVP تجريبي ببيانات وهمية",
     en: "© {year} Aqaar Alsahel — Demo MVP with mock data",
+  },
+
+  /* ---------- وسائل التواصل والدعم الفني ---------- */
+  "footer.support.title": {
+    ar: "وسائل التواصل والدعم الفني",
+    en: "Contact & Technical Support",
+  },
+  "footer.support.phone": { ar: "أرقام الدعم", en: "Support lines" },
+  "footer.support.email": { ar: "بريد الدعم", en: "Support email" },
+  "footer.support.hours": { ar: "ساعات العمل", en: "Working hours" },
+  "footer.support.hoursValue": {
+    ar: "يومياً من 9 صباحاً حتى 9 مساءً",
+    en: "Daily from 9:00 AM to 9:00 PM",
   },
 
   /* ---------- المساحات الإعلانية ---------- */

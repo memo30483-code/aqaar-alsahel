@@ -10,7 +10,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { saveSession } from "@/lib/session";
+import { saveSession, MOCK_ADMIN } from "@/lib/session";
 import { useT, type MessageKey } from "@/lib/i18n";
 
 /* ============================ الأنواع ============================ */
@@ -630,6 +630,8 @@ export default function RegisterPage() {
   const [otpError, setOtpError] = useState("");
   const [resent, setResent] = useState(false);
   const [verified, setVerified] = useState(false);
+  const [mode, setMode] = useState<"register" | "login">("register");
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const router = useRouter();
   const [redirectTo, setRedirectTo] = useState("");

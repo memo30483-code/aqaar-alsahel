@@ -339,7 +339,7 @@ export default function Header() {
             )}
           </Dropdown>
 
-          <Link href="/register" className={NAV_LINK}>
+          <Link href="/login" className={NAV_LINK}>
             <User className="h-4 w-4 text-ocean-500" />
             {t("nav.login")}
           </Link>
@@ -452,7 +452,7 @@ export default function Header() {
             </p>
 
             <Link
-              href="/register"
+              href="/login"
               className={`${NAV_LINK} mt-2`}
               onClick={closeMobile}
             >

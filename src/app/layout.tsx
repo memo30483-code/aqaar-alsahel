@@ -25,10 +25,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl">
-      <body className={`${cairo.variable} font-sans antialiased`}>
+      <body className={`${cairo.variable} font-sans antialiased min-h-screen flex flex-col`}>
         <AppProviders>
           <Header />
-          <main>{children}</main>
+          <main className="flex-1 min-h-0">{children}</main>
           <Footer />
           <FeaturedAds />
         </AppProviders>
