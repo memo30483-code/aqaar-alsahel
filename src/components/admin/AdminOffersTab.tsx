@@ -220,8 +220,8 @@ export default function AdminOffersTab({
           </Field>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-2 rounded-2xl bg-slate-50 p-3 text-xs text-slate-600">
-          <Calendar className="h-4 w-4 text-[#b8963b]" />
+        <div className="mt-4 flex flex-wrap items-center gap-2 rounded-2xl bg-sand-50 p-3 text-xs text-sand-700">
+          <Calendar className="h-4 w-4 text-gold-600" />
           <span>
             الحالة الآن:{" "}
             <strong className={active.length > 0 ? "text-emerald-600" : "text-rose-600"}>
@@ -254,15 +254,15 @@ export default function AdminOffersTab({
           {offers.map((offer) => (
             <div
               key={offer.id}
-              className="flex flex-col gap-3 rounded-2xl border border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-3 rounded-2xl border border-sand-200 p-4 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[rgba(201,162,77,0.12)] text-[#b8963b]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[rgba(201,146,42,0.12)] text-gold-600">
                   <Gift className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900">{offer.titleAr}</p>
-                  <p className="mt-0.5 text-[11px] text-slate-500">
+                  <p className="font-bold text-ocean-900">{offer.titleAr}</p>
+                  <p className="mt-0.5 text-[11px] text-sand-600">
                     {offer.type === "property_linked"
                       ? "مرتبط بعقار"
                       : offer.type === "general"
@@ -286,7 +286,7 @@ export default function AdminOffersTab({
                   className={`${ROW_ACTION} ${
                     offer.enabled
                       ? "border-emerald-200 text-emerald-700"
-                      : "border-slate-200 text-slate-500"
+                      : "border-sand-200 text-sand-600"
                   }`}
                   disabled={!can("offers.manage")}
                 >
@@ -343,7 +343,7 @@ export default function AdminOffersTab({
             </div>
           ))}
           {offers.length === 0 && (
-            <p className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-sm text-slate-500">
+            <p className="rounded-2xl border border-dashed border-sand-200 p-8 text-center text-sm text-sand-600">
               لا توجد عروض بعد. اضغط «إضافة عرض» لإنشاء أول عرض.
             </p>
           )}
@@ -351,14 +351,14 @@ export default function AdminOffersTab({
       </Panel>
 
       {draft && (
-        <div className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-slate-900/50 p-4 py-10">
+        <div className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-ocean-950/60 p-4 py-10">
           <div className="w-full max-w-3xl rounded-3xl bg-white p-6 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-black text-slate-900">
+              <h3 className="text-lg font-black text-ocean-900">
                 {draft.id ? "تعديل عرض" : "إضافة عرض جديد"}
               </h3>
               <button onClick={() => setDraft(null)}>
-                <X className="h-5 w-5 text-slate-500" />
+                <X className="h-5 w-5 text-sand-600" />
               </button>
             </div>
 
@@ -508,7 +508,7 @@ export default function AdminOffersTab({
             <div className="mt-5 flex justify-end gap-2">
               <button
                 onClick={() => setDraft(null)}
-                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600"
+                className="rounded-full border border-sand-200 px-4 py-2 text-sm font-bold text-sand-700"
               >
                 إلغاء
               </button>

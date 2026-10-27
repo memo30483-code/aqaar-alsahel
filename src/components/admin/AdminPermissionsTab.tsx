@@ -104,7 +104,7 @@ export default function AdminPermissionsTab({
       desc="حدد يدوياً ما يستطيع كل أدمن فعله — الصلاحيات الممنوحة هنا تُضاف فوق صلاحيات دوره."
       actions={
         <div className="flex flex-wrap items-center gap-2">
-          <button onClick={resetToRole} className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600">
+          <button onClick={resetToRole} className="inline-flex items-center gap-1 rounded-full border border-sand-200 px-3 py-2 text-xs font-bold text-sand-700">
             <RotateCcw className="h-3.5 w-3.5" /> صلاحيات الدور
           </button>
           <button onClick={save} className={BTN_PRIMARY} disabled={!editable || !activeId}>
@@ -120,8 +120,8 @@ export default function AdminPermissionsTab({
             onClick={() => onSelect(user.id)}
             className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
               activeId === user.id
-                ? "bg-slate-900 text-white"
-                : "border border-slate-200 bg-white text-slate-600 hover:border-[#b8963b]"
+                ? "bg-ocean-950 text-white"
+                : "border border-sand-200 bg-white text-sand-700 hover:border-gold-400"
             }`}
           >
             {user.name}
@@ -131,14 +131,14 @@ export default function AdminPermissionsTab({
       </div>
 
       {!activeUser && (
-        <p className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-sm text-slate-500">
+        <p className="rounded-2xl border border-dashed border-sand-200 p-8 text-center text-sm text-sand-600">
           لا يوجد مستخدمون قابلون للتخصيص. المدير العام يملك كل الصلاحيات دائماً.
         </p>
       )}
 
       {activeUser && (
         <div className="space-y-4">
-          <div className="flex items-center gap-2 rounded-2xl bg-[rgba(201,162,77,0.08)] p-3 text-xs text-[#8a6d2f]">
+          <div className="flex items-center gap-2 rounded-2xl bg-[rgba(201,146,42,0.08)] p-3 text-xs text-[#8a6d2f]">
             <ShieldCheck className="h-4 w-4" />
             <span>
               صلاحيات {activeUser.name} — {permissions.length} من {ALL_PERMISSIONS.length} صلاحية
@@ -146,7 +146,7 @@ export default function AdminPermissionsTab({
           </div>
           {grouped.map(([category, items]) => (
             <div key={category}>
-              <h4 className="mb-2 text-xs font-black text-slate-500">
+              <h4 className="mb-2 text-xs font-black text-sand-600">
                 {CATEGORY_LABEL[category] ?? category}
               </h4>
               <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
@@ -159,13 +159,13 @@ export default function AdminPermissionsTab({
                       disabled={!editable}
                       className={`flex items-center gap-2 rounded-xl border p-2.5 text-start text-xs transition ${
                         checked
-                          ? "border-[#b8963b] bg-[rgba(201,162,77,0.08)] text-slate-900"
-                          : "border-slate-100 bg-white text-slate-600 hover:border-slate-300"
+                          ? "border-gold-400 bg-[rgba(201,146,42,0.08)] text-ocean-900"
+                          : "border-sand-200 bg-white text-sand-700 hover:border-sand-300"
                       } ${!editable ? "opacity-60" : ""}`}
                     >
                       <span
                         className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
-                          checked ? "border-[#b8963b] bg-[#b8963b] text-white" : "border-slate-300"
+                          checked ? "border-gold-400 bg-gold-500 text-white" : "border-sand-300"
                         }`}
                       >
                         {checked && <Check className="h-3 w-3" />}

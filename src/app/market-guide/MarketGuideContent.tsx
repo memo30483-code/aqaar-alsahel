@@ -210,9 +210,17 @@ export default function MarketGuideContent() {
   return (
     <>
       {/* Hero */}
-      <section className="bg-black">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/50">
+      <section className="relative overflow-hidden bg-[linear-gradient(135deg,#141a33_0%,#242e5c_58%,#141a33_100%)]">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -end-24 -top-28 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(217,185,92,0.26),transparent_65%)]"
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-l from-transparent via-gold-400 to-transparent"
+        />
+        <div className="relative mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
+          <p className="flex items-center gap-2 text-[10.5px] font-black uppercase tracking-[0.2em] text-gold-300">
             {t("marketGuide.hero.eyebrow")}
           </p>
           <h1 className="mt-3 text-4xl font-black leading-tight text-white sm:text-5xl">
@@ -226,12 +234,12 @@ export default function MarketGuideContent() {
             {heroStats.map((stat) => (
               <div
                 key={stat.label}
-                className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 backdrop-blur"
+                className="rounded-2xl border border-white/15 bg-white/[0.06] px-5 py-4 backdrop-blur"
               >
-                <p className="text-xs font-semibold text-white/50">
+                <p className="text-[10.5px] font-bold text-white/50">
                   {stat.label}
                 </p>
-                <p className="mt-1 text-2xl font-black text-white">
+                <p className="mt-1 text-2xl font-black text-gold-200">
                   {stat.value}
                 </p>
               </div>
@@ -245,14 +253,14 @@ export default function MarketGuideContent() {
         <section id="guide" className="scroll-mt-32">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-2xl font-black text-gray-900 sm:text-3xl">
+              <h2 className="text-2xl font-black text-ocean-900 sm:text-[28px]">
                 {t("marketGuide.guide.heading")}
               </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-7 text-gray-500">
+              <p className="mt-2 max-w-2xl text-[12.5px] leading-7 text-sand-700">
                 {t("marketGuide.guide.subheading")}
               </p>
             </div>
-            <span className="rounded-full bg-gray-100 px-4 py-1.5 text-xs font-bold text-gray-600">
+            <span className="rounded-full border border-sand-200 bg-sand-100 px-4 py-1.5 text-[11px] font-bold text-sand-700">
               {t("marketGuide.guide.mvpBadge")}
             </span>
           </div>
@@ -262,28 +270,28 @@ export default function MarketGuideContent() {
               const inner = (
                 <>
                   <div className="flex items-start justify-between gap-3">
-                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white transition group-hover:scale-105">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#141a33,#2d3875)] text-gold-300 transition group-hover:scale-105">
                       {card.icon}
                     </span>
                     <span
                       className={`rounded-full px-3 py-1 text-[11px] font-bold ring-1 ${
                         card.href
-                          ? "bg-gray-900 text-white ring-gray-900"
-                          : "bg-gray-100 text-gray-500 ring-gray-200"
+                          ? "bg-ocean-950 text-white ring-ocean-950"
+                          : "bg-sand-100 text-sand-600 ring-sand-200"
                       }`}
                     >
                       {t(card.badgeKey)}
                     </span>
                   </div>
 
-                  <h3 className="mt-5 text-lg font-black text-gray-900">
+                  <h3 className="mt-5 text-[16px] font-black text-ocean-900">
                     {t(card.titleKey)}
                   </h3>
-                  <p className="mt-2 flex-1 text-sm leading-7 text-gray-600">
+                  <p className="mt-2 flex-1 text-[12.5px] leading-7 text-sand-800">
                     {t(card.descriptionKey)}
                   </p>
 
-                  <span className="mt-5 flex items-center gap-1.5 text-sm font-bold text-gray-900">
+                  <span className="mt-5 flex items-center gap-1.5 text-[12px] font-extrabold text-gold-700">
                     {card.href
                       ? t("marketGuide.cta.learnMore")
                       : t("marketGuide.cta.comingSoon")}
@@ -297,7 +305,7 @@ export default function MarketGuideContent() {
               );
 
               const className =
-                "group flex h-full flex-col rounded-3xl border border-gray-200 bg-white p-6 transition hover:-translate-y-1 hover:border-gray-300 hover:shadow-xl";
+                "group flex h-full flex-col rounded-3xl border border-sand-200 bg-white p-6 shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)] transition hover:-translate-y-1 hover:border-gold-300/70 hover:shadow-[0_28px_60px_-40px_rgba(20,26,51,0.35)]";
 
               if (card.href?.startsWith("#")) {
                 return (
@@ -324,10 +332,10 @@ export default function MarketGuideContent() {
         <section id="meters" className="mt-14 scroll-mt-32">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-2xl font-black text-gray-900 sm:text-3xl">
+              <h2 className="text-2xl font-black text-ocean-900 sm:text-[28px]">
                 {t("marketGuide.meters.heading")}
               </h2>
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="mt-2 text-[12.5px] leading-7 text-sand-700">
                 {t("marketGuide.meters.subheading")}
               </p>
             </div>
@@ -337,10 +345,10 @@ export default function MarketGuideContent() {
             {stats.map((row) => (
               <article
                 key={row.city}
-                className="flex h-full flex-col rounded-3xl border border-gray-200 bg-white p-6 transition hover:-translate-y-1 hover:shadow-xl"
+                className="flex h-full flex-col rounded-3xl border border-sand-200 bg-white p-6 shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)] transition hover:-translate-y-1 hover:border-gold-300/70 hover:shadow-[0_28px_60px_-40px_rgba(20,26,51,0.35)]"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <h3 className="text-lg font-black text-gray-900">
+                  <h3 className="text-[16px] font-black text-ocean-900">
                     {cityLabel(row.city, t)}
                   </h3>
                   <span
@@ -352,28 +360,28 @@ export default function MarketGuideContent() {
                   </span>
                 </div>
 
-                <div className="mt-5 grid grid-cols-2 gap-3 border-t border-gray-100 pt-5">
+                <div className="mt-5 grid grid-cols-2 gap-3 border-t border-sand-200 pt-5">
                   <div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-[10.5px] font-bold text-sand-600">
                       {t("marketGuide.meters.apartments")}
                     </p>
-                    <p className="mt-1 text-xl font-black text-gray-900">
+                    <p className="mt-1 text-lg font-black text-ocean-900">
                       {row.apartments === null
                         ? "—"
                         : formatWithSymbol(row.apartments)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-[10.5px] font-bold text-sand-600">
                       {t("marketGuide.meters.villas")}
                     </p>
-                    <p className="mt-1 text-xl font-black text-gray-900">
+                    <p className="mt-1 text-lg font-black text-ocean-900">
                       {row.villas === null ? "—" : formatWithSymbol(row.villas)}
                     </p>
                   </div>
                 </div>
 
-                <p className="mt-4 text-xs text-gray-500">
+                <p className="mt-4 text-[10.5px] font-bold text-sand-600">
                   {t("marketGuide.meters.listingsNote", {
                     count: row.listings,
                     note: t(row.noteKey),
@@ -383,7 +391,7 @@ export default function MarketGuideContent() {
                 <div className="mt-auto pt-5">
                   <Link
                     href="/#properties"
-                    className="flex items-center justify-center rounded-xl bg-black px-4 py-3 text-sm font-bold text-white transition hover:bg-gray-800"
+                    className="flex items-center justify-center rounded-xl bg-ocean-950 px-4 py-3 text-[12px] font-black text-white transition hover:bg-ocean-900"
                   >
                     {t("marketGuide.meters.browseCity", {
                       city: cityLabel(row.city, t),
@@ -397,27 +405,27 @@ export default function MarketGuideContent() {
 
         {/* أعمدة المقارنة */}
         <section id="comparison" className="mt-14 scroll-mt-32">
-          <h2 className="text-2xl font-black text-gray-900 sm:text-3xl">
+          <h2 className="text-2xl font-black text-ocean-900 sm:text-[28px]">
             {t("marketGuide.comparison.heading")}
           </h2>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-[12.5px] leading-7 text-sand-700">
             {t("marketGuide.comparison.subheading")}
           </p>
 
-          <div className="mt-6 space-y-5 rounded-3xl border border-gray-200 bg-white p-5 sm:p-7">
+          <div className="mt-6 space-y-5 rounded-3xl border border-sand-200 bg-white p-5 shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)] sm:p-7">
             {stats.map((row) => (
               <div key={row.city}>
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm font-bold text-gray-900">
+                  <span className="text-[12.5px] font-extrabold text-ocean-900">
                     {cityLabel(row.city, t)}
                   </span>
-                  <span className="text-xs font-bold text-gray-500">
+                  <span className="text-[10.5px] font-bold text-sand-600">
                     {t("marketGuide.comparison.apartments")}
                   </span>
                 </div>
-                <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
+                <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-sand-200">
                   <div
-                    className="h-full rounded-full bg-black"
+                    className="h-full rounded-full bg-gradient-to-l from-gold-500 to-gold-300"
                     style={{
                       width: `${Math.round(
                         ((row.apartments ?? 0) / maxMeter) * 100
@@ -426,16 +434,16 @@ export default function MarketGuideContent() {
                   />
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-3">
-                  <span className="text-sm font-bold text-gray-900">
+                  <span className="text-[12.5px] font-extrabold text-ocean-900">
                     {cityLabel(row.city, t)}
                   </span>
-                  <span className="text-xs font-bold text-gray-500">
+                  <span className="text-[10.5px] font-bold text-sand-600">
                     {t("marketGuide.comparison.villas")}
                   </span>
                 </div>
-                <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
+                <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-sand-200">
                   <div
-                    className="h-full rounded-full bg-ocean-600"
+                    className="h-full rounded-full bg-gradient-to-l from-ocean-700 to-ocean-400"
                     style={{
                       width: `${Math.round(
                         ((row.villas ?? 0) / maxMeter) * 100
@@ -450,10 +458,10 @@ export default function MarketGuideContent() {
 
         {/* تفاصيل المدن ورأي الخبراء */}
         <section id="cities" className="mt-14 scroll-mt-32">
-          <h2 className="text-2xl font-black text-gray-900 sm:text-3xl">
+          <h2 className="text-2xl font-black text-ocean-900 sm:text-[28px]">
             {t("marketGuide.cities.heading")}
           </h2>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-[12.5px] leading-7 text-sand-700">
             {t("marketGuide.cities.subheading")}
           </p>
 
@@ -461,10 +469,10 @@ export default function MarketGuideContent() {
             {stats.map((row) => (
               <article
                 key={row.city}
-                className="flex h-full flex-col rounded-3xl border border-gray-200 bg-white p-6 transition hover:-translate-y-1 hover:shadow-xl"
+                className="flex h-full flex-col rounded-3xl border border-sand-200 bg-white p-6 shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)] transition hover:-translate-y-1 hover:border-gold-300/70 hover:shadow-[0_28px_60px_-40px_rgba(20,26,51,0.35)]"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <h3 className="text-xl font-black text-gray-900">
+                  <h3 className="text-lg font-black text-ocean-900">
                     {cityLabel(row.city, t)}
                   </h3>
                   <span
@@ -476,19 +484,19 @@ export default function MarketGuideContent() {
                   </span>
                 </div>
 
-                <p className="mt-3 flex-1 text-sm leading-7 text-gray-600">
+                <p className="mt-3 flex-1 text-[12.5px] leading-7 text-sand-800">
                   {t(row.summaryKey)}
                 </p>
 
                 <div className="mt-5">
-                  <p className="text-xs font-bold text-gray-500">
+                  <p className="text-[10.5px] font-bold text-sand-600">
                     {t("marketGuide.cities.topDistricts")}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {row.districts.map((district) => (
                       <span
                         key={district}
-                        className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700"
+                        className="rounded-full border border-sand-200 bg-sand-50 px-3 py-1 text-[10.5px] font-bold text-sand-800"
                       >
                         {district}
                       </span>
@@ -503,11 +511,11 @@ export default function MarketGuideContent() {
         {/* المنهجية + دعوة للإضافة */}
         <section id="methodology" className="mt-14 scroll-mt-32">
           <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
-            <div className="rounded-3xl border border-gray-200 bg-white p-6 sm:p-8">
-              <h2 className="text-xl font-black text-gray-900">
+            <div className="rounded-3xl border border-sand-200 bg-white p-6 shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)] sm:p-8">
+              <h2 className="text-lg font-black text-ocean-900">
                 {t("marketGuide.method.heading")}
               </h2>
-              <ul className="mt-4 space-y-3 text-sm leading-7 text-gray-600">
+              <ul className="mt-4 space-y-3 text-[12.5px] leading-7 text-sand-800">
                 <li>{t("marketGuide.method.item1")}</li>
                 <li>{t("marketGuide.method.item2")}</li>
                 <li>{t("marketGuide.method.item3")}</li>
@@ -516,18 +524,18 @@ export default function MarketGuideContent() {
               </ul>
             </div>
 
-            <div className="flex flex-col justify-between rounded-3xl bg-black p-6 text-white sm:p-8">
+            <div className="flex flex-col justify-between rounded-3xl bg-[linear-gradient(140deg,#141a33_0%,#242e5c_100%)] p-6 text-white shadow-[0_30px_80px_-60px_rgba(20,26,51,0.9)] sm:p-8">
               <div>
                 <h2 className="text-xl font-black">
                   {t("marketGuide.add.heading")}
                 </h2>
-                <p className="mt-3 text-sm leading-7 text-white/70">
+                <p className="mt-3 text-[12px] leading-7 text-white/70">
                   {t("marketGuide.add.description")}
                 </p>
               </div>
               <Link
                 href="/add-property"
-                className="mt-6 flex items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-bold text-black transition hover:bg-white/90"
+                className="mt-6 flex items-center justify-center rounded-xl bg-gradient-to-l from-gold-500 to-gold-400 px-5 py-3 text-[12.5px] font-black text-ocean-950 transition hover:-translate-y-0.5"
               >
                 {t("marketGuide.add.cta")}
               </Link>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ArrowLeft, Gift, X } from "lucide-react";
 import { getOffersSettings, isOffersPageAvailable } from "@/lib/admin-system";
 import { useI18n } from "@/lib/i18n";
@@ -9,16 +10,37 @@ import { useI18n } from "@/lib/i18n";
 const HIDDEN_KEY = "aqaar-offers-banner-hidden-session";
 
 /**
+ * هل بانر العروض العائم نشط الآن؟ تُستخدم لمنع تعارضه مع البانر الإعلاني الآخر.
+ */
+export function isOffersBannerActive(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const current = getOffersSettings();
+    if (!current.enabled || !current.showFloatingBanner) return false;
+    if (sessionStorage.getItem(HIDDEN_KEY)) return false;
+    return isOffersPageAvailable();
+  } catch {
+    return false;
+  }
+}
+
+/**
  * بانر عائم ضخم لصفحة العروض الموسمية.
- * يظهر فقط عندما تكون الصفحة مفعّلة ومتاحة فعلياً، ويختفي لبقية جلسة المتصفح
- * عند ضغط الزائر على زر الإغلاق.
+ * يظهر في الصفحة الرئيسية فقط، وفقط عندما تكون الصفحة مفعّلة ومتاحة فعلياً،
+ * ويختفي لبقية جلسة المتصفح عند ضغط الزائر على زر الإغلاق.
  */
 export default function OffersFloatingBanner() {
   const { locale } = useI18n();
+  const pathname = usePathname();
   const [show, setShow] = useState(false);
   const [settings, setSettings] = useState(getOffersSettings());
 
   useEffect(() => {
+    if (pathname !== "/") {
+      setShow(false);
+      return;
+    }
+
     const current = getOffersSettings();
     setSettings(current);
     if (!current.enabled || !current.showFloatingBanner) return;
@@ -34,7 +56,7 @@ export default function OffersFloatingBanner() {
 
     const timer = setTimeout(() => setShow(true), 900);
     return () => clearTimeout(timer);
-  }, []);
+  }, [pathname]);
 
   const hide = () => {
     setShow(false);

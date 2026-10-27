@@ -420,7 +420,7 @@ function CheckIcon({ className = "h-5 w-5" }: { className?: string }) {
 function StepIndicator({ step }: { step: 1 | 2 }) {
   const t = useT();
   return (
-    <ol className="flex flex-col gap-3 rounded-3xl border border-gray-200 bg-white p-4 shadow-soft sm:flex-row sm:items-center">
+    <ol className="flex flex-col gap-3 rounded-3xl border border-sand-200 bg-white p-4 shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)] sm:flex-row sm:items-center">
       {STEPS.map((s, index) => {
         const isDone = step > s.id;
         const isCurrent = step === s.id;
@@ -431,24 +431,24 @@ function StepIndicator({ step }: { step: 1 | 2 }) {
                 isDone
                   ? "bg-emerald-500 text-white"
                   : isCurrent
-                    ? "bg-black text-white"
-                    : "bg-gray-100 text-gray-400"
+                    ? "bg-[linear-gradient(135deg,#b8963b,#dfae3d)] text-white"
+                    : "bg-sand-100 text-sand-500"
               }`}
             >
               {isDone ? <CheckIcon className="h-4 w-4" /> : s.id}
             </span>
             <span className="min-w-0">
               <span
-                className={`block text-sm font-bold ${isCurrent || isDone ? "text-gray-900" : "text-gray-400"}`}
+                className={`block text-[12.5px] font-extrabold ${isCurrent || isDone ? "text-ocean-900" : "text-sand-500"}`}
               >
                 {t(s.titleKey)}
               </span>
-              <span className="block text-xs text-gray-500">{t(s.descKey)}</span>
+              <span className="block text-[10.5px] text-sand-600">{t(s.descKey)}</span>
             </span>
             {index === 0 && (
               <span
                 className={`mx-1 hidden h-1 flex-1 rounded-full sm:block ${
-                  step === 2 ? "bg-emerald-500" : "bg-gray-200"
+                  step === 2 ? "bg-emerald-500" : "bg-sand-200"
                 }`}
               />
             )}
@@ -482,10 +482,10 @@ function TextFieldRow({
     <div>
       <label
         htmlFor={field.name}
-        className="mb-1.5 block text-sm font-semibold text-gray-800"
+        className="mb-1.5 block text-[11px] font-extrabold text-sand-700"
       >
         {t(field.labelKey)}
-        <span className="text-rose-500"> *</span>
+        <span className="text-gold-600"> *</span>
       </label>
       <input
         id={field.name}
@@ -498,16 +498,16 @@ function TextFieldRow({
         aria-invalid={showError}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
-        className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:ring-2 ${
+        className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-[13px] font-semibold text-ocean-900 outline-none transition placeholder:font-medium placeholder:text-sand-500 focus:ring-2 ${
           showError
             ? "border-rose-300 focus:border-rose-400 focus:ring-rose-100"
-            : "border-gray-200 focus:border-gray-900 focus:ring-gray-100"
+            : "border-sand-200 focus:border-gold-400 focus:ring-gold-200/60"
         }`}
       />
       {showError ? (
-        <p className="mt-1.5 text-xs font-medium text-rose-600">{error}</p>
+        <p className="mt-1.5 text-[11px] font-bold text-rose-600">{error}</p>
       ) : field.hintKey ? (
-        <p className="mt-1.5 text-xs text-gray-400">{t(field.hintKey)}</p>
+        <p className="mt-1.5 text-[10.5px] text-sand-600">{t(field.hintKey)}</p>
       ) : null}
     </div>
   );
@@ -536,9 +536,9 @@ function FileFieldRow({
   const showError = touched && Boolean(error);
   return (
     <div>
-      <span className="mb-1.5 block text-sm font-semibold text-gray-800">
+      <span className="mb-1.5 block text-[11px] font-extrabold text-sand-700">
         {t(field.labelKey)}
-        <span className="text-rose-500"> *</span>
+        <span className="text-gold-600"> *</span>
       </span>
       <div
         className={`flex items-center gap-3 rounded-2xl border-2 border-dashed p-3 transition ${
@@ -546,7 +546,7 @@ function FileFieldRow({
             ? "border-emerald-200 bg-emerald-50/50"
             : showError
               ? "border-rose-200 bg-rose-50/40"
-              : "border-gray-200 bg-gray-50"
+              : "border-sand-300 bg-sand-50/60 hover:border-gold-400/70 hover:bg-gold-50/30"
         }`}
       >
         {value ? (
@@ -557,7 +557,7 @@ function FileFieldRow({
             className="h-16 w-24 shrink-0 rounded-lg border border-white object-cover shadow-soft"
           />
         ) : (
-          <span className="flex h-16 w-24 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-300">
+          <span className="flex h-16 w-24 shrink-0 items-center justify-center rounded-lg border border-sand-200 bg-white text-sand-400">
             <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
                 strokeLinecap="round"
@@ -569,17 +569,17 @@ function FileFieldRow({
           </span>
         )}
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-gray-800">
+          <p className="truncate text-[12px] font-extrabold text-ocean-900">
             {value ? t("register.file.uploaded") : t("register.file.notUploaded")}
           </p>
-          <p className="mt-0.5 text-xs text-gray-500">
+          <p className="mt-0.5 text-[10.5px] text-sand-600">
             {field.hintKey ? t(field.hintKey) : t("register.hint.clearImage")}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <label
               htmlFor={field.name}
               onClick={onOpen}
-              className="cursor-pointer rounded-lg bg-black px-3 py-1.5 text-xs font-bold text-white transition hover:bg-gray-800"
+              className="cursor-pointer rounded-lg bg-ocean-950 px-3 py-1.5 text-[11px] font-bold text-white transition hover:bg-ocean-900"
             >
               {value ? t("register.file.replace") : t("register.file.upload")}
             </label>
@@ -587,7 +587,7 @@ function FileFieldRow({
               <button
                 type="button"
                 onClick={onRemove}
-                className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-rose-600 transition hover:bg-rose-50"
+                className="rounded-lg border border-sand-200 bg-white px-3 py-1.5 text-[11px] font-bold text-rose-600 transition hover:bg-rose-50"
               >
                 {t("register.action.delete")}
               </button>
@@ -603,7 +603,7 @@ function FileFieldRow({
         />
       </div>
       {showError && (
-        <p className="mt-1.5 text-xs font-medium text-rose-600">{error}</p>
+        <p className="mt-1.5 text-[11px] font-bold text-rose-600">{error}</p>
       )}
     </div>
   );
@@ -764,20 +764,29 @@ export default function RegisterPage() {
   const uploadedCount = Object.values(documents).filter(Boolean).length;
 
   return (
-    <div className="bg-gray-50 pb-20">
+    <div className="bg-sand-50 pb-20">
       {/* Hero */}
-      <section className="relative overflow-hidden bg-black px-4 pb-24 pt-14 text-white sm:px-6">
-        <div className="mx-auto max-w-6xl">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white/80 backdrop-blur">
+      <section className="relative overflow-hidden bg-[linear-gradient(135deg,#141a33_0%,#242e5c_58%,#141a33_100%)] px-4 pb-24 pt-14 text-white sm:px-6">
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -end-20 -top-24 h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(217,185,92,0.28),transparent_65%)]"
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-l from-transparent via-gold-400 to-transparent"
+        />
+        <div className="relative mx-auto max-w-6xl">
+          <p className="flex items-center gap-2 text-[10.5px] font-black uppercase tracking-[0.2em] text-gold-300">
+            <span aria-hidden className="h-px w-6 bg-gold-400/70" />
             {t("register.badge")}
-          </span>
-          <h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl">
+          </p>
+          <h1 className="mt-3 text-3xl font-black leading-tight tracking-tight sm:text-[38px] sm:leading-[52px]">
             {t("register.hero.title")}
           </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/70 sm:text-base">
+          <p className="mt-3 max-w-2xl text-[12.5px] leading-7 text-white/70 sm:text-[13.5px]">
             {t("register.hero.desc")}
           </p>
-          <div className="mt-6 flex flex-wrap gap-2 text-xs font-semibold">
+          <div className="mt-6 flex flex-wrap gap-2 text-[10.5px] font-bold">
             {ACCOUNT_TYPES.map((type) => (
               <span
                 key={type.id}
@@ -802,53 +811,53 @@ export default function RegisterPage() {
                 <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500 text-white">
                   <CheckIcon className="h-8 w-8" />
                 </span>
-                <h2 className="mt-5 text-2xl font-black text-gray-900">
+                <h2 className="mt-5 text-2xl font-black text-ocean-900">
                   {t("register.success.title")}
                 </h2>
-                <p className="mt-2 text-sm text-gray-500">
+                <p className="mt-2 text-[12px] leading-6 text-sand-600">
                   {t("register.success.desc")}
                 </p>
-                <dl className="mx-auto mt-6 max-w-md space-y-2 rounded-2xl bg-gray-50 p-4 text-right text-sm">
+                <dl className="mx-auto mt-6 max-w-md space-y-2 rounded-2xl border border-sand-200 bg-sand-50/70 p-4 text-right text-[12.5px]">
                   <div className="flex justify-between gap-3">
-                    <dt className="font-semibold text-gray-700">
+                    <dt className="font-bold text-sand-700">
                       {t("register.success.accountType")}
                     </dt>
-                    <dd className="text-gray-900">
+                    <dd className="font-semibold text-ocean-900">
                       {activeType ? t(activeType.titleKey) : null}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="font-semibold text-gray-700">
+                    <dt className="font-bold text-sand-700">
                       {t("register.success.name")}
                     </dt>
-                    <dd className="text-gray-900">
+                    <dd className="font-semibold text-ocean-900">
                       {details.fullName ||
                         details.companyName ||
                         details.fullTripleName}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="font-semibold text-gray-700">
+                    <dt className="font-bold text-sand-700">
                       {t("register.success.email")}
                     </dt>
-                    <dd className="text-gray-900">{details.email}</dd>
+                    <dd className="font-semibold text-ocean-900">{details.email}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="font-semibold text-gray-700">
+                    <dt className="font-bold text-sand-700">
                       {t("register.success.phone")}
                     </dt>
-                    <dd className="text-gray-900">{details.phone}</dd>
+                    <dd className="font-semibold text-ocean-900">{details.phone}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="font-semibold text-gray-700">
+                    <dt className="font-bold text-sand-700">
                       {t("register.success.documents")}
                     </dt>
-                    <dd className="text-gray-900">
+                    <dd className="font-semibold text-ocean-900">
                       {t("register.success.documentsCount", { count: uploadedCount })}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="font-semibold text-gray-700">
+                    <dt className="font-bold text-sand-700">
                       {t("register.success.status")}
                     </dt>
                     <dd className="font-bold text-emerald-600">
@@ -864,13 +873,13 @@ export default function RegisterPage() {
                 <div className="mt-6 flex flex-wrap justify-center gap-3">
                   <Link
                     href={redirectTo || "/add-property"}
-                    className="rounded-xl bg-black px-5 py-2.5 text-sm font-bold text-white transition hover:bg-gray-800"
+                    className="rounded-xl bg-gradient-to-l from-gold-500 to-gold-400 px-5 py-2.5 text-[12.5px] font-black text-ocean-950 transition hover:-translate-y-0.5"
                   >
                     {t("register.success.addProperty")}
                   </Link>
                   <Link
                     href="/"
-                    className="rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold text-gray-800 transition hover:bg-gray-50"
+                    className="rounded-xl border border-sand-200 bg-white px-5 py-2.5 text-[12.5px] font-bold text-ocean-800 transition hover:border-gold-300 hover:bg-gold-50/50"
                   >
                     {t("register.success.backHome")}
                   </Link>
@@ -880,13 +889,13 @@ export default function RegisterPage() {
               /* ------------------ الخطوة 1 ------------------ */
               <form
                 onSubmit={onSubmitDetails}
-                className="space-y-6 rounded-3xl border border-gray-200 bg-white p-5 shadow-soft sm:p-7"
+                className="space-y-6 rounded-3xl border border-sand-200 bg-white p-5 shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)] sm:p-7"
               >
                 <div>
-                  <h2 className="text-lg font-black text-gray-900">
+                  <h2 className="text-[15px] font-black text-ocean-900">
                     {t("register.section.accountType")}
                   </h2>
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-[11.5px] leading-6 text-sand-600">
                     {t("register.section.accountTypeDesc")}
                   </p>
                   <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -900,12 +909,12 @@ export default function RegisterPage() {
                           onClick={() => setAccountType(type.id)}
                           className={`rounded-2xl border p-4 text-right transition ${
                             active
-                              ? "border-black bg-black text-white shadow-lg"
-                              : "border-gray-200 bg-white text-gray-800 hover:border-gray-300 hover:bg-gray-50"
+                              ? "border-gold-400/70 bg-[linear-gradient(135deg,#141a33,#2d3875)] text-white shadow-lg"
+                              : "border-sand-200 bg-white text-ocean-900 hover:border-gold-300 hover:bg-gold-50/40"
                           }`}
                         >
                           <svg
-                            className={`h-6 w-6 ${active ? "text-white" : "text-gray-400"}`}
+                            className={`h-6 w-6 ${active ? "text-gold-300" : "text-sand-400"}`}
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -916,7 +925,7 @@ export default function RegisterPage() {
                             {t(type.titleKey)}
                           </span>
                           <span
-                            className={`mt-0.5 block text-xs ${active ? "text-white/70" : "text-gray-500"}`}
+                            className={`mt-0.5 block text-[10.5px] ${active ? "text-white/70" : "text-sand-600"}`}
                           >
                             {t(type.noteKey)}
                           </span>
@@ -928,7 +937,7 @@ export default function RegisterPage() {
 
                 {accountType === "individual" && (
                   <div>
-                    <h2 className="text-lg font-black text-gray-900">
+                    <h2 className="text-[15px] font-black text-ocean-900">
                       {t("register.role.heading")}
                     </h2>
                     <div className="mt-3 flex flex-wrap gap-2">
@@ -954,8 +963,8 @@ export default function RegisterPage() {
                             }}
                             className={`rounded-xl px-4 py-2.5 text-sm font-bold transition ${
                               active
-                                ? "bg-black text-white shadow"
-                                : "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                                ? "bg-ocean-950 text-white shadow"
+                                : "border border-sand-200 bg-white text-ocean-800 hover:border-gold-300 hover:bg-gold-50/40"
                             }`}
                           >
                             {t(role.labelKey)}
@@ -971,8 +980,8 @@ export default function RegisterPage() {
                   </div>
                 )}
 
-                <div className="border-t border-gray-100 pt-6">
-                  <h2 className="text-lg font-black text-gray-900">
+                <div className="border-t border-sand-200 pt-6">
+                  <h2 className="text-[15px] font-black text-ocean-900">
                     {t("register.section.basicData")}
                   </h2>
                   <div className="mt-4 grid gap-5 sm:grid-cols-2">
@@ -990,11 +999,11 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                <div className="border-t border-gray-100 pt-6">
-                  <h2 className="text-lg font-black text-gray-900">
+                <div className="border-t border-sand-200 pt-6">
+                  <h2 className="text-[15px] font-black text-ocean-900">
                     {t("register.section.documents")}
                   </h2>
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-[11.5px] leading-6 text-sand-600">
                     {t("register.section.documentsDesc")}
                   </p>
                   <div className="mt-4 space-y-4">
@@ -1013,14 +1022,14 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                <div className="border-t border-gray-100 pt-6">
+                <div className="border-t border-sand-200 pt-6">
                   <button
                     type="submit"
                     disabled={!complete || sending}
                     className={`w-full rounded-2xl px-6 py-4 text-sm font-black transition ${
                       complete && !sending
-                        ? "bg-black text-white hover:bg-gray-800"
-                        : "cursor-not-allowed bg-gray-200 text-gray-400"
+                        ? "bg-gradient-to-l from-gold-500 to-gold-400 text-ocean-950 shadow-[0_18px_38px_-24px_rgba(201,146,42,0.95)] hover:-translate-y-0.5"
+                        : "cursor-not-allowed bg-sand-200 text-sand-500"
                     }`}
                   >
                     {sending
@@ -1042,15 +1051,15 @@ export default function RegisterPage() {
               /* ------------------ الخطوة 2 ------------------ */
               <form
                 onSubmit={onSubmitOtp}
-                className="space-y-6 rounded-3xl border border-gray-200 bg-white p-5 shadow-soft sm:p-7"
+                className="space-y-6 rounded-3xl border border-sand-200 bg-white p-5 shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)] sm:p-7"
               >
                 <div>
-                  <h2 className="text-lg font-black text-gray-900">
+                  <h2 className="text-[15px] font-black text-ocean-900">
                     {t("register.otp.heading")}
                   </h2>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-[11.5px] leading-6 text-sand-600">
                     {t("register.otp.sentPrefix")}{" "}
-                    <span className="font-bold text-gray-900">
+                    <span className="font-bold text-ocean-900">
                       {details.phone}
                     </span>
                   </p>
@@ -1066,7 +1075,7 @@ export default function RegisterPage() {
                 <div>
                   <label
                     htmlFor="otp"
-                    className="mb-1.5 block text-sm font-semibold text-gray-800"
+                    className="mb-1.5 block text-[11px] font-extrabold text-sand-700"
                   >
                     {t("register.otp.label")}
                     <span className="text-rose-500"> *</span>
@@ -1082,10 +1091,10 @@ export default function RegisterPage() {
                     onChange={(e) =>
                       setOtp(e.target.value.replace(/[^0-9]/g, ""))
                     }
-                    className={`w-full rounded-xl border bg-white px-4 py-3 text-center font-mono text-2xl font-black tracking-[0.5em] text-gray-900 outline-none transition focus:ring-2 ${
+                    className={`w-full rounded-xl border bg-white px-4 py-3 text-center font-mono text-2xl font-black tracking-[0.5em] text-ocean-900 outline-none transition focus:ring-2 ${
                       otpError
                         ? "border-rose-300 focus:border-rose-400 focus:ring-rose-100"
-                        : "border-gray-200 focus:border-gray-900 focus:ring-gray-100"
+                        : "border-sand-200 focus:border-gold-400 focus:ring-gold-200/60"
                     }`}
                   />
                   {otpError && (
@@ -1105,28 +1114,28 @@ export default function RegisterPage() {
                   disabled={otp.length !== 6}
                   className={`w-full rounded-2xl px-6 py-4 text-sm font-black transition ${
                     otp.length === 6
-                      ? "bg-black text-white hover:bg-gray-800"
-                      : "cursor-not-allowed bg-gray-200 text-gray-400"
+                      ? "bg-gradient-to-l from-gold-500 to-gold-400 text-ocean-950 shadow-[0_18px_38px_-24px_rgba(201,146,42,0.95)] hover:-translate-y-0.5"
+                      : "cursor-not-allowed bg-sand-200 text-sand-500"
                   }`}
                 >
                   {t("register.otp.confirm")}
                 </button>
 
-                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-sand-200 pt-4">
                   <button
                     type="button"
                     onClick={() => {
                       setStep(1);
                       setOtpError("");
                     }}
-                    className="text-xs font-bold text-gray-600 transition hover:text-gray-900"
+                    className="text-[11.5px] font-bold text-sand-700 transition hover:text-gold-600"
                   >
                     {t("register.otp.back")}
                   </button>
                   <button
                     type="button"
                     onClick={sendOtp}
-                    className="text-xs font-bold text-gray-600 transition hover:text-gray-900"
+                    className="text-[11.5px] font-bold text-sand-700 transition hover:text-gold-600"
                   >
                     {t("register.otp.resend")}
                   </button>
@@ -1137,13 +1146,13 @@ export default function RegisterPage() {
 
           {/* العمود الجانبي */}
           <aside className="space-y-4 lg:sticky lg:top-[88px] lg:self-start">
-            <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-soft">
-              <h3 className="text-sm font-black text-gray-900">
+            <div className="rounded-3xl border border-sand-200 bg-white p-5 shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)]">
+              <h3 className="text-[13px] font-black text-ocean-900">
                 {t("register.sidebar.checklist", {
                   type: activeType ? t(activeType.titleKey) : "",
                 })}
               </h3>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-[11.5px] leading-6 text-sand-600">
                 {t("register.sidebar.checklistDesc")}
               </p>
               <ul className="mt-4 space-y-2.5 text-sm">
@@ -1153,14 +1162,14 @@ export default function RegisterPage() {
                       className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                         individualRole
                           ? "bg-emerald-500 text-white"
-                          : "bg-gray-100 text-gray-400"
+                          : "bg-sand-100 text-sand-500"
                       }`}
                     >
                       {individualRole ? "✓" : "!"}
                     </span>
                     <span
                       className={
-                        individualRole ? "text-gray-700" : "text-gray-900"
+                        individualRole ? "text-sand-700" : "text-ocean-900"
                       }
                     >
                       {t("register.role.heading")}
@@ -1174,14 +1183,14 @@ export default function RegisterPage() {
                       <span
                         className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                           invalid
-                            ? "bg-gray-100 text-gray-400"
+                            ? "bg-sand-100 text-sand-500"
                             : "bg-emerald-500 text-white"
                         }`}
                       >
                         {invalid ? "!" : "✓"}
                       </span>
                       <span
-                        className={invalid ? "text-gray-900" : "text-gray-700"}
+                        className={invalid ? "text-ocean-900" : "text-sand-700"}
                       >
                         {t(field.labelKey)}
                       </span>
@@ -1189,15 +1198,15 @@ export default function RegisterPage() {
                   );
                 })}
               </ul>
-              <div className="mt-4 rounded-2xl bg-gray-50 p-3">
-                <div className="flex items-center justify-between text-xs font-bold text-gray-700">
+              <div className="mt-4 rounded-2xl border border-sand-200 bg-sand-50/70 p-3">
+                <div className="flex items-center justify-between text-[11px] font-bold text-sand-700">
                   <span>{t("register.sidebar.progress")}</span>
                   <span>{progress}%</span>
                 </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-sand-200">
                   <div
                     className={`h-full rounded-full transition-all ${
-                      complete ? "bg-emerald-500" : "bg-black"
+                      complete ? "bg-emerald-500" : "bg-gold-500"
                     }`}
                     style={{ width: `${progress}%` }}
                   />
@@ -1205,7 +1214,7 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div className="rounded-3xl bg-black p-5 text-white">
+            <div className="rounded-3xl bg-ocean-950 p-5 text-white">
               <h3 className="text-sm font-black">{t("register.why.heading")}</h3>
               <ul className="mt-3 space-y-2.5 text-xs leading-relaxed text-white/70">
                 <li>{t("register.why.b1")}</li>
@@ -1215,16 +1224,16 @@ export default function RegisterPage() {
               </ul>
             </div>
 
-            <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-soft">
-              <h3 className="text-sm font-black text-gray-900">
+            <div className="rounded-3xl border border-sand-200 bg-white p-5 shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)]">
+              <h3 className="text-[13px] font-black text-ocean-900">
                 {t("register.help.heading")}
               </h3>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-[11.5px] leading-6 text-sand-600">
                 {t("register.help.desc")}
               </p>
               <Link
                 href="/legal-consultational"
-                className="mt-3 inline-block rounded-xl border border-gray-200 px-4 py-2 text-xs font-bold text-gray-800 transition hover:bg-gray-50"
+                className="mt-3 inline-block rounded-xl border border-sand-200 px-4 py-2 text-[11.5px] font-bold text-ocean-800 transition hover:border-gold-300 hover:bg-gold-50/50"
               >
                 {t("register.help.cta")}
               </Link>

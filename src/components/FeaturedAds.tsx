@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { BarChart3, Building2, MapPin, Megaphone, Sparkles, TrendingUp } from "lucide-react";
 import { useI18n, type MessageKey } from "@/lib/i18n";
+import { isOffersBannerActive } from "@/components/OffersFloatingBanner";
 import {
   MashrabiyaLayer,
   OrnateFrame,
@@ -13,13 +15,19 @@ import {
 /** بانر إعلاني عائم أسفل الشاشة — يظهر بعد لحظة قصيرة وقابل للإغلاق */
 export default function FeaturedAds() {
   const { t } = useI18n();
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setVisible(true), 1200);
+    setVisible(false);
+    const timer = setTimeout(() => {
+      /* على الرئيسية: لا نعرض بانرين عائمين فوق بعض — الأولوية لبانر العروض الموسمية */
+      if (pathname === "/" && isOffersBannerActive()) return;
+      setVisible(true);
+    }, 1600);
     return () => clearTimeout(timer);
-  }, []);
+  }, [pathname]);
 
   if (dismissed) return null;
 

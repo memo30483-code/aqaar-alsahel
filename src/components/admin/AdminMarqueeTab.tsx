@@ -63,7 +63,7 @@ export default function AdminMarqueeTab({
         {items.map((item, index) => (
           <div
             key={item.id}
-            className="grid gap-3 rounded-2xl border border-slate-100 p-4 md:grid-cols-[auto_1fr_1fr_auto_auto]"
+            className="grid gap-3 rounded-2xl border border-sand-200 p-4 md:grid-cols-[auto_1fr_1fr_auto_auto]"
           >
             <button
               role="switch"
@@ -71,7 +71,7 @@ export default function AdminMarqueeTab({
               onClick={() => update(index, { enabled: !item.enabled })}
               disabled={!editable}
               className={`mt-6 h-6 w-11 rounded-full transition ${
-                item.enabled ? "bg-emerald-500" : "bg-slate-300"
+                item.enabled ? "bg-emerald-500" : "bg-sand-300"
               }`}
             >
               <span
@@ -81,7 +81,7 @@ export default function AdminMarqueeTab({
               />
             </button>
             <label className="block">
-              <span className="mb-1 block text-[11px] font-bold text-slate-500">النص العربي</span>
+              <span className="mb-1 block text-[11px] font-bold text-sand-600">النص العربي</span>
               <input
                 value={item.textAr}
                 onChange={(event) => update(index, { textAr: event.target.value })}
@@ -90,7 +90,7 @@ export default function AdminMarqueeTab({
               />
             </label>
             <label className="block">
-              <span className="mb-1 block text-[11px] font-bold text-slate-500">English text</span>
+              <span className="mb-1 block text-[11px] font-bold text-sand-600">English text</span>
               <input
                 value={item.textEn}
                 onChange={(event) => update(index, { textEn: event.target.value })}
@@ -99,7 +99,7 @@ export default function AdminMarqueeTab({
               />
             </label>
             <label className="block">
-              <span className="mb-1 block text-[11px] font-bold text-slate-500">النوع</span>
+              <span className="mb-1 block text-[11px] font-bold text-sand-600">النوع</span>
               <select
                 value={item.type}
                 onChange={(event) =>
@@ -126,7 +126,7 @@ export default function AdminMarqueeTab({
           </div>
         ))}
         {items.length === 0 && (
-          <p className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-sm text-slate-500">
+          <p className="rounded-2xl border border-dashed border-sand-200 p-8 text-center text-sm text-sand-600">
             لا توجد عناصر. أضف عنصراً ليظهر الشريط المتحرك في الرئيسية.
           </p>
         )}
@@ -147,12 +147,12 @@ export default function AdminMarqueeTab({
           ])
         }
         disabled={!editable}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 py-2.5 text-sm font-bold text-slate-600 transition hover:border-[#b8963b] hover:text-[#b8963b]"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-sand-300 py-2.5 text-sm font-bold text-sand-700 transition hover:border-gold-400 hover:text-gold-600"
       >
         <Plus className="h-4 w-4" /> إضافة عنصر
       </button>
 
-      <p className="mt-3 flex items-center gap-2 text-[11px] text-slate-500">
+      <p className="mt-3 flex items-center gap-2 text-[11px] text-sand-600">
         <Megaphone className="h-3.5 w-3.5" />
         العناصر من نوع «إعلان مدفوع» تظهر بوسم «إعلان» للزائر.
       </p>

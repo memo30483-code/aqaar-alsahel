@@ -67,7 +67,7 @@ export default function AdminLogsTab({ logs }: Props) {
       actions={
         <button
           onClick={exportCsv}
-          className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600"
+          className="inline-flex items-center gap-1 rounded-full border border-sand-200 px-3 py-2 text-xs font-bold text-sand-700"
         >
           <Download className="h-3.5 w-3.5" /> تصدير CSV
         </button>
@@ -75,7 +75,7 @@ export default function AdminLogsTab({ logs }: Props) {
     >
       <div className="mb-4 flex flex-wrap gap-2">
         <div className="relative">
-          <Search className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-sand-500" />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -99,26 +99,26 @@ export default function AdminLogsTab({ logs }: Props) {
 
       <div className="max-h-[560px] space-y-2 overflow-y-auto">
         {filtered.map((log) => (
-          <div key={log.id} className="rounded-2xl border border-slate-100 p-3">
+          <div key={log.id} className="rounded-2xl border border-sand-200 p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                <span className="rounded-full bg-sand-100 px-2 py-0.5 text-[10px] font-bold text-sand-700">
                   {CATEGORY_LABEL[log.category]}
                 </span>
-                <p className="text-sm font-bold text-slate-900">{log.details}</p>
+                <p className="text-sm font-bold text-ocean-900">{log.details}</p>
               </div>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-sand-500">
                 {new Date(log.timestamp).toLocaleString("ar-EG")}
               </p>
             </div>
-            <p className="mt-1 text-[11px] text-slate-500">
+            <p className="mt-1 text-[11px] text-sand-600">
               بواسطة {log.performedByName} • {log.action}
             </p>
           </div>
         ))}
         {filtered.length === 0 && (
-          <p className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-500">
-            <ListChecks className="h-6 w-6 text-slate-300" />
+          <p className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-sand-200 p-10 text-center text-sm text-sand-600">
+            <ListChecks className="h-6 w-6 text-sand-400" />
             لا توجد نشاطات مطابقة.
           </p>
         )}

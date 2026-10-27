@@ -28,11 +28,11 @@ const ROLE_LABEL: Record<UserRole, string> = {
 };
 
 const ROLE_STYLE: Record<UserRole, string> = {
-  user: "bg-slate-100 text-slate-600",
+  user: "bg-sand-100 text-sand-700",
   agent: "bg-sky-50 text-sky-700",
   moderator: "bg-violet-50 text-violet-700",
-  admin: "bg-[rgba(201,162,77,0.14)] text-[#a9843a]",
-  super_admin: "bg-slate-900 text-white",
+  admin: "bg-[rgba(201,146,42,0.14)] text-gold-700",
+  super_admin: "bg-ocean-950 text-white",
 };
 
 export default function AdminUsersTab({
@@ -104,9 +104,9 @@ export default function AdminUsersTab({
         </button>
       }
     >
-      <div className="overflow-x-auto rounded-2xl border border-slate-100">
+      <div className="overflow-x-auto rounded-2xl border border-sand-200">
         <table className="w-full min-w-[760px] text-sm">
-          <thead className="bg-slate-50 text-xs text-slate-600">
+          <thead className="bg-sand-50 text-xs text-sand-700">
             <tr>
               <th className="p-3 text-start font-bold">المستخدم</th>
               <th className="p-3 text-start font-bold">الدور</th>
@@ -116,11 +116,11 @@ export default function AdminUsersTab({
           </thead>
           <tbody>
             {users.map((user) => (
-              <tr key={user.id} className="border-t border-slate-100">
+              <tr key={user.id} className="border-t border-sand-200">
                 <td className="p-3">
-                  <p className="font-bold text-slate-900">{user.name}</p>
-                  <p className="text-[11px] text-slate-500">{user.email}</p>
-                  <p className="text-[11px] text-slate-400">انضم: {user.joinedAt}</p>
+                  <p className="font-bold text-ocean-900">{user.name}</p>
+                  <p className="text-[11px] text-sand-600">{user.email}</p>
+                  <p className="text-[11px] text-sand-500">انضم: {user.joinedAt}</p>
                 </td>
                 <td className="p-3">
                   <div className="flex items-center gap-2">
@@ -138,7 +138,7 @@ export default function AdminUsersTab({
                           `تغيير دور ${user.name} إلى ${ROLE_LABEL[event.target.value as UserRole]}`
                         )
                       }
-                      className="rounded-lg border border-slate-200 px-2 py-1 text-[11px]"
+                      className="rounded-lg border border-sand-200 px-2 py-1 text-[11px]"
                     >
                       {Object.entries(ROLE_LABEL).map(([value, label]) => (
                         <option key={value} value={value}>
@@ -199,14 +199,14 @@ export default function AdminUsersTab({
       </div>
 
       {draft && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/50 p-4">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-ocean-950/60 p-4">
           <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-black text-slate-900">
+              <h3 className="text-lg font-black text-ocean-900">
                 {draft.id ? "تعديل مستخدم" : "إضافة مستخدم جديد"}
               </h3>
               <button onClick={() => setDraft(null)}>
-                <X className="h-5 w-5 text-slate-500" />
+                <X className="h-5 w-5 text-sand-600" />
               </button>
             </div>
             <div className="grid gap-3">
@@ -248,11 +248,11 @@ export default function AdminUsersTab({
             <div className="mt-5 flex justify-end gap-2">
               <button
                 onClick={() => setDraft(null)}
-                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600"
+                className="rounded-full border border-sand-200 px-4 py-2 text-sm font-bold text-sand-700"
               >
                 إلغاء
               </button>
-              <button onClick={saveDraft} className="rounded-full bg-slate-900 px-4 py-2 text-sm font-bold text-white">
+              <button onClick={saveDraft} className="rounded-full bg-ocean-950 px-4 py-2 text-sm font-bold text-white">
                 حفظ
               </button>
             </div>

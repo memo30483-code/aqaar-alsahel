@@ -36,7 +36,7 @@ export default function AdminOverviewTab({
       label: "إجمالي الإعلانات",
       value: listings.length,
       Icon: LayoutList,
-      tone: "text-slate-700",
+      tone: "text-ocean-800",
       tab: "listings" as const,
     },
     {
@@ -50,7 +50,7 @@ export default function AdminOverviewTab({
       label: "العروض المحفوظة",
       value: offers.length,
       Icon: Gift,
-      tone: "text-[#b8963b]",
+      tone: "text-gold-600",
       tab: "offers" as const,
     },
     {
@@ -69,26 +69,34 @@ export default function AdminOverviewTab({
           <button
             key={card.label}
             onClick={() => goTo(card.tab)}
-            className="rounded-3xl border border-slate-100 bg-white/90 p-4 text-start shadow-[0_20px_60px_-55px_rgba(15,23,42,0.5)] transition hover:-translate-y-0.5"
+            className="rounded-3xl border border-sand-200 bg-white p-4 text-start shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)] transition hover:-translate-y-0.5 hover:border-gold-300/70"
           >
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs text-slate-500">{card.label}</p>
-                <p className={`mt-1 text-2xl font-black ${card.tone}`}>{card.value}</p>
+                <p className="text-[10.5px] font-bold text-sand-600">
+                  {card.label}
+                </p>
+                <p className="mt-1 text-2xl font-black text-ocean-900">
+                  {card.value}
+                </p>
               </div>
-              <card.Icon className={`h-7 w-7 opacity-80 ${card.tone}`} />
+              <span
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sand-50 ${card.tone}`}
+              >
+                <card.Icon className="h-4 w-4" />
+              </span>
             </div>
           </button>
         ))}
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <section className="rounded-3xl border border-slate-100 bg-white/90 p-5">
+        <section className="rounded-3xl border border-sand-200 bg-white/90 p-5">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-black text-slate-900">أحدث الإعلانات</h2>
+            <h2 className="text-base font-black text-ocean-900">أحدث الإعلانات</h2>
             <button
               onClick={() => goTo("listings")}
-              className="inline-flex items-center gap-1 text-xs font-bold text-[#b8963b]"
+              className="inline-flex items-center gap-1 text-xs font-bold text-gold-600"
             >
               إدارة الكل <ArrowRight className="h-3 w-3 rtl:rotate-180" />
             </button>
@@ -98,11 +106,11 @@ export default function AdminOverviewTab({
               <Link
                 key={listing.id}
                 href={`/property/${listing.id}`}
-                className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 p-3 transition hover:border-[#b8963b]"
+                className="flex items-center justify-between gap-3 rounded-2xl border border-sand-200 p-3 transition hover:border-gold-400"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-bold text-slate-800">{listing.title}</p>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="truncate text-sm font-bold text-ocean-900">{listing.title}</p>
+                  <p className="text-[11px] text-sand-600">
                     {listing.city} • {format(listing.price)}
                   </p>
                 </div>
@@ -114,37 +122,37 @@ export default function AdminOverviewTab({
               </Link>
             ))}
             {listings.length === 0 && (
-              <p className="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
+              <p className="rounded-2xl border border-dashed border-sand-200 p-6 text-center text-sm text-sand-600">
                 لا توجد إعلانات بعد.
               </p>
             )}
           </div>
         </section>
 
-        <section className="rounded-3xl border border-slate-100 bg-white/90 p-5">
+        <section className="rounded-3xl border border-sand-200 bg-white/90 p-5">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-black text-slate-900">آخر النشاطات</h2>
+            <h2 className="text-base font-black text-ocean-900">آخر النشاطات</h2>
             <button
               onClick={() => goTo("logs")}
-              className="inline-flex items-center gap-1 text-xs font-bold text-[#b8963b]"
+              className="inline-flex items-center gap-1 text-xs font-bold text-gold-600"
             >
               السجل الكامل <ArrowRight className="h-3 w-3 rtl:rotate-180" />
             </button>
           </div>
           <div className="space-y-2">
             {logs.slice(0, 6).map((log) => (
-              <div key={log.id} className="rounded-2xl border border-slate-100 p-3">
+              <div key={log.id} className="rounded-2xl border border-sand-200 p-3">
                 <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm font-semibold text-slate-800">{log.details}</p>
-                  <span className="shrink-0 text-[10px] text-slate-400">
+                  <p className="text-sm font-semibold text-ocean-900">{log.details}</p>
+                  <span className="shrink-0 text-[10px] text-sand-500">
                     {new Date(log.timestamp).toLocaleDateString("ar-EG")}
                   </span>
                 </div>
-                <p className="mt-1 text-[11px] text-slate-500">بواسطة {log.performedByName}</p>
+                <p className="mt-1 text-[11px] text-sand-600">بواسطة {log.performedByName}</p>
               </div>
             ))}
             {logs.length === 0 && (
-              <p className="flex items-center gap-2 rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
+              <p className="flex items-center gap-2 rounded-2xl border border-dashed border-sand-200 p-6 text-center text-sm text-sand-600">
                 <Check className="h-4 w-4 text-emerald-500" />
                 لا توجد نشاطات مسجلة بعد — ابدأ بإدارة إعلان أو عرض.
               </p>
@@ -153,20 +161,20 @@ export default function AdminOverviewTab({
         </section>
       </div>
 
-      <section className="rounded-3xl border border-[rgba(201,162,77,0.3)] bg-[linear-gradient(135deg,rgba(201,162,77,0.12),rgba(255,255,255,0.9))] p-5">
+      <section className="rounded-3xl border border-[rgba(201,146,42,0.28)] bg-[linear-gradient(135deg,rgba(201,146,42,0.12),rgba(255,255,255,0.9))] p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-start gap-3">
-            <Sparkles className="mt-0.5 h-5 w-5 text-[#b8963b]" />
+            <Sparkles className="mt-0.5 h-5 w-5 text-gold-600" />
             <div>
-              <p className="text-sm font-black text-slate-900">صفحة العروض الموسمية</p>
-              <p className="mt-1 text-xs text-slate-600">
+              <p className="text-sm font-black text-ocean-900">صفحة العروض الموسمية</p>
+              <p className="mt-1 text-xs text-sand-700">
                 فعّل الصفحة، حدد التوقيت، وستظهر كبانر عائم في الرئيسية مع رابط في الهيدر.
               </p>
             </div>
           </div>
           <button
             onClick={() => goTo("offers")}
-            className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-bold text-white"
+            className="inline-flex items-center gap-2 rounded-full bg-ocean-950 px-4 py-2 text-xs font-bold text-white"
           >
             إدارة العروض <ArrowRight className="h-3.5 w-3.5 rtl:rotate-180" />
           </button>

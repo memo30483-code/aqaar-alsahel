@@ -50,16 +50,16 @@ export default function AdminDevelopersTab({
     >
       <div className="grid gap-3 md:grid-cols-2">
         {developers.map((developer) => (
-          <div key={developer.id} className="rounded-2xl border border-slate-100 p-4">
+          <div key={developer.id} className="rounded-2xl border border-sand-200 p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sand-100 text-sand-600">
                   <Building2 className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900">{developer.company}</p>
-                  <p className="text-[11px] text-slate-500">{developer.owner}</p>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="font-bold text-ocean-900">{developer.company}</p>
+                  <p className="text-[11px] text-sand-600">{developer.owner}</p>
+                  <p className="text-[11px] text-sand-500">
                     {developer.city} • {developer.projects} مشاريع
                   </p>
                 </div>
@@ -92,7 +92,7 @@ export default function AdminDevelopersTab({
           </div>
         ))}
         {developers.length === 0 && (
-          <p className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-sm text-slate-500 md:col-span-2">
+          <p className="rounded-2xl border border-dashed border-sand-200 p-8 text-center text-sm text-sand-600 md:col-span-2">
             لا توجد شركات مسجلة.
           </p>
         )}

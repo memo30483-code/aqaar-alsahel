@@ -3,6 +3,7 @@ export const legalMessages = {
   "legal.title": { ar: "الاستشارات القانونية", en: "Legal consultations" },
 
   /* ---------- القسم الرئيسي ---------- */
+  "legal.eyebrow": { ar: "خدمة الاستشارات", en: "Consultation service" },
   "legal.badge": {
     ar: "مراجعة قانونية قبل الدفع",
     en: "Legal review before payment",
@@ -41,6 +42,7 @@ export const legalMessages = {
   },
 
   /* ---------- نقاط المراجعة ---------- */
+  "legal.why.eyebrow": { ar: "قبل ما تدفع", en: "Before you pay" },
   "legal.review.0.title": {
     ar: "تأكيد ملكية البائع",
     en: "Confirming the seller's ownership",
@@ -75,6 +77,7 @@ export const legalMessages = {
   },
 
   /* ---------- نموذج حجز الاستشارة ---------- */
+  "legal.form.eyebrow": { ar: "طلب استشارة", en: "Consultation request" },
   "legal.form.title": {
     ar: "احجز استشارتك القانونية",
     en: "Book your legal consultation",
@@ -90,10 +93,6 @@ export const legalMessages = {
   "legal.form.successBody": {
     ar: "أهلاً {name}، تم تسجيل طلب استشارة لـ«{propertyType}» في {city} على رقم {phone}. سيتم التواصل معاك خلال 24 ساعة.",
     en: "Hello {name}, a consultation request for “{propertyType}” in {city} has been registered under the number {phone}. We'll contact you within 24 hours.",
-  },
-  "legal.form.whatsappNow": {
-    ar: "تواصل فوري على واتساب",
-    en: "Chat now on WhatsApp",
   },
   "legal.form.newRequest": { ar: "طلب جديد", en: "New request" },
   "legal.form.name": { ar: "الاسم بالكامل", en: "Full name" },
@@ -125,12 +124,8 @@ export const legalMessages = {
     en: "Send consultation request",
   },
   "legal.form.privacy": {
-    ar: "بياناتك تُستخدم للتواصل بشأن الطلب فقط.",
-    en: "Your data is used only to contact you about this request.",
-  },
-  "legal.form.whatsappText": {
-    ar: "طلب استشارة قانونية — {name} — {propertyType} في {city} — {phone}",
-    en: "Legal consultation request — {name} — {propertyType} in {city} — {phone}",
+    ar: "بياناتك تُستخدم للتواصل بشأن الطلب فقط، والتنسيق كله عبر إدارة الموقع.",
+    en: "Your data is used only to contact you about this request; all scheduling goes through site management.",
   },
 
   /* ---------- كيف تعمل الخدمة ---------- */
@@ -159,27 +154,39 @@ export const legalMessages = {
     en: "For reviewing one contract and a written report — deducted from the notarization fees if you complete the purchase.",
   },
 
+  /* ---------- التواصل مع الإدارة ---------- */
+  "legal.management.title": {
+    ar: "التنسيق الكامل عبر إدارة الموقع",
+    en: "Everything coordinated through site management",
+  },
+  "legal.management.desc": {
+    ar: "مفيش أرقام محامين أو واتساب مباشر على الموقع. ابعت طلبك، وإدارة عقار FAMILY بتعيّن المحامي وتحدد الموعد وتبعتلك التفاصيل.",
+    en: "No lawyer phone numbers or direct WhatsApp on the site. Send your request and Aqaar FAMILY management assigns the lawyer, sets the appointment and sends you the details.",
+  },
+  "legal.management.cta": { ar: "تواصل مع الإدارة", en: "Contact management" },
+
   /* ---------- المحامون المعتمدون ---------- */
   "legal.lawyers.title": { ar: "المحامون المعتمدون", en: "Licensed lawyers" },
+  "legal.lawyers.eyebrow": { ar: "الفريق القانوني", en: "Legal team" },
   "legal.lawyers.subtitle": {
-    ar: "محامون مرخصون يغطون مدن الدلتا الست، وتقدر تتواصل معاهم مباشرة.",
-    en: "Licensed lawyers covering the five coastal cities; you can contact them directly.",
+    ar: "محامون مرخصون يغطون مدن الدلتا الست — التنسيق والمواعيد كلها عبر إدارة الموقع.",
+    en: "Licensed lawyers covering the six Delta cities — all scheduling goes through site management.",
   },
   "legal.lawyers.badge": { ar: "محامي معتمد", en: "Licensed lawyer" },
   "legal.lawyers.license": { ar: "رقم الكارنيه", en: "License no." },
   "legal.lawyers.experience": { ar: "الخبرة", en: "Experience" },
   "legal.lawyers.coverage": { ar: "يغطي: {coverage}", en: "Covers: {coverage}" },
-  "legal.lawyers.whatsapp": {
-    ar: "تواصل عبر واتساب",
-    en: "Contact via WhatsApp",
+  "legal.lawyers.request": {
+    ar: "اطلب استشارة معاه",
+    en: "Request a consultation",
   },
-  "legal.lawyers.whatsappText": {
-    ar: "السلام عليكم {name}، أرغب في استشارة قانونية بخصوص عقد عقار.",
-    en: "Hello {name}, I'd like a legal consultation regarding a property contract.",
+  "legal.lawyers.management": {
+    ar: "التنسيق والمواعيد عبر إدارة الموقع",
+    en: "Scheduling handled by site management",
   },
   "legal.lawyers.note": {
-    ar: "بيانات المحامين وأرقام التواصل تجريبية لأغراض العرض في نسخة الـ MVP.",
-    en: "Lawyer details and contact numbers are demo data for display purposes in the MVP.",
+    ar: "بيانات المحامين وأرقام الكارنيه تجريبية لأغراض العرض في نسخة الـ MVP — يتم التحقق منها قبل الإطلاق.",
+    en: "Lawyer details and license numbers are demo data for the MVP — verified before launch.",
   },
 
   /* ---------- بيانات المحامين التجريبية ---------- */

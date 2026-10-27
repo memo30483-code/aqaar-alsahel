@@ -217,19 +217,19 @@ export default function Footer() {
         <div className="flex flex-col items-center justify-between gap-3 border-t border-white/[0.08] py-5 text-[10.5px] text-[#7d879f] sm:flex-row">
           <span>{t("footer.rights", { year: new Date().getFullYear() })}</span>
           <div className="flex flex-wrap items-center gap-4">
-            <Link href="/#properties" className="transition hover:text-gold-200">
+            <Link href="/privacy" className="transition hover:text-gold-200">
               {t("footer.links.privacy")}
             </Link>
-            <Link href="/#properties" className="transition hover:text-gold-200">
+            <Link href="/terms" className="transition hover:text-gold-200">
               {t("footer.links.terms")}
             </Link>
             <Link href="/add-property" className="transition hover:text-gold-200">
               {t("footer.links.advertise")}
             </Link>
-            <span className="inline-flex items-center gap-1">
+            <Link href="/sitemap" className="inline-flex items-center gap-1 transition hover:text-gold-200">
               <Send className="h-3 w-3 text-gold-500" />
               {t("footer.links.sitemap")}
-            </span>
+            </Link>
           </div>
         </div>
       </div>

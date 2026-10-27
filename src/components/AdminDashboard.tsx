@@ -154,61 +154,71 @@ export default function AdminDashboard() {
 
   if (!ready) {
     return (
-      <main className="grid min-h-[60vh] place-items-center">
-        <p className="text-sm text-slate-500">جاري تحميل لوحة التحكم…</p>
+      <main className="grid min-h-[60vh] place-items-center bg-sand-50">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-sand-300 border-t-gold-500" />
       </main>
     );
   }
 
   if (!hasAccess) {
     return (
-      <main className="min-h-[70vh] bg-[radial-gradient(circle_at_top,_rgba(201,162,77,0.08),_transparent_55%)]">
-        <div className="mx-auto flex max-w-xl flex-col items-center gap-4 px-4 py-20 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rose-50 text-rose-600">
-            <ShieldCheck className="h-8 w-8" />
+      <main className="min-h-[70vh] bg-sand-50">
+        <div className="mx-auto flex max-w-xl flex-col items-center px-4 py-16 text-center">
+          <div className="w-full overflow-hidden rounded-3xl border border-sand-200 bg-white p-6 shadow-[0_30px_80px_-70px_rgba(20,26,51,0.6)] sm:p-8">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+              <ShieldCheck className="h-8 w-8" />
+            </div>
+            <h1 className="mt-4 text-2xl font-black text-ocean-900">
+              غير مصرح بالدخول
+            </h1>
+            <p className="mx-auto mt-2 max-w-sm text-[12px] leading-7 text-sand-700">
+              هذه الصفحة مخصصة للإدارة فقط. سجّل الدخول بحساب أدمن أو اطلب من المدير
+              منحك الصلاحية.
+            </p>
+            <Link
+              href="/login"
+              className="mt-5 inline-flex rounded-full bg-gradient-to-l from-gold-500 to-gold-400 px-6 py-2.5 text-[12.5px] font-black text-ocean-950 shadow-[0_18px_38px_-24px_rgba(201,146,42,0.95)] transition hover:-translate-y-0.5"
+            >
+              تسجيل الدخول
+            </Link>
           </div>
-          <h1 className="text-2xl font-black text-slate-900">غير مصرح بالدخول</h1>
-          <p className="text-slate-600">
-            هذه الصفحة مخصصة للإدارة فقط. سجّل الدخول بحساب أدمن أو اطلب من المدير منحك
-            الصلاحية.
-          </p>
-          <Link
-            href="/login"
-            className="mt-2 rounded-full bg-slate-900 px-6 py-2.5 text-sm font-bold text-white"
-          >
-            تسجيل الدخول
-          </Link>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(201,162,77,0.07),_transparent_60%)]">
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#b8963b] to-[#d9b95c] text-white">
-              <ShieldCheck className="h-6 w-6" />
+    <main className="min-h-screen bg-sand-50">
+      <div className="mx-auto w-full max-w-[1240px] px-4 py-6 sm:px-6 sm:py-8">
+        <header className="overflow-hidden rounded-3xl border border-sand-200 bg-white shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)]">
+          <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#141a33,#2d3875)] text-gold-300">
+                <ShieldCheck className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gold-600">
+                  <span aria-hidden className="h-px w-5 bg-gold-400/70" />
+                  لوحة التحكم
+                </p>
+                <h1 className="mt-1 text-[22px] font-black leading-8 text-ocean-900 sm:text-[26px]">
+                  لوحة تحكم عقار FAMILY
+                </h1>
+                <p className="mt-0.5 text-[11.5px] font-semibold text-sand-600">
+                  {session?.name} •{" "}
+                  <span className="font-extrabold text-gold-700">
+                    {ROLE_LABEL[session?.role ?? "user"] ?? session?.role}
+                  </span>
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-black text-slate-900 sm:text-3xl">
-                لوحة تحكم عقار FAMILY
-              </h1>
-              <p className="text-sm text-slate-500">
-                {session?.name} •{" "}
-                <span className="font-bold text-[#a9843a]">
-                  {ROLE_LABEL[session?.role ?? "user"] ?? session?.role}
-                </span>
-              </p>
-            </div>
+            <Link
+              href="/"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-sand-200 bg-sand-50 px-4 py-2.5 text-[12px] font-bold text-ocean-800 transition hover:border-gold-300 hover:bg-gold-50/60"
+            >
+              <Home className="h-4 w-4 text-gold-600" /> الرئيسية
+            </Link>
           </div>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-[#b8963b] hover:text-[#b8963b]"
-          >
-            <Home className="h-4 w-4" /> الرئيسية
-          </Link>
         </header>
 
         {flash && (
@@ -217,15 +227,15 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        <nav className="mb-6 flex flex-wrap gap-1.5 rounded-3xl border border-slate-100 bg-white/90 p-2">
+        <nav className="sticky top-[74px] z-30 mb-5 mt-5 flex flex-wrap gap-1.5 rounded-3xl border border-sand-200 bg-white/90 p-2 shadow-[0_20px_50px_-45px_rgba(20,26,51,0.6)] backdrop-blur-xl">
           {visibleTabs.map((item) => (
             <button
               key={item.key}
               onClick={() => setTab(item.key)}
-              className={`inline-flex items-center gap-2 rounded-2xl px-3.5 py-2 text-xs font-bold transition sm:text-sm ${
+              className={`inline-flex items-center gap-2 rounded-2xl px-3.5 py-2 text-xs font-bold transition sm:text-[13px] ${
                 tab === item.key
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "text-slate-600 hover:bg-slate-50"
+                  ? "bg-ocean-950 text-white shadow-sm"
+                  : "text-sand-700 hover:bg-sand-50"
               }`}
             >
               <item.Icon className="h-4 w-4" />
@@ -323,7 +333,7 @@ export default function AdminDashboard() {
         )}
 
         {tab === "logs" && <AdminLogsTab logs={logs} />}
-      </section>
+      </div>
     </main>
   );
 }

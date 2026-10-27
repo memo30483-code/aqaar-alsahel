@@ -159,7 +159,7 @@ export default function AdminListingsTab({
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
-              <Search className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-sand-500" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
@@ -177,8 +177,8 @@ export default function AdminListingsTab({
               onClick={() => setFilter(item.key)}
               className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
                 filter === item.key
-                  ? "bg-slate-900 text-white"
-                  : "border border-slate-200 bg-white text-slate-600 hover:border-[#b8963b]"
+                  ? "bg-ocean-950 text-white"
+                  : "border border-sand-200 bg-white text-sand-700 hover:border-gold-400"
               }`}
             >
               {item.label}
@@ -193,9 +193,9 @@ export default function AdminListingsTab({
           ))}
         </div>
 
-        <div className="overflow-x-auto rounded-2xl border border-slate-100">
+        <div className="overflow-x-auto rounded-2xl border border-sand-200">
           <table className="w-full min-w-[980px] text-sm">
-            <thead className="bg-slate-50 text-xs text-slate-600">
+            <thead className="bg-sand-50 text-xs text-sand-700">
               <tr>
                 <th className="p-3 text-start font-bold">الإعلان</th>
                 <th className="p-3 text-start font-bold">المدينة</th>
@@ -207,21 +207,21 @@ export default function AdminListingsTab({
             </thead>
             <tbody>
               {filtered.map((listing) => (
-                <tr key={listing.id} className="border-t border-slate-100 hover:bg-slate-50/60">
+                <tr key={listing.id} className="border-t border-sand-200 hover:bg-sand-50/60">
                   <td className="p-3">
                     <div className="flex items-center gap-2">
-                      <p className="font-bold text-slate-900">{listing.title}</p>
+                      <p className="font-bold text-ocean-900">{listing.title}</p>
                       {listing.featuredByAdmin && (
-                        <Star className="h-3.5 w-3.5 fill-[#b8963b] text-[#b8963b]" />
+                        <Star className="h-3.5 w-3.5 fill-[#b8963b] text-gold-600" />
                       )}
                     </div>
-                    <p className="mt-0.5 text-[11px] text-slate-400">
+                    <p className="mt-0.5 text-[11px] text-sand-500">
                       {listing.id} • {listing.source === "user" ? "مستخدم" : "بيانات تجريبية"}
                     </p>
                   </td>
-                  <td className="p-3 text-slate-600">{listing.city}</td>
-                  <td className="p-3 font-semibold text-slate-800">{format(listing.price)}</td>
-                  <td className="p-3 text-[11px] text-slate-500">
+                  <td className="p-3 text-sand-700">{listing.city}</td>
+                  <td className="p-3 font-semibold text-ocean-900">{format(listing.price)}</td>
+                  <td className="p-3 text-[11px] text-sand-600">
                     <p>أضافه: {listing.addedByName ?? "—"}</p>
                     <p>المسئول: {listing.assignedToName ?? "غير معيّن"}</p>
                     {listing.approvedBy && <p>اعتمده: {listing.approvedBy}</p>}
@@ -314,7 +314,7 @@ export default function AdminListingsTab({
                       {can("listings.feature") && (
                         <button
                           onClick={() => doToggleFeature(listing)}
-                          className={`${ROW_ACTION} border-[#e6d29a] text-[#a9843a] hover:border-[#b8963b] hover:text-[#b8963b]`}
+                          className={`${ROW_ACTION} border-[#e6d29a] text-gold-700 hover:border-gold-400 hover:text-gold-600`}
                         >
                           <Star className="h-3 w-3" />
                           {listing.featuredByAdmin ? "إلغاء التمييز" : "تمييز"}
@@ -333,7 +333,7 @@ export default function AdminListingsTab({
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-sm text-slate-500">
+                  <td colSpan={6} className="p-8 text-center text-sm text-sand-600">
                     لا توجد إعلانات مطابقة للفلتر الحالي.
                   </td>
                 </tr>
@@ -344,10 +344,10 @@ export default function AdminListingsTab({
       </Panel>
 
       {assignFor && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/40 p-4">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-ocean-950/50 p-4">
           <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
-            <h3 className="text-lg font-black text-slate-900">تعيين مسئول للإعلان</h3>
-            <p className="mt-1 text-sm text-slate-500">{assignFor.title}</p>
+            <h3 className="text-lg font-black text-ocean-900">تعيين مسئول للإعلان</h3>
+            <p className="mt-1 text-sm text-sand-600">{assignFor.title}</p>
             <div className="mt-4 space-y-2">
               {users
                 .filter((user) => user.active)
@@ -388,19 +388,19 @@ export default function AdminListingsTab({
                       setAssignFor(null);
                       notify("تم تعيين المسئول");
                     }}
-                    className="flex w-full items-center justify-between rounded-2xl border border-slate-100 px-4 py-3 text-start transition hover:border-[#b8963b]"
+                    className="flex w-full items-center justify-between rounded-2xl border border-sand-200 px-4 py-3 text-start transition hover:border-gold-400"
                   >
                     <span>
-                      <span className="block text-sm font-bold text-slate-800">{user.name}</span>
-                      <span className="block text-[11px] text-slate-500">{user.role}</span>
+                      <span className="block text-sm font-bold text-ocean-900">{user.name}</span>
+                      <span className="block text-[11px] text-sand-600">{user.role}</span>
                     </span>
-                    <UserCheck className="h-4 w-4 text-[#b8963b]" />
+                    <UserCheck className="h-4 w-4 text-gold-600" />
                   </button>
                 ))}
             </div>
             <button
               onClick={() => setAssignFor(null)}
-              className="mt-4 w-full rounded-full border border-slate-200 py-2 text-sm font-bold text-slate-600"
+              className="mt-4 w-full rounded-full border border-sand-200 py-2 text-sm font-bold text-sand-700"
             >
               إلغاء
             </button>
@@ -409,10 +409,10 @@ export default function AdminListingsTab({
       )}
 
       {replaceFor && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/40 p-4">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-ocean-950/50 p-4">
           <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
-            <h3 className="text-lg font-black text-slate-900">استبدال الإعلان بإعلان جديد</h3>
-            <p className="mt-1 text-sm text-slate-500">
+            <h3 className="text-lg font-black text-ocean-900">استبدال الإعلان بإعلان جديد</h3>
+            <p className="mt-1 text-sm text-sand-600">
               سيتم أرشفة «{replaceFor.title}» وربطه بالإعلان البديل مع تسجيل السبب.
             </p>
             <div className="mt-4 space-y-3">
@@ -441,7 +441,7 @@ export default function AdminListingsTab({
             <div className="mt-4 flex justify-end gap-2">
               <button
                 onClick={() => setReplaceFor(null)}
-                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600"
+                className="rounded-full border border-sand-200 px-4 py-2 text-sm font-bold text-sand-700"
               >
                 إلغاء
               </button>
@@ -485,7 +485,7 @@ export default function AdminListingsTab({
                   setReplaceFor(null);
                   notify("تم استبدال الإعلان وأرشفة القديم");
                 }}
-                className="rounded-full bg-slate-900 px-4 py-2 text-sm font-bold text-white disabled:opacity-40"
+                className="rounded-full bg-ocean-950 px-4 py-2 text-sm font-bold text-white disabled:opacity-40"
               >
                 تنفيذ الاستبدال
               </button>
@@ -495,28 +495,28 @@ export default function AdminListingsTab({
       )}
 
       {historyFor && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/40 p-4">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-ocean-950/50 p-4">
           <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-black text-slate-900">سجل الإعلان</h3>
+              <h3 className="text-lg font-black text-ocean-900">سجل الإعلان</h3>
               <button onClick={() => setHistoryFor(null)}>
-                <X className="h-5 w-5 text-slate-500" />
+                <X className="h-5 w-5 text-sand-600" />
               </button>
             </div>
-            <p className="mt-1 text-sm text-slate-500">{historyFor.title}</p>
+            <p className="mt-1 text-sm text-sand-600">{historyFor.title}</p>
             <div className="mt-4 max-h-80 space-y-2 overflow-y-auto">
               {getListingActions(historyFor.id).map((action) => (
-                <div key={action.id} className="rounded-2xl border border-slate-100 p-3">
-                  <p className="text-sm font-bold text-slate-800">{action.action}</p>
-                  <p className="text-[11px] text-slate-500">
+                <div key={action.id} className="rounded-2xl border border-sand-200 p-3">
+                  <p className="text-sm font-bold text-ocean-900">{action.action}</p>
+                  <p className="text-[11px] text-sand-600">
                     {action.performedByName} •{" "}
                     {new Date(action.timestamp).toLocaleString("ar-EG")}
                   </p>
-                  {action.note && <p className="mt-1 text-[11px] text-slate-500">{action.note}</p>}
+                  {action.note && <p className="mt-1 text-[11px] text-sand-600">{action.note}</p>}
                 </div>
               ))}
               {getListingActions(historyFor.id).length === 0 && (
-                <p className="py-6 text-center text-sm text-slate-500">لا توجد إجراءات مسجلة بعد.</p>
+                <p className="py-6 text-center text-sm text-sand-600">لا توجد إجراءات مسجلة بعد.</p>
               )}
             </div>
           </div>

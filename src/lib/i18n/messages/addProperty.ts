@@ -98,6 +98,56 @@ export const addPropertyMessages = {
     ar: "من فضلك اختر ملف صورة صالحاً.",
     en: "Please choose a valid image file.",
   },
+  /* ---------- عناصر التصميم الجديدة ---------- */
+  "addProperty.eyebrow": { ar: "عرض جديد", en: "New listing" },
+  "addProperty.formTitle": {
+    ar: "بيانات العرض خطوة بخطوة",
+    en: "Listing details, step by step",
+  },
+  "addProperty.sectionImage": {
+    ar: "الصورة والموقع",
+    en: "Photo and location",
+  },
+  "addProperty.steps.title": {
+    ar: "إزاي عرضك بيتم نشره؟",
+    en: "How your listing gets published",
+  },
+  "addProperty.steps.1.title": {
+    ar: "تعبئة البيانات",
+    en: "Fill in the details",
+  },
+  "addProperty.steps.1.desc": {
+    ar: "المواصفات والسعر والصور والموقع التقريبي.",
+    en: "Specs, price, photos and approximate location.",
+  },
+  "addProperty.steps.2.title": {
+    ar: "تحقق المستندات",
+    en: "Document check",
+  },
+  "addProperty.steps.2.desc": {
+    ar: "الإدارة بتتواصل معاك لمراجعة الملكية والسلامة القانونية.",
+    en: "Management contacts you to review ownership and legal safety.",
+  },
+  "addProperty.steps.3.title": {
+    ar: "نشر بعلامة موثّق",
+    en: "Published as verified",
+  },
+  "addProperty.steps.3.desc": {
+    ar: "يظهر العرض برقم توثيق، والتواصل عبر إدارة الموقع فقط.",
+    en: "The listing shows a verification ID, with contact via management only.",
+  },
+  "addProperty.privacy.title": {
+    ar: "بياناتك مش بتظهر للزوار",
+    en: "Your details stay off the public site",
+  },
+  "addProperty.privacy.desc": {
+    ar: "رقم التواصل والمستندات تُستخدم للمراجعة فقط، والزائر بيتواصل مع إدارة الموقع.",
+    en: "Your number and documents are used for review only; visitors contact site management.",
+  },
+  "addProperty.priceHint": {
+    ar: "سعر المتر التقديري",
+    en: "Estimated price per meter",
+  },
   "addProperty.saving": { ar: "جاري الحفظ...", en: "Saving..." },
   "addProperty.submit": { ar: "حفظ العقار ونشره", en: "Save and publish property" },
   "addProperty.cancel": { ar: "إلغاء", en: "Cancel" },
