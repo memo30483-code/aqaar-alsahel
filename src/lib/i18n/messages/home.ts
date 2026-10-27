@@ -190,6 +190,21 @@ export const homeMessages = {
   "home.projects.plan4": { ar: "تقسيط 7 سنوات", en: "7-year installments" },
 
   "home.ai.eyebrow": { ar: "مساعد ذكي", en: "AI assistant" },
+  "home.ai.launcher": { ar: "اسأل مساعد FAMILY", en: "Ask FAMILY assistant" },
+  "home.ai.launcherShort": { ar: "مساعد FAMILY", en: "FAMILY assistant" },
+  "home.adstrip.title": {
+    ar: "شركاء ومطورون",
+    en: "Partners & developers",
+  },
+  "home.adstrip.sub": {
+    ar: "مساحات إعلانية متاحة لمشاريع المدن الست",
+    en: "Ad spaces available for projects in the six cities",
+  },
+  "home.adstrip.cta": { ar: "كل المشاريع", en: "All projects" },
+  "home.ai.panelNote": {
+    ar: "رد فوري من قاعدة العقارات الموثّقة",
+    en: "Instant answers from the verified listings base",
+  },
   "home.ai.title1": { ar: "مساعد FAMILY…", en: "The FAMILY assistant…" },
   "home.ai.title2": { ar: "يجاوبك قبل ما تسأل.", en: "answers before you ask." },
   "home.ai.lead": {

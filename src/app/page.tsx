@@ -26,10 +26,10 @@ import {
 import PropertyCard from "@/components/PropertyCard";
 import PropertyMapDynamic from "@/components/PropertyMapDynamic";
 import { FeaturedAdSlot } from "@/components/FeaturedAds";
-import { MashrabiyaLayer } from "@/components/Ornaments";
 import MarqueeStrip from "@/components/MarqueeStrip";
+import AdSlider from "@/components/AdSlider";
 import { AdBand, ProjectsSlider } from "@/components/ProjectsSlider";
-import AiAssistant, { OPEN_AI_EVENT } from "@/components/AiAssistant";
+import { OPEN_AI_EVENT } from "@/components/AssistantWidget";
 import {
   filterProperties,
   mockProperties,
@@ -90,7 +90,7 @@ export default function HomePage() {
   const [blocks, setBlocks] = useState<Record<string, boolean> | null>(null);
 
   useEffect(() => {
-    const keys: BlockKey[] = ["hero","verify_strip","marquee","featured_listings","projects_slider","ai_assistant","inline_ad","ad_band","market_panel","story_dossier","manage_note"];
+    const keys: BlockKey[] = ["hero","verify_strip","marquee","featured_listings","projects_slider","ad_slider","inline_ad","ad_band","market_panel","story_dossier","manage_note"];
     const next: Record<string, boolean> = {};
     keys.forEach((key) => {
       next[key] = isBlockEnabled(key);
@@ -288,12 +288,11 @@ export default function HomePage() {
           />
           <span
             aria-hidden
-            className="absolute inset-0 bg-[linear-gradient(270deg,rgba(20,26,51,0.94)_0%,rgba(20,26,51,0.80)_34%,rgba(20,26,51,0.34)_62%,rgba(20,26,51,0.10)_100%),linear-gradient(0deg,rgba(20,26,51,0.85)_0%,rgba(20,26,51,0)_45%)]"
+            className="absolute inset-0 bg-[linear-gradient(270deg,rgba(20,26,51,0.92)_0%,rgba(20,26,51,0.72)_34%,rgba(20,26,51,0.28)_62%,rgba(20,26,51,0.06)_100%),linear-gradient(0deg,rgba(20,26,51,0.82)_0%,rgba(20,26,51,0)_45%)]"
           />
-          <MashrabiyaLayer tone="dark" className="opacity-[0.14] mix-blend-overlay" />
         </div>
 
-        <div className="relative z-10 mx-auto w-full max-w-[1240px] px-4 pb-40 pt-14 sm:px-6 lg:pb-44 lg:pt-20">
+        <div className="relative z-10 mx-auto w-full max-w-[1240px] px-4 pb-28 pt-12 sm:px-6 lg:pb-32 lg:pt-16">
           <div className="max-w-[680px] text-white">
             <p className="flex items-center gap-2.5 text-xs font-bold tracking-wide text-gold-200">
               <span aria-hidden className="h-px w-8 bg-gold-400" />
@@ -866,64 +865,23 @@ export default function HomePage() {
       </div>
       )}
 
-      {showBlock("ai_assistant") && (
-      <div key="ai_assistant" style={{ order: orderOf("ai_assistant") }} className="w-full">
-      {/* ====================== AI ASSISTANT ====================== */}
-      <section id="assistant" className="scroll-mt-24 border-t border-sand-200 bg-gradient-to-b from-sand-50 to-white py-14 sm:py-16">
-        <div className="mx-auto grid w-full max-w-[1240px] items-center gap-8 px-4 sm:px-6 lg:grid-cols-[1fr_0.92fr] lg:gap-14">
-          <div>
-            <p className="flex items-center gap-2.5 text-xs font-bold text-gold-700">
-              <span aria-hidden className="h-px w-8 bg-gold-400" />
-              {t("home.ai.eyebrow")}
-            </p>
-            <h2 className="mt-3 text-3xl font-black leading-[1.4] tracking-tight text-ocean-900 sm:text-[35px]">
-              {t("home.ai.title1")}
-              <br />
-              <span className="text-gold-600">{t("home.ai.title2")}</span>
-            </h2>
-            <p className="mt-4 max-w-[540px] text-sm font-medium leading-8 text-sand-700">
-              {t("home.ai.lead")}
-            </p>
-
-            <div className="mt-5 flex flex-col gap-2.5">
-              {(["home.ai.feat1", "home.ai.feat2", "home.ai.feat3"] as MessageKey[]).map(
-                (key) => (
-                  <p
-                    key={key}
-                    className="flex items-center gap-2.5 text-[12.5px] font-bold text-ocean-800"
-                  >
-                    <span className="grid h-5 w-5 shrink-0 place-items-center rounded-md border border-gold-200 bg-gold-50 text-gold-600">
-                      <Check className="h-3 w-3" />
-                    </span>
-                    {t(key)}
-                  </p>
-                )
-              )}
-            </div>
-
-            <div className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-sand-300 bg-white px-3.5 py-1.5 text-[10.5px] font-extrabold text-ocean-800 shadow-soft">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(46,158,107,0.15)]" />
-              {t("home.ai.live")}
-            </div>
-          </div>
-
-          <AiAssistant />
-        </div>
-      </section>
+      {showBlock("ad_slider") && (
+      <div key="ad_slider" style={{ order: orderOf("ad_slider") }} className="w-full">
+      {/* ====================== AD SLIDER ====================== */}
+      <AdSlider />
       </div>
       )}
 
       {showBlock("story_dossier") && (
       <div key="story_dossier" style={{ order: orderOf("story_dossier") }} className="w-full">
       {/* ====================== STORY + DOSSIER ====================== */}
-      <section className="relative overflow-hidden bg-[radial-gradient(120%_120%_at_85%_0%,#28325f_0%,#141a33_55%,#0f1428_100%)] py-16 text-white">
-        <MashrabiyaLayer tone="dark" className="opacity-[0.10]" />
+      <section className="relative overflow-hidden bg-[radial-gradient(120%_120%_at_85%_0%,#273155_0%,#141a33_58%,#0f1428_100%)] py-12 text-white sm:py-14">
         <span
           aria-hidden
-          className="pointer-events-none absolute -left-48 -top-64 h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,rgba(201,146,42,0.20),transparent_62%)] blur-[10px]"
+          className="pointer-events-none absolute -left-48 -top-64 h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,rgba(201,146,42,0.18),transparent_62%)] blur-[10px]"
         />
 
-        <div className="relative z-10 mx-auto grid w-full max-w-[1240px] items-center gap-10 px-4 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16">
+        <div className="relative z-10 mx-auto grid w-full max-w-[1240px] items-center gap-8 px-4 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:gap-12">
           <div>
             <p className="flex items-center gap-2.5 text-xs font-bold text-gold-300">
               <span aria-hidden className="h-px w-8 bg-gold-400" />

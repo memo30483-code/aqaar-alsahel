@@ -65,6 +65,16 @@ export default function OffersFloatingBanner() {
     }
   };
 
+  /* إبلاغ بقية العناصر العائمة (زر المساعد) بوجود البانر حتى ترتفع فوقه */
+  useEffect(() => {
+    const root = document.documentElement;
+    if (show) root.dataset.offersBanner = "1";
+    else delete root.dataset.offersBanner;
+    return () => {
+      delete root.dataset.offersBanner;
+    };
+  }, [show]);
+
   if (!show) return null;
 
   return (

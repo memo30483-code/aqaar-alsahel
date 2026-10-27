@@ -28,7 +28,6 @@ import {
   hasAdminAccess,
   type Session,
 } from "@/lib/session";
-import { MashrabiyaLayer } from "@/components/Ornaments";
 import BrandLogo from "@/components/BrandLogo";
 import OffersHeaderLink from "@/components/OffersHeaderLink";
 
@@ -159,7 +158,6 @@ export default function Header() {
         className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-l from-gold-600 via-gold-300 to-gold-200"
       />
       {/* خلفية النقوش الإسلامية الهندسية (شفافة خفيفة جداً) */}
-      <MashrabiyaLayer tone="light" className="opacity-[0.05]" />
       <div className="relative mx-auto flex w-full max-w-[1440px] items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:py-3.5">
         {/* الشعار */}
         <Link

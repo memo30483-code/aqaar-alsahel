@@ -25,7 +25,7 @@ const BLOCK_LABELS: Record<BlockKey, string> = {
   marquee: "الشريط المتحرك (إعلانات/أخبار)",
   featured_listings: "شبكة العقارات المميزة",
   projects_slider: "سلايدر المشاريع",
-  ai_assistant: "المساعد العقاري الذكي",
+  ad_slider: "شريط إعلانات منزلق",
   inline_ad: "الإعلان الداخلي بين العقارات",
   ad_band: "شريط الإعلانات العريض",
   market_panel: "لوحة السوق والخريطة",

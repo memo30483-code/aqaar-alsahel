@@ -117,15 +117,6 @@ export function FeaturedAdSlot({
           : "border-gold-200 bg-gradient-to-l from-sand-100 via-white to-white"
       } ${className}`}
     >
-      <MashrabiyaLayer
-        tone={isBold ? "dark" : "light"}
-        className={isBold ? "opacity-[0.07]" : "opacity-[0.05]"}
-      />
-      <OrnateFrame
-        tone={isBold ? "dark" : "light"}
-        className="inset-2"
-        radiusClassName="rounded-[1.25rem]"
-      />
       <div className="pointer-events-none absolute -left-10 -top-10 h-28 w-28 rounded-full bg-gradient-to-br from-gold-400/25 to-transparent blur-2xl" />
 
       <div className="relative flex flex-wrap items-center justify-between gap-4">

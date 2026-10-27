@@ -20,7 +20,6 @@ import {
 } from "@/lib/i18n/cities";
 import { PROPERTY_TYPES, propertyTypeLabel } from "@/lib/i18n/taxonomy";
 import { useCurrency } from "@/lib/currency";
-import { MashrabiyaLayer } from "@/components/Ornaments";
 
 export interface CityOption {
   id: City | "all";
@@ -167,7 +166,6 @@ export default function Filters({
       onSubmit={handleSubmit}
       className="relative overflow-hidden rounded-3xl border border-sand-300 bg-white p-3.5 shadow-soft"
     >
-      <MashrabiyaLayer tone="light" className="opacity-[0.05]" />
       <span className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-l from-transparent via-gold-400/60 to-transparent" />
 
       <div className="relative">

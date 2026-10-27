@@ -15,7 +15,7 @@ export type BlockKey =
   | "marquee"
   | "featured_listings"
   | "projects_slider"
-  | "ai_assistant"
+  | "ad_slider"
   | "inline_ad"
   | "ad_band"
   | "market_panel"
@@ -240,10 +240,10 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     { key: "verify_strip", enabled: true, order: 2 },
     { key: "marquee", enabled: true, order: 3 },
     { key: "featured_listings", enabled: true, order: 4 },
-    { key: "projects_slider", enabled: true, order: 5 },
-    { key: "ai_assistant", enabled: true, order: 6 },
-    { key: "inline_ad", enabled: true, order: 7 },
-    { key: "ad_band", enabled: true, order: 8 },
+    { key: "ad_band", enabled: true, order: 5 },
+    { key: "projects_slider", enabled: true, order: 6 },
+    { key: "ad_slider", enabled: true, order: 7 },
+    { key: "inline_ad", enabled: true, order: 8 },
     { key: "market_panel", enabled: true, order: 9 },
     { key: "story_dossier", enabled: true, order: 10 },
     { key: "manage_note", enabled: true, order: 11 },
@@ -364,10 +364,15 @@ export function getAdminLogs(limit = 100): AdminLog[] {
 
 export function getSiteSettings(): SiteSettings {
   const stored = readJson<SiteSettings>(SITE_SETTINGS_KEY, DEFAULT_SITE_SETTINGS);
-  if (!stored.blocks || stored.blocks.length !== DEFAULT_SITE_SETTINGS.blocks.length) {
+  if (!stored.blocks || stored.blocks.length === 0) {
     return DEFAULT_SITE_SETTINGS;
   }
-  return stored;
+  /* دمج البلوكات الجديدة مع المحفوظة (مع الاحتفاظ بحالة التفعيل والترتيب) */
+  const blocks = DEFAULT_SITE_SETTINGS.blocks.map((block) => {
+    const saved = stored.blocks.find((item) => item.key === block.key);
+    return saved ? { ...block, enabled: saved.enabled, order: saved.order } : block;
+  });
+  return { ...DEFAULT_SITE_SETTINGS, ...stored, blocks };
 }
 
 export function saveSiteSettings(settings: SiteSettings): void {
