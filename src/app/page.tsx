@@ -10,7 +10,6 @@ import {
   FileText,
   Headset,
   Lock,
-  MapPin,
   ScanLine,
   Search,
   ShieldCheck,
@@ -338,11 +337,6 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-
-        <span className="absolute bottom-24 left-6 z-10 hidden items-center gap-1.5 rounded-full border border-white/[0.18] bg-[#0a0e20]/50 px-3 py-1.5 text-[10px] font-extrabold text-[#e9edf8] backdrop-blur lg:flex xl:left-16">
-          <MapPin className="h-3 w-3 text-gold-300" />
-          {t("home.hero.place")}
-        </span>
       </section>
 
       {/* ====================== SEARCH CARD ====================== */}

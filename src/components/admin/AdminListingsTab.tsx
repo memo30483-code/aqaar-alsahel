@@ -21,6 +21,12 @@ import {
 import { useCurrency } from "@/lib/currency";
 import { getSession } from "@/lib/session";
 import {
+  ADD_PROPERTY_FIELDS,
+  documentFieldKey,
+  getAddPropertyFieldSettings,
+  type AddPropertyFieldSettings,
+} from "@/lib/add-property-fields";
+import {
   addAdminLog,
   addListingAction,
   getListingActions,
@@ -49,13 +55,22 @@ const FILTERS: { key: "all" | ListingStatus; label: string }[] = [
   { key: "deleted", label: "سلة المحذوفات" },
 ];
 
-/** عدد المستندات الأساسية المطلوبة قبل اعتماد إعلان مستخدم */
-const REQUIRED_DOCUMENTS = 4;
-
-/** هل ينقص الإعلان مستندات تمنع اعتماده؟ (لا ينطبق على البيانات التجريبية) */
-function hasIncompleteDocuments(listing: AdminListing): boolean {
-  if (listing.source !== "user") return false;
-  return (listing.documents?.length ?? 0) < REQUIRED_DOCUMENTS;
+/** المستندات الإجبارية الناقصة في طلب مستخدم — حسب إعدادات الأدمن */
+function missingRequiredDocuments(
+  listing: AdminListing,
+  settings: AddPropertyFieldSettings
+): string[] {
+  if (listing.source !== "user") return [];
+  return ADD_PROPERTY_FIELDS.filter(
+    (field) => field.group === "documents" && settings[field.key]
+  )
+    .filter(
+      (field) =>
+        !(listing.documents ?? []).some(
+          (doc) => documentFieldKey(doc.key) === field.key
+        )
+    )
+    .map((field) => field.label);
 }
 
 function formatBytes(bytes: number): string {
@@ -72,6 +87,15 @@ export default function AdminListingsTab({
   reloadLogs,
 }: Props) {
   const { format } = useCurrency();
+  /* المستندات الإجبارية يحددها الأدمن من تبويب «حقول إضافة العقار» */
+  const fieldSettings = useMemo(() => getAddPropertyFieldSettings(), []);
+  const requiredDocCount = ADD_PROPERTY_FIELDS.filter(
+    (field) => field.group === "documents" && fieldSettings[field.key]
+  ).length;
+  const incompleteDocs = (listing: AdminListing) =>
+    missingRequiredDocuments(listing, fieldSettings);
+  const uploadedRequiredDocs = (listing: AdminListing) =>
+    requiredDocCount - incompleteDocs(listing).length;
   const [filter, setFilter] = useState<"all" | ListingStatus>("all");
   const [query, setQuery] = useState("");
   const [assignFor, setAssignFor] = useState<AdminListing | null>(null);
@@ -116,10 +140,12 @@ export default function AdminListingsTab({
     note?: string
   ) => {
     if (!session) return;
-    /* لا اعتماد لأي إعلان مستخدم قبل استيفاء المستندات الأساسية */
-    if (status === "approved" && hasIncompleteDocuments(listing)) {
+    /* لا اعتماد لأي إعلان مستخدم قبل استيفاء المستندات الإجبارية */
+    if (status === "approved" && incompleteDocs(listing).length > 0) {
       notify(
-        `لا يمكن اعتماد «${listing.title}» قبل رفع المستندات الأساسية الأربعة`
+        `لا يمكن اعتماد «${listing.title}» قبل رفع المستندات الإجبارية: ${incompleteDocs(
+          listing
+        ).join("، ")}`
       );
       return;
     }
@@ -240,7 +266,7 @@ export default function AdminListingsTab({
                       {listing.featuredByAdmin && (
                         <Star className="h-3.5 w-3.5 fill-[#b8963b] text-gold-600" />
                       )}
-                      {hasIncompleteDocuments(listing) && (
+                      {incompleteDocs(listing).length > 0 && (
                         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9.5px] font-black text-amber-800">
                           مستندات ناقصة
                         </span>
@@ -281,9 +307,9 @@ export default function AdminListingsTab({
 
                       {listing.status !== "approved" &&
                         can("listings.approve") &&
-                        (hasIncompleteDocuments(listing) ? (
+                        (incompleteDocs(listing).length > 0 ? (
                           <span
-                            title="لا يمكن الاعتماد قبل رفع المستندات الأساسية الأربعة"
+                            title="لا يمكن الاعتماد قبل رفع المستندات الإجبارية"
                             className={`${ROW_ACTION} cursor-not-allowed border-sand-200 text-sand-400`}
                           >
                             <Check className="h-3 w-3" /> موافقة
@@ -376,14 +402,14 @@ export default function AdminListingsTab({
                         <button
                           onClick={() => setDocsFor(listing)}
                           className={`${ROW_ACTION} ${
-                            hasIncompleteDocuments(listing)
+                            incompleteDocs(listing).length > 0
                               ? "border-amber-200 text-amber-700"
                               : "border-emerald-200 text-emerald-700"
                           }`}
                         >
                           <Paperclip className="h-3 w-3" />
-                          المستندات ({listing.documents?.length ?? 0}/
-                          {REQUIRED_DOCUMENTS})
+                          المستندات ({uploadedRequiredDocs(listing)}/
+                          {requiredDocCount})
                         </button>
                       )}
 
@@ -584,11 +610,11 @@ export default function AdminListingsTab({
               </button>
             </div>
 
-            {hasIncompleteDocuments(docsFor) && (
+            {incompleteDocs(docsFor).length > 0 && (
               <p className="mt-3 flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11.5px] font-semibold leading-6 text-amber-900">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                المستندات ناقصة — لا يمكن اعتماد الإعلان ونشره قبل رفع المستندات
-                الأساسية الأربعة.
+                المستندات الإجبارية ناقصة ({incompleteDocs(docsFor).join("، ")}) —
+                لا يمكن اعتماد الإعلان ونشره قبل رفعها.
               </p>
             )}
 

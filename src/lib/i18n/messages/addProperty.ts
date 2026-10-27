@@ -83,8 +83,8 @@ export const addPropertyMessages = {
     en: "Legal safety documents",
   },
   "addProperty.sectionDocs.desc": {
-    ar: "المستندات الأساسية الأربعة إلزامية. تُستخدم للمراجعة فقط، ولا تظهر للزوار ولا تُنشر مع الإعلان.",
-    en: "The four core documents are mandatory. They are used for review only, are never shown to visitors, and are not published with the listing.",
+    ar: "المستندات اللي إدارة المنصة حددتها كإجبارية لازم ترفعها قبل إرسال الطلب. المستندات تُستخدم للمراجعة فقط، ولا تظهر للزوار ولا تُنشر مع الإعلان.",
+    en: "Documents that management marks as required must be uploaded before submitting. Documents are used for review only, are never shown to visitors, and are not published with the listing.",
   },
   "addProperty.doc.owner_id": {
     ar: "بطاقة المالك (الرقم القومي) *",
@@ -112,6 +112,7 @@ export const addPropertyMessages = {
   },
   "addProperty.doc.required": { ar: "مطلوب", en: "Required" },
   "addProperty.doc.optional": { ar: "اختياري", en: "Optional" },
+  "addProperty.optionalTag": { ar: "(اختياري)", en: "(optional)" },
   "addProperty.doc.upload": { ar: "ارفع المستند", en: "Upload document" },
   "addProperty.doc.replace": { ar: "تغيير", en: "Replace" },
   "addProperty.doc.remove": { ar: "حذف", en: "Remove" },
@@ -214,6 +215,14 @@ export const addPropertyMessages = {
   "addProperty.errorDocuments": {
     ar: "لازم ترفع المستندات الأساسية الأربعة (بطاقة المالك، عقد الملكية، الترخيص أو محضر الحيازة، إيصال مرافق) قبل الإرسال.",
     en: "Upload the four core documents (owner ID, ownership contract, licence or possession report, utility bill) before submitting.",
+  },
+  "addProperty.errorMissingFields": {
+    ar: "من فضلك أكمل الحقول الإجبارية: {fields}",
+    en: "Please complete the required fields: {fields}",
+  },
+  "addProperty.errorMissingDocs": {
+    ar: "المستندات الإجبارية ناقصة: {fields}",
+    en: "Required documents are missing: {fields}",
   },
   "addProperty.errorAck": {
     ar: "لازم توافق على الإقرار بصحة البيانات والمستندات قبل إرسال الطلب.",

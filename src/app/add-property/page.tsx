@@ -11,7 +11,6 @@ import {
   FileText,
   ImagePlus,
   Lock,
-  MapPin,
   ShieldCheck,
   Sparkles,
   Trash2,
@@ -35,6 +34,14 @@ import {
 } from "@/lib/i18n/taxonomy";
 import { useCurrency } from "@/lib/currency";
 import { getSession } from "@/lib/session";
+import {
+  ADD_PROPERTY_FIELDS_EVENT,
+  DEFAULT_ADD_PROPERTY_FIELD_SETTINGS,
+  documentFieldKey,
+  getAddPropertyFieldSettings,
+  type AddPropertyFieldKey,
+  type AddPropertyFieldSettings,
+} from "@/lib/add-property-fields";
 import LocationPickerDynamic from "@/components/LocationPickerDynamic";
 
 type DocKey =
@@ -45,52 +52,43 @@ type DocKey =
   | "power_of_attorney"
   | "tax";
 
-/** المستندات المطلوبة — الأربعة الأولى إلزامية للموافقة على النشر */
+/** المستندات المتاحة — إجبارية أم اختيارية يحدده الأدمن من لوحة التحكم */
 const DOCUMENTS: {
   key: DocKey;
   labelKey: MessageKey;
   labelAr: string;
-  required: boolean;
 }[] = [
   {
     key: "owner_id",
     labelKey: "addProperty.doc.owner_id",
     labelAr: "بطاقة المالك (الرقم القومي)",
-    required: true,
   },
   {
     key: "ownership",
     labelKey: "addProperty.doc.ownership",
     labelAr: "عقد الملكية / سند الملكية",
-    required: true,
   },
   {
     key: "license",
     labelKey: "addProperty.doc.license",
     labelAr: "الترخيص أو محضر الحيازة",
-    required: true,
   },
   {
     key: "utility",
     labelKey: "addProperty.doc.utility",
     labelAr: "إيصال مرافق (كهرباء أو مياه)",
-    required: true,
   },
   {
     key: "power_of_attorney",
     labelKey: "addProperty.doc.power_of_attorney",
     labelAr: "توكيل رسمي",
-    required: false,
   },
   {
     key: "tax",
     labelKey: "addProperty.doc.tax",
     labelAr: "شهادة ضريبة عقارية",
-    required: false,
   },
 ];
-
-const REQUIRED_DOCS = DOCUMENTS.filter((doc) => doc.required);
 
 /** الحد الأقصى لحجم المستند الواحد: 5 ميجابايت */
 const MAX_DOC_SIZE = 5 * 1024 * 1024;
@@ -250,21 +248,37 @@ export default function AddPropertyPage() {
   const t = useT();
   const { formatWithSymbol } = useCurrency();
   const [form, setForm] = useState<FormState>(initial);
-  const [error, setError] = useState<MessageKey | "">("");
+  const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState<SubmittedRequest | null>(null);
   const [checking, setChecking] = useState(true);
+  /** إعدادات الأدمن: أي حقل إجباري وأي حقل اختياري */
+  const [fieldSettings, setFieldSettings] = useState<AddPropertyFieldSettings>(
+    DEFAULT_ADD_PROPERTY_FIELD_SETTINGS
+  );
   /** إعادة تصفير حقول الملفات بعد حذف مستند حتى يمكن رفع نفس الملف مرة أخرى */
   const [docNonce, setDocNonce] = useState(0);
 
-  /** Auth Guard — يعرض null (لا محتوى) حتى يكتمل التحقق */
+  /** Auth Guard + تحميل إعدادات الحقول التي حددها الأدمن */
   useEffect(() => {
     const session = getSession();
     if (!session) {
       router.replace("/login?redirect=/add-property");
       return;
     }
+    setFieldSettings(getAddPropertyFieldSettings());
     setChecking(false);
   }, [router]);
+
+  /* تحديث الإعدادات لو عدّلها الأدمن في تبويب آخر */
+  useEffect(() => {
+    const sync = () => setFieldSettings(getAddPropertyFieldSettings());
+    window.addEventListener("storage", sync);
+    window.addEventListener(ADD_PROPERTY_FIELDS_EVENT, sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener(ADD_PROPERTY_FIELDS_EVENT, sync);
+    };
+  }, []);
 
   useEffect(() => {
     if (!form.city) return;
@@ -281,6 +295,21 @@ export default function AddPropertyPage() {
     );
   }
 
+  const needs = (key: AddPropertyFieldKey) => fieldSettings[key];
+
+  /** تسمية الحقل مع علامة * أو وسم «اختياري» حسب إعداد الأدمن */
+  const labelFor = (key: AddPropertyFieldKey, messageKey: MessageKey) => {
+    const base = t(messageKey).replace(/\s*\*$/, "");
+    return needs(key)
+      ? `${base} *`
+      : `${base} ${t("addProperty.optionalTag")}`;
+  };
+
+  /** المستندات الإجبارية حسب إعداد الأدمن */
+  const requiredDocuments = DOCUMENTS.filter((doc) =>
+    needs(documentFieldKey(doc.key))
+  );
+
   const set =
     (key: keyof FormState) =>
     (
@@ -295,7 +324,7 @@ export default function AddPropertyPage() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setError("addProperty.errorImageType");
+      setError(t("addProperty.errorImageType"));
       return;
     }
     setError("");
@@ -316,11 +345,11 @@ export default function AddPropertyPage() {
       const isPdf = file.type === "application/pdf";
       const isImage = file.type.startsWith("image/");
       if (!isPdf && !isImage) {
-        setError("addProperty.errorDocType");
+        setError(t("addProperty.errorDocType"));
         return;
       }
       if (file.size > MAX_DOC_SIZE) {
-        setError("addProperty.errorDocSize");
+        setError(t("addProperty.errorDocSize"));
         return;
       }
 
@@ -354,7 +383,7 @@ export default function AddPropertyPage() {
       ? Math.round(Number(form.price) / Number(form.area))
       : null;
 
-  const uploadedRequired = REQUIRED_DOCS.filter(
+  const uploadedRequired = requiredDocuments.filter(
     (doc) => form.documents[doc.key]
   ).length;
 
@@ -369,43 +398,84 @@ export default function AddPropertyPage() {
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
 
-    if (
-      !form.title.trim() ||
-      !form.city ||
-      !form.district.trim() ||
-      !form.type ||
-      !form.sellerType ||
-      !form.whatsapp.trim() ||
-      !form.description.trim()
-    ) {
-      setError("addProperty.errorRequired");
-      return;
+    const missing: string[] = [];
+    const empty = (value: string) => value.trim() === "";
+
+    if (needs("title") && empty(form.title)) {
+      missing.push(labelFor("title", "addProperty.fieldTitle"));
     }
-    if (Number(form.area) <= 0 || Number(form.price) <= 0) {
-      setError("addProperty.errorPositive");
+    if (needs("city") && !form.city) {
+      missing.push(labelFor("city", "addProperty.fieldCity"));
+    }
+    if (needs("district") && empty(form.district)) {
+      missing.push(labelFor("district", "addProperty.fieldDistrict"));
+    }
+    if (needs("type") && !form.type) {
+      missing.push(labelFor("type", "addProperty.fieldType"));
+    }
+    if (needs("sellerType") && !form.sellerType) {
+      missing.push(labelFor("sellerType", "addProperty.fieldSellerType"));
+    }
+    if (needs("description") && empty(form.description)) {
+      missing.push(labelFor("description", "addProperty.fieldDescription"));
+    }
+    if (needs("whatsapp") && empty(form.whatsapp)) {
+      missing.push(labelFor("whatsapp", "addProperty.fieldWhatsapp"));
+    }
+    if (needs("area") && (empty(form.area) || Number(form.area) <= 0)) {
+      missing.push(labelFor("area", "addProperty.fieldArea"));
+    }
+    if (needs("price") && (empty(form.price) || Number(form.price) <= 0)) {
+      missing.push(labelFor("price", "addProperty.fieldPrice"));
+    }
+    if (needs("rooms") && empty(form.rooms)) {
+      missing.push(labelFor("rooms", "addProperty.fieldRooms"));
+    }
+    if (needs("bathrooms") && empty(form.bathrooms)) {
+      missing.push(labelFor("bathrooms", "addProperty.fieldBathrooms"));
+    }
+
+    if (missing.length > 0) {
+      setError(
+        t("addProperty.errorMissingFields", {
+          fields: missing.map((label) => label.replace(/\s*\*$/, "")).join("، "),
+        })
+      );
       return;
     }
 
-    const whatsapp = normalizeWhatsApp(form.whatsapp);
-    if (!whatsapp) {
-      setError("addProperty.errorWhatsapp");
+    /* الصورة إجبارية فقط لو الأدمن حددها كذلك */
+    if (needs("image") && !form.imagePreview) {
+      setError(t("addProperty.errorImageRequired"));
       return;
     }
 
-    /* الصورة إلزامية — لا نشر بدون صورة حقيقية للعقار */
-    if (!form.imagePreview) {
-      setError("addProperty.errorImageRequired");
+    /* المستندات التي حددها الأدمن إجبارية قبل إرسال الطلب */
+    const missingDocuments = requiredDocuments.filter(
+      (doc) => !form.documents[doc.key]
+    );
+    if (missingDocuments.length > 0) {
+      setError(
+        t("addProperty.errorMissingDocs", {
+          fields: missingDocuments
+            .map((doc) => t(doc.labelKey).replace(/\s*\*$/, ""))
+            .join("، "),
+        })
+      );
       return;
     }
 
-    /* كل المستندات الأساسية إلزامية قبل إرسال الطلب */
-    if (uploadedRequired < REQUIRED_DOCS.length) {
-      setError("addProperty.errorDocuments");
+    /* رقم التواصل إن أُدخل يجب أن يكون صحيحاً */
+    const whatsappRaw = form.whatsapp.trim();
+    const normalizedWhatsapp = whatsappRaw ? normalizeWhatsApp(whatsappRaw) : "";
+    if (whatsappRaw && !normalizedWhatsapp) {
+      setError(t("addProperty.errorWhatsapp"));
       return;
     }
+    const whatsapp = normalizedWhatsapp ?? "";
 
     if (!form.ack) {
-      setError("addProperty.errorAck");
+      setError(t("addProperty.errorAck"));
       return;
     }
 
@@ -418,23 +488,25 @@ export default function AddPropertyPage() {
     const documents = DOCUMENTS.map((doc) => form.documents[doc.key]).filter(
       (doc): doc is PropertyDocument => Boolean(doc)
     );
+    const image =
+      form.imagePreview || `https://picsum.photos/seed/${id}/800/600`;
 
     const property: Property = {
       id,
-      title: form.title.trim(),
+      title: form.title.trim() || "عقار جديد",
       purpose: form.purpose,
-      city: form.city,
+      city: form.city as City,
       district: form.district.trim(),
-      type: form.type,
-      area: Number(form.area),
+      type: form.type as PropertyType,
+      area: Number(form.area) || 0,
       rooms: Number(form.rooms) || 0,
       bathrooms: Number(form.bathrooms) || 0,
-      price: Number(form.price),
-      sellerType: form.sellerType,
+      price: Number(form.price) || 0,
+      sellerType: form.sellerType || "فرد",
       whatsapp,
       description: form.description.trim(),
-      image: form.imagePreview,
-      images: [form.imagePreview],
+      image,
+      images: [image],
       lat: form.lat,
       lng: form.lng,
       /* لا نشر تلقائي: الطلب يبقى «قيد المراجعة» حتى موافقة الإدارة */
@@ -451,7 +523,7 @@ export default function AddPropertyPage() {
         JSON.stringify([...list, property])
       );
     } catch {
-      setError("addProperty.errorStorage");
+      setError(t("addProperty.errorStorage"));
       return;
     }
 
@@ -601,7 +673,6 @@ export default function AddPropertyPage() {
               {[
                 { Icon: ShieldCheck, label: t("home.listings.verified") },
                 { Icon: Lock, label: t("addProperty.privacy.title") },
-                { Icon: MapPin, label: t("home.hero.place") },
               ].map(({ Icon, label }) => (
                 <span
                   key={label}
@@ -634,10 +705,9 @@ export default function AddPropertyPage() {
               <div className="mt-4 space-y-3.5">
                 <label className="block">
                   <span className={LABEL}>
-                    {t("addProperty.fieldTitle")}
+                    {labelFor("title", "addProperty.fieldTitle")}
                   </span>
                   <input
-                    required
                     value={form.title}
                     onChange={set("title")}
                     placeholder={t("addProperty.titlePlaceholder")}
@@ -651,7 +721,6 @@ export default function AddPropertyPage() {
                       {t("addProperty.fieldPurpose")}
                     </span>
                     <select
-                      required
                       value={form.purpose}
                       onChange={(e) =>
                         setForm((prev) => ({
@@ -668,10 +737,9 @@ export default function AddPropertyPage() {
 
                   <label className="block">
                     <span className={LABEL}>
-                      {t("addProperty.fieldCity")}
+                      {labelFor("city", "addProperty.fieldCity")}
                     </span>
                     <select
-                      required
                       value={form.city}
                       onChange={set("city")}
                       className={FIELD}
@@ -687,10 +755,9 @@ export default function AddPropertyPage() {
 
                   <label className="block">
                     <span className={LABEL}>
-                      {t("addProperty.fieldDistrict")}
+                      {labelFor("district", "addProperty.fieldDistrict")}
                     </span>
                     <input
-                      required
                       value={form.district}
                       onChange={set("district")}
                       placeholder={t("addProperty.districtPlaceholder")}
@@ -713,10 +780,9 @@ export default function AddPropertyPage() {
                 <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
                   <label className="block">
                     <span className={LABEL}>
-                      {t("addProperty.fieldType")}
+                      {labelFor("type", "addProperty.fieldType")}
                     </span>
                     <select
-                      required
                       value={form.type}
                       onChange={set("type")}
                       className={FIELD}
@@ -732,12 +798,11 @@ export default function AddPropertyPage() {
 
                   <label className="block">
                     <span className={LABEL}>
-                      {t("addProperty.fieldArea")}
+                      {labelFor("area", "addProperty.fieldArea")}
                     </span>
                     <input
-                      required
                       type="number"
-                      min={1}
+                      min={0}
                       value={form.area}
                       onChange={set("area")}
                       className={FIELD}
@@ -746,12 +811,11 @@ export default function AddPropertyPage() {
 
                   <label className="block">
                     <span className={LABEL}>
-                      {t("addProperty.fieldPrice")}
+                      {labelFor("price", "addProperty.fieldPrice")}
                     </span>
                     <input
-                      required
                       type="number"
-                      min={1}
+                      min={0}
                       value={form.price}
                       onChange={set("price")}
                       className={FIELD}
@@ -760,10 +824,9 @@ export default function AddPropertyPage() {
 
                   <label className="block">
                     <span className={LABEL}>
-                      {t("addProperty.fieldRooms")}
+                      {labelFor("rooms", "addProperty.fieldRooms")}
                     </span>
                     <input
-                      required
                       type="number"
                       min={0}
                       value={form.rooms}
@@ -774,10 +837,9 @@ export default function AddPropertyPage() {
 
                   <label className="block">
                     <span className={LABEL}>
-                      {t("addProperty.fieldBathrooms")}
+                      {labelFor("bathrooms", "addProperty.fieldBathrooms")}
                     </span>
                     <input
-                      required
                       type="number"
                       min={0}
                       value={form.bathrooms}
@@ -801,10 +863,9 @@ export default function AddPropertyPage() {
 
                 <label className="block">
                   <span className={LABEL}>
-                    {t("addProperty.fieldDescription")}
+                    {labelFor("description", "addProperty.fieldDescription")}
                   </span>
                   <textarea
-                    required
                     rows={4}
                     value={form.description}
                     onChange={set("description")}
@@ -827,10 +888,9 @@ export default function AddPropertyPage() {
               <div className="mt-4 grid gap-3.5 sm:grid-cols-2">
                 <label className="block">
                   <span className={LABEL}>
-                    {t("addProperty.fieldSellerType")}
+                    {labelFor("sellerType", "addProperty.fieldSellerType")}
                   </span>
                   <select
-                    required
                     value={form.sellerType}
                     onChange={set("sellerType")}
                     className={FIELD}
@@ -846,10 +906,9 @@ export default function AddPropertyPage() {
 
                 <label className="block">
                   <span className={LABEL}>
-                    {t("addProperty.fieldWhatsapp")}
+                    {labelFor("whatsapp", "addProperty.fieldWhatsapp")}
                   </span>
                   <input
-                    required
                     type="tel"
                     value={form.whatsapp}
                     onChange={set("whatsapp")}
@@ -871,7 +930,9 @@ export default function AddPropertyPage() {
 
               <div className="mt-4 space-y-4">
                 <label className="block">
-                  <span className={LABEL}>{t("addProperty.fieldImage")}</span>
+                  <span className={LABEL}>
+                    {labelFor("image", "addProperty.fieldImage")}
+                  </span>
                   <div className="rounded-2xl border border-dashed border-sand-300 bg-sand-50/60 p-4 transition hover:border-gold-400/70 hover:bg-gold-50/30">
                     <div className="flex items-center gap-3">
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-sand-200 bg-white text-gold-600">
@@ -933,13 +994,13 @@ export default function AddPropertyPage() {
                 />
                 <span
                   className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-[10.5px] font-black ${
-                    uploadedRequired === REQUIRED_DOCS.length
+                    uploadedRequired === requiredDocuments.length
                       ? "bg-emerald-50 text-emerald-700"
                       : "bg-sand-100 text-sand-700"
                   }`}
                 >
                   <ShieldCheck className="h-3.5 w-3.5" />
-                  {uploadedRequired} / {REQUIRED_DOCS.length}
+                  {uploadedRequired} / {requiredDocuments.length}
                 </span>
               </div>
 
@@ -951,6 +1012,7 @@ export default function AddPropertyPage() {
                 {DOCUMENTS.map((spec) => {
                   const doc = form.documents[spec.key];
                   const uploaded = Boolean(doc);
+                  const docRequired = needs(documentFieldKey(spec.key));
 
                   return (
                     <div
@@ -964,20 +1026,23 @@ export default function AddPropertyPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <p className="text-[12px] font-extrabold leading-5 text-ocean-900">
-                            {t(spec.labelKey)}
+                            {labelFor(
+                              documentFieldKey(spec.key),
+                              spec.labelKey
+                            )}
                           </p>
                           <span
                             className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[9.5px] font-black ${
                               uploaded
                                 ? "bg-emerald-100 text-emerald-700"
-                                : spec.required
+                                : docRequired
                                   ? "bg-amber-100 text-amber-800"
                                   : "bg-sand-200/70 text-sand-700"
                             }`}
                           >
                             {uploaded
                               ? t("addProperty.doc.uploaded")
-                              : spec.required
+                              : docRequired
                                 ? t("addProperty.doc.required")
                                 : t("addProperty.doc.optional")}
                           </span>
@@ -1044,7 +1109,7 @@ export default function AddPropertyPage() {
 
             {error && (
               <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-[12.5px] font-bold text-rose-700">
-                {t(error)}
+                {error}
               </p>
             )}
 

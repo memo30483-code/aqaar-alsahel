@@ -57,7 +57,6 @@ export const homeMessages = {
     ar: "تواصل عبر إدارة الموقع",
     en: "contact via site management",
   },
-  "home.hero.place": { ar: "رأس البر · لسان البحر", en: "Ras El Bar · the river tongue" },
   "home.hero.imageAlt": {
     ar: "غروب على شاطئ البحر المتوسط في رأس البر",
     en: "Sunset over the Mediterranean beach in Ras El Bar",

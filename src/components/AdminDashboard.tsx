@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BarChart3,
   Building2,
+  ClipboardList,
   Gift,
   Home,
   LayoutList,
@@ -40,6 +41,7 @@ import {
 import AdminListingsTab from "@/components/admin/AdminListingsTab";
 import AdminOffersTab from "@/components/admin/AdminOffersTab";
 import AdminSiteTab from "@/components/admin/AdminSiteTab";
+import AdminAddPropertyFieldsTab from "@/components/admin/AdminAddPropertyFieldsTab";
 import AdminMarqueeTab from "@/components/admin/AdminMarqueeTab";
 import AdminUsersTab from "@/components/admin/AdminUsersTab";
 import AdminPermissionsTab from "@/components/admin/AdminPermissionsTab";
@@ -50,6 +52,7 @@ import AdminOverviewTab from "@/components/admin/AdminOverviewTab";
 type TabKey =
   | "overview"
   | "listings"
+  | "propertyFields"
   | "offers"
   | "site"
   | "marquee"
@@ -66,6 +69,12 @@ const TABS: {
 }[] = [
   { key: "overview", label: "نظرة عامة", Icon: BarChart3 },
   { key: "listings", label: "الإعلانات", Icon: LayoutList, permission: "listings.view" },
+  {
+    key: "propertyFields",
+    label: "حقول إضافة العقار",
+    Icon: ClipboardList,
+    permission: "site.settings",
+  },
   { key: "offers", label: "العروض والتخفيضات", Icon: Gift, permission: "offers.view" },
   { key: "site", label: "إعدادات الموقع", Icon: Settings, permission: "site.settings" },
   { key: "marquee", label: "البنرات والشريط", Icon: Megaphone, permission: "banners.manage" },
@@ -260,6 +269,14 @@ export default function AdminDashboard() {
             users={users}
             can={can}
             onChange={setListings}
+            notify={notify}
+            reloadLogs={reloadLogs}
+          />
+        )}
+
+        {tab === "propertyFields" && (
+          <AdminAddPropertyFieldsTab
+            can={can}
             notify={notify}
             reloadLogs={reloadLogs}
           />
