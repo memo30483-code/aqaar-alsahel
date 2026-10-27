@@ -9,7 +9,6 @@ import {
   ChevronDown,
   FileText,
   Headset,
-  Landmark,
   Lock,
   MapPin,
   ScanLine,
@@ -24,7 +23,6 @@ import {
   matchesCity,
 } from "@/components/Filters";
 import PropertyCard from "@/components/PropertyCard";
-import PropertyMapDynamic from "@/components/PropertyMapDynamic";
 import { FeaturedAdSlot } from "@/components/FeaturedAds";
 import MarqueeStrip from "@/components/MarqueeStrip";
 import AdSlider from "@/components/AdSlider";
@@ -90,7 +88,7 @@ export default function HomePage() {
   const [blocks, setBlocks] = useState<Record<string, boolean> | null>(null);
 
   useEffect(() => {
-    const keys: BlockKey[] = ["hero","verify_strip","marquee","featured_listings","projects_slider","ad_slider","inline_ad","ad_band","market_panel","story_dossier","manage_note"];
+    const keys: BlockKey[] = ["hero","verify_strip","marquee","featured_listings","projects_slider","ad_slider","inline_ad","ad_band","story_dossier","manage_note"];
     const next: Record<string, boolean> = {};
     keys.forEach((key) => {
       next[key] = isBlockEnabled(key);
@@ -154,12 +152,6 @@ export default function HomePage() {
     }
     return purposed;
   }, [allProperties, filters, search, selectedCity, sort]);
-
-  const averagePricePerMeter = useMemo(() => {
-    if (visible.length === 0) return null;
-    const total = visible.reduce((sum, property) => sum + property.price / property.area, 0);
-    return Math.round(total / visible.length);
-  }, [visible]);
 
   const cityTitle = filters.city ? cityLabel(filters.city, t) : t("city.all");
 
@@ -814,54 +806,6 @@ export default function HomePage() {
       <div key="projects_slider" style={{ order: orderOf("projects_slider") }} className="w-full">
       {/* ====================== PROJECTS ====================== */}
       <ProjectsSlider />
-      </div>
-      )}
-
-      {showBlock("market_panel") && (
-      <div key="market_panel" style={{ order: orderOf("market_panel") }} className="w-full">
-      {/* ====================== MAP + MARKET ====================== */}
-      <section className="border-t border-sand-200 bg-sand-50 py-12 sm:py-14">
-        <div className="mx-auto grid w-full max-w-[1240px] gap-5 px-4 sm:px-6 lg:grid-cols-[1.5fr_0.7fr]">
-          <div>
-            <h2 className="text-xl font-black text-ocean-900">
-              {t("home.map.title", { city: cityTitle })}
-            </h2>
-            <p className="mt-1 text-xs font-medium text-sand-700">
-              {t("home.map.sub")}
-            </p>
-            <div className="mt-4 h-[360px] overflow-hidden rounded-2xl border border-sand-200 bg-white">
-              <PropertyMapDynamic properties={visible} selectedCity={selectedCity} />
-            </div>
-          </div>
-
-          <div className="flex flex-col justify-between rounded-2xl border border-sand-200 bg-white p-5 shadow-soft">
-            <div>
-              <p className="flex items-center gap-1.5 text-[11px] font-extrabold text-gold-700">
-                <Landmark className="h-3.5 w-3.5" />
-                {t("home.market.title", { city: cityTitle })}
-              </p>
-              <p className="mt-4 text-xs font-semibold text-sand-700">
-                {t("home.market.avg")}
-              </p>
-              <p className="mt-1 text-3xl font-black text-ocean-900">
-                {averagePricePerMeter === null
-                  ? "—"
-                  : formatWithSymbol(averagePricePerMeter)}
-              </p>
-              <p className="mt-2 text-[11px] text-sand-600">
-                {t("home.market.basedOn", { count: visible.length })}
-              </p>
-            </div>
-            <Link
-              href="/market-guide"
-              className="mt-5 inline-flex items-center justify-center gap-1.5 rounded-xl bg-ocean-900 px-4 py-2.5 text-xs font-extrabold text-white transition hover:bg-ocean-950"
-            >
-              {t("nav.compass")}
-              <ArrowLeft className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        </div>
-      </section>
       </div>
       )}
 

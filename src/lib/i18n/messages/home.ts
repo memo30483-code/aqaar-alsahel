@@ -191,6 +191,14 @@ export const homeMessages = {
 
   "home.ai.eyebrow": { ar: "مساعد ذكي", en: "AI assistant" },
   "home.ai.launcher": { ar: "اسأل مساعد FAMILY", en: "Ask FAMILY assistant" },
+  "home.ai.mascotHint": {
+    ar: "اسألني عن أي عقار 👋",
+    en: "Ask me about any property 👋",
+  },
+  "home.ai.mascotAria": {
+    ar: "مساعد FAMILY — اضغط لفتح المحادثة",
+    en: "FAMILY assistant — tap to open the chat",
+  },
   "home.ai.launcherShort": { ar: "مساعد FAMILY", en: "FAMILY assistant" },
   "home.adstrip.title": {
     ar: "شركاء ومطورون",

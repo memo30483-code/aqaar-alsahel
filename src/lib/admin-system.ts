@@ -18,7 +18,6 @@ export type BlockKey =
   | "ad_slider"
   | "inline_ad"
   | "ad_band"
-  | "market_panel"
   | "story_dossier"
   | "manage_note";
 
@@ -244,7 +243,6 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     { key: "projects_slider", enabled: true, order: 6 },
     { key: "ad_slider", enabled: true, order: 7 },
     { key: "inline_ad", enabled: true, order: 8 },
-    { key: "market_panel", enabled: true, order: 9 },
     { key: "story_dossier", enabled: true, order: 10 },
     { key: "manage_note", enabled: true, order: 11 },
   ],

@@ -78,7 +78,10 @@ export default function OffersFloatingBanner() {
   if (!show) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[60] flex justify-center px-3 pb-3 sm:px-6 sm:pb-6">
+    <div
+      data-floating-banner="offers"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-[60] flex justify-center px-3 pb-3 sm:px-6 sm:pb-6"
+    >
       <div className="offers-banner-in pointer-events-auto relative w-full max-w-2xl overflow-hidden rounded-[26px] border border-[rgba(217,185,92,0.45)] bg-[linear-gradient(120deg,#0f172a_0%,#1c2547_45%,#0f172a_100%)] p-4 shadow-[0_50px_120px_-40px_rgba(15,23,42,0.85)] sm:p-5">
         <span
           aria-hidden

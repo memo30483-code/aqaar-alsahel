@@ -28,7 +28,6 @@ const BLOCK_LABELS: Record<BlockKey, string> = {
   ad_slider: "شريط إعلانات منزلق",
   inline_ad: "الإعلان الداخلي بين العقارات",
   ad_band: "شريط الإعلانات العريض",
-  market_panel: "لوحة السوق والخريطة",
   story_dossier: "قصة الموقع + ملف التحقق",
   manage_note: "شريط سياسة التواصل أسفل الصفحة",
 };

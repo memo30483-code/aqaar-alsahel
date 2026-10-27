@@ -3,6 +3,7 @@ import { Cairo } from "next/font/google";
 import AppProviders from "@/components/AppProviders";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import FeaturedAds from "@/components/FeaturedAds";
 import AssistantWidget from "@/components/AssistantWidget";
 import OffersFloatingBanner from "@/components/OffersFloatingBanner";
 import "./globals.css";
@@ -31,6 +32,7 @@ export default function RootLayout({
           <Header />
           <main className="flex-1 min-h-0 flex flex-col">{children}</main>
           <Footer />
+          <FeaturedAds />
           <AssistantWidget />
           <OffersFloatingBanner />
         </AppProviders>

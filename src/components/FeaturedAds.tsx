@@ -33,13 +33,12 @@ export default function FeaturedAds() {
 
   return (
     <div
+      data-floating-banner={visible ? "featured-ad" : undefined}
       className={`fixed inset-x-3 bottom-3 z-40 transition duration-500 sm:inset-x-auto sm:left-6 sm:w-[22rem] ${
         visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
       }`}
     >
       <div className="relative overflow-hidden rounded-3xl border border-gold-400/30 bg-ocean-950 p-4 shadow-2xl sm:p-5">
-        <MashrabiyaLayer tone="dark" className="opacity-[0.07]" />
-        <OrnateFrame tone="dark" className="inset-1.5" radiusClassName="rounded-[1.25rem]" />
         <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-gradient-to-br from-gold-400/30 to-transparent blur-2xl" />
 
         <div className="relative flex items-start gap-3">

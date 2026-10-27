@@ -341,11 +341,12 @@ export default function PropertyDetail({ property }: Props) {
               <div className="p-5 pb-4 sm:p-6 sm:pb-4">
                 <Eyebrow>{t("property.location")}</Eyebrow>
                 <h2 className="mt-2 text-lg font-black text-ocean-900">
-                  موقع تقريبي داخل النطاق
+                  موقع العقار على الخريطة
                 </h2>
                 <p className="mt-1 text-[12px] font-medium text-sand-700">
-                  {property.district}، {cityLabel(property.city, t)} — العنوان الدقيق
-                  يُنسَّق عبر إدارة الموقع أثناء المعاينة.
+                  {property.district}، {cityLabel(property.city, t)} — العلامة الذهبية
+                  تشير إلى الموقع التقريبي، والعنوان الدقيق يُنسَّق عبر إدارة الموقع
+                  أثناء المعاينة.
                 </p>
               </div>
               <div className="px-3 pb-3 sm:px-5 sm:pb-5">
