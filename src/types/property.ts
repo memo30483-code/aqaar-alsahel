@@ -17,6 +17,23 @@ export type PropertyType =
 
 export type SellerType = "فرد" | "مطور" | "مسوق";
 
+/** حالة الإعلان — لا يُنشر أي إعلان قبل موافقة إدارة المنصة */
+export type PropertyStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "archived"
+  | "deleted";
+
+/** بيانات وصفية لمستند مرفوع مع طلب نشر العقار */
+export interface PropertyDocument {
+  key: string;
+  label: string;
+  name: string;
+  size: number;
+  type: string;
+}
+
 /** نوع العرض: بيع أو إيجار */
 export type Purpose = "بيع" | "إيجار";
 
@@ -43,6 +60,14 @@ export interface Property {
   lng: number;
   /** نوع العرض — غياب القيمة يعني "بيع" للإعلانات القديمة */
   purpose?: Purpose;
+  /** حالة النشر — غياب القيمة في إعلانات المستخدمين يعني "قيد المراجعة" */
+  status?: PropertyStatus;
+  /** المستندات المرفوعة مع الطلب (وصفية — التخزين الآمن يُربط لاحقاً) */
+  documents?: PropertyDocument[];
+  /** تاريخ إرسال الطلب للمراجعة */
+  submittedAt?: string;
+  /** رقم مرجعي يظهر لصاحب العقار لمتابعة الطلب */
+  reference?: string;
 }
 
 export interface PropertyFilters {

@@ -45,6 +45,7 @@ import { cityLabel } from "@/lib/i18n/cities";
 import { propertyTypeLabel } from "@/lib/i18n/taxonomy";
 import { useCurrency } from "@/lib/currency";
 import { blockOrder, isBlockEnabled, type BlockKey } from "@/lib/admin-system";
+import { filterPublishedProperties } from "@/lib/public-listings";
 
 type SortKey = "newest" | "priceDesc" | "priceAsc";
 
@@ -111,7 +112,8 @@ export default function HomePage() {
 
   const allProperties = useMemo(
     () =>
-      [...userProperties, ...mockProperties].map((property) => ({
+      /* لا يظهر للزوار إلا ما وافقت عليه إدارة المنصة */
+      filterPublishedProperties([...userProperties, ...mockProperties]).map((property) => ({
         ...property,
         /* بيانات التواصل للمالك لا تُمرَّر لواجهة العرض — التواصل عبر إدارة الموقع */
         whatsapp: "",

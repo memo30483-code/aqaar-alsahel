@@ -3,9 +3,13 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  AlertTriangle,
   Archive,
   Check,
+  Clock,
   Eye,
+  FileCheck2,
+  Paperclip,
   RefreshCw,
   Replace,
   Search,
@@ -45,6 +49,20 @@ const FILTERS: { key: "all" | ListingStatus; label: string }[] = [
   { key: "deleted", label: "سلة المحذوفات" },
 ];
 
+/** عدد المستندات الأساسية المطلوبة قبل اعتماد إعلان مستخدم */
+const REQUIRED_DOCUMENTS = 4;
+
+/** هل ينقص الإعلان مستندات تمنع اعتماده؟ (لا ينطبق على البيانات التجريبية) */
+function hasIncompleteDocuments(listing: AdminListing): boolean {
+  if (listing.source !== "user") return false;
+  return (listing.documents?.length ?? 0) < REQUIRED_DOCUMENTS;
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
 export default function AdminListingsTab({
   listings,
   users,
@@ -61,6 +79,7 @@ export default function AdminListingsTab({
   const [replaceTarget, setReplaceTarget] = useState("");
   const [replaceNote, setReplaceNote] = useState("");
   const [historyFor, setHistoryFor] = useState<AdminListing | null>(null);
+  const [docsFor, setDocsFor] = useState<AdminListing | null>(null);
 
   const session = typeof window !== "undefined" ? getSession() : null;
   const performerId =
@@ -97,6 +116,13 @@ export default function AdminListingsTab({
     note?: string
   ) => {
     if (!session) return;
+    /* لا اعتماد لأي إعلان مستخدم قبل استيفاء المستندات الأساسية */
+    if (status === "approved" && hasIncompleteDocuments(listing)) {
+      notify(
+        `لا يمكن اعتماد «${listing.title}» قبل رفع المستندات الأساسية الأربعة`
+      );
+      return;
+    }
     saveListingOverride(listing.id, { ...(status ? { status } : {}), ...patch });
     if (status) {
       onChange(listings.map((row) => (row.id === listing.id ? { ...row, status } : row)));
@@ -214,6 +240,11 @@ export default function AdminListingsTab({
                       {listing.featuredByAdmin && (
                         <Star className="h-3.5 w-3.5 fill-[#b8963b] text-gold-600" />
                       )}
+                      {hasIncompleteDocuments(listing) && (
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9.5px] font-black text-amber-800">
+                          مستندات ناقصة
+                        </span>
+                      )}
                     </div>
                     <p className="mt-0.5 text-[11px] text-sand-500">
                       {listing.id} • {listing.source === "user" ? "مستخدم" : "بيانات تجريبية"}
@@ -225,6 +256,17 @@ export default function AdminListingsTab({
                     <p>أضافه: {listing.addedByName ?? "—"}</p>
                     <p>المسئول: {listing.assignedToName ?? "غير معيّن"}</p>
                     {listing.approvedBy && <p>اعتمده: {listing.approvedBy}</p>}
+                    {listing.reference && (
+                      <p>
+                        رقم الطلب: <span dir="ltr">{listing.reference}</span>
+                      </p>
+                    )}
+                    {listing.submittedAt && (
+                      <p>
+                        أُرسل:{" "}
+                        {new Date(listing.submittedAt).toLocaleDateString("ar-EG")}
+                      </p>
+                    )}
                   </td>
                   <td className="p-3">
                     <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold ${STATUS_STYLE[listing.status]}`}>
@@ -237,14 +279,23 @@ export default function AdminListingsTab({
                         <Eye className="h-3 w-3" /> معاينة
                       </Link>
 
-                      {listing.status !== "approved" && can("listings.approve") && (
-                        <button
-                          onClick={() => runAction(listing, "approved", "approved")}
-                          className={`${ROW_ACTION} border-emerald-200 text-emerald-700 hover:border-emerald-400 hover:text-emerald-700`}
-                        >
-                          <Check className="h-3 w-3" /> موافقة
-                        </button>
-                      )}
+                      {listing.status !== "approved" &&
+                        can("listings.approve") &&
+                        (hasIncompleteDocuments(listing) ? (
+                          <span
+                            title="لا يمكن الاعتماد قبل رفع المستندات الأساسية الأربعة"
+                            className={`${ROW_ACTION} cursor-not-allowed border-sand-200 text-sand-400`}
+                          >
+                            <Check className="h-3 w-3" /> موافقة
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => runAction(listing, "approved", "approved")}
+                            className={`${ROW_ACTION} border-emerald-200 text-emerald-700 hover:border-emerald-400 hover:text-emerald-700`}
+                          >
+                            <Check className="h-3 w-3" /> موافقة
+                          </button>
+                        ))}
 
                       {listing.status !== "rejected" && can("listings.reject") && (
                         <button
@@ -318,6 +369,21 @@ export default function AdminListingsTab({
                         >
                           <Star className="h-3 w-3" />
                           {listing.featuredByAdmin ? "إلغاء التمييز" : "تمييز"}
+                        </button>
+                      )}
+
+                      {listing.source === "user" && (
+                        <button
+                          onClick={() => setDocsFor(listing)}
+                          className={`${ROW_ACTION} ${
+                            hasIncompleteDocuments(listing)
+                              ? "border-amber-200 text-amber-700"
+                              : "border-emerald-200 text-emerald-700"
+                          }`}
+                        >
+                          <Paperclip className="h-3 w-3" />
+                          المستندات ({listing.documents?.length ?? 0}/
+                          {REQUIRED_DOCUMENTS})
                         </button>
                       )}
 
@@ -490,6 +556,84 @@ export default function AdminListingsTab({
                 تنفيذ الاستبدال
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {docsFor && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-ocean-950/50 p-4">
+          <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-black text-ocean-900">
+                  مستندات السلامة القانونية
+                </h3>
+                <p className="mt-1 text-sm text-sand-600">{docsFor.title}</p>
+                {docsFor.reference && (
+                  <p className="mt-0.5 text-[11px] font-bold text-sand-500" dir="ltr">
+                    {docsFor.reference}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={() => setDocsFor(null)}
+                aria-label="إغلاق"
+                className="rounded-lg p-1 text-sand-500 transition hover:bg-sand-100"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {hasIncompleteDocuments(docsFor) && (
+              <p className="mt-3 flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11.5px] font-semibold leading-6 text-amber-900">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                المستندات ناقصة — لا يمكن اعتماد الإعلان ونشره قبل رفع المستندات
+                الأساسية الأربعة.
+              </p>
+            )}
+
+            <div className="mt-4 max-h-80 space-y-2 overflow-y-auto">
+              {(docsFor.documents ?? []).map((doc, index) => (
+                <div
+                  key={`${doc.key}-${index}`}
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-sand-200 p-3"
+                >
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-600">
+                      <FileCheck2 className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-[12px] font-bold text-ocean-900">
+                        {doc.label}
+                      </p>
+                      <p className="truncate text-[10.5px] text-sand-500">
+                        {doc.name}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="shrink-0 text-[10px] font-bold text-sand-500">
+                    {formatBytes(doc.size)}
+                  </span>
+                </div>
+              ))}
+              {(docsFor.documents ?? []).length === 0 && (
+                <p className="py-6 text-center text-sm text-sand-600">
+                  لا توجد مستندات مرفوعة مع هذا الطلب.
+                </p>
+              )}
+            </div>
+
+            <p className="mt-4 flex items-center gap-1.5 text-[10.5px] font-semibold text-sand-500">
+              <Clock className="h-3 w-3" />
+              المستندات للمراجعة الداخلية فقط ولا تظهر للزوار.
+            </p>
+
+            <button
+              onClick={() => setDocsFor(null)}
+              className="mt-4 w-full rounded-full border border-sand-200 py-2 text-sm font-bold text-sand-700"
+            >
+              إغلاق
+            </button>
           </div>
         </div>
       )}

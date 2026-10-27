@@ -3,7 +3,7 @@
  * يدعم الصلاحيات المخصصة، إعدادات الموقع، العروض، البانرات، وسجل النشاطات
  */
 
-import type { Property } from "@/types/property";
+import type { Property, PropertyDocument } from "@/types/property";
 import type { UserRole } from "@/lib/session";
 import { mockProperties, USER_PROPERTIES_KEY } from "@/data/properties";
 
@@ -57,6 +57,11 @@ export interface AdminListing {
   sellerType: string;
   status: ListingStatus;
   source: "user" | "demo";
+  /** رقم متابعة الطلب الذي ظهر لصاحب العقار */
+  reference?: string;
+  submittedAt?: string;
+  /** المستندات المرفقة بالطلب — لا تُعرض للجمهور */
+  documents?: PropertyDocument[];
   addedBy?: string;
   addedByName?: string;
   assignedTo?: string;
@@ -570,6 +575,9 @@ export function getListings(): AdminListing[] {
       approvedBy: latestApproval?.performedByName,
       approvedAt: latestApproval?.timestamp,
       featuredByAdmin: override?.featuredByAdmin || false,
+      reference: property.reference,
+      submittedAt: property.submittedAt,
+      documents: property.documents,
     };
   };
 
@@ -577,6 +585,13 @@ export function getListings(): AdminListing[] {
     ...getUserProperties().map((property) => toRow(property, "user")),
     ...mockProperties.map((property) => toRow(property, "demo")),
   ];
+}
+
+/** معرّفات الإعلانات المنشورة فعلياً — بعد موافقة الإدارة فقط */
+export function getApprovedListingIds(): string[] {
+  return getListings()
+    .filter((listing) => listing.status === "approved")
+    .map((listing) => listing.id);
 }
 
 export function saveListingOverride(id: string, patch: ListingOverride): void {

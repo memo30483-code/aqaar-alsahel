@@ -6,17 +6,22 @@ import { useRouter } from "next/navigation";
 import {
   Camera,
   Check,
+  Clock,
+  FileCheck2,
   FileText,
   ImagePlus,
   Lock,
   MapPin,
   ShieldCheck,
   Sparkles,
+  Trash2,
+  Upload,
 } from "lucide-react";
 import { sellerTypes, USER_PROPERTIES_KEY } from "@/data/properties";
 import {
   City,
   Property,
+  PropertyDocument,
   PropertyType,
   Purpose,
   SellerType,
@@ -31,6 +36,64 @@ import {
 import { useCurrency } from "@/lib/currency";
 import { getSession } from "@/lib/session";
 import LocationPickerDynamic from "@/components/LocationPickerDynamic";
+
+type DocKey =
+  | "owner_id"
+  | "ownership"
+  | "license"
+  | "utility"
+  | "power_of_attorney"
+  | "tax";
+
+/** المستندات المطلوبة — الأربعة الأولى إلزامية للموافقة على النشر */
+const DOCUMENTS: {
+  key: DocKey;
+  labelKey: MessageKey;
+  labelAr: string;
+  required: boolean;
+}[] = [
+  {
+    key: "owner_id",
+    labelKey: "addProperty.doc.owner_id",
+    labelAr: "بطاقة المالك (الرقم القومي)",
+    required: true,
+  },
+  {
+    key: "ownership",
+    labelKey: "addProperty.doc.ownership",
+    labelAr: "عقد الملكية / سند الملكية",
+    required: true,
+  },
+  {
+    key: "license",
+    labelKey: "addProperty.doc.license",
+    labelAr: "الترخيص أو محضر الحيازة",
+    required: true,
+  },
+  {
+    key: "utility",
+    labelKey: "addProperty.doc.utility",
+    labelAr: "إيصال مرافق (كهرباء أو مياه)",
+    required: true,
+  },
+  {
+    key: "power_of_attorney",
+    labelKey: "addProperty.doc.power_of_attorney",
+    labelAr: "توكيل رسمي",
+    required: false,
+  },
+  {
+    key: "tax",
+    labelKey: "addProperty.doc.tax",
+    labelAr: "شهادة ضريبة عقارية",
+    required: false,
+  },
+];
+
+const REQUIRED_DOCS = DOCUMENTS.filter((doc) => doc.required);
+
+/** الحد الأقصى لحجم المستند الواحد: 5 ميجابايت */
+const MAX_DOC_SIZE = 5 * 1024 * 1024;
 
 interface FormState {
   title: string;
@@ -49,6 +112,14 @@ interface FormState {
   lng: number;
   imageName: string;
   imagePreview: string;
+  documents: Partial<Record<DocKey, PropertyDocument>>;
+  ack: boolean;
+}
+
+interface SubmittedRequest {
+  reference: string;
+  title: string;
+  city: City;
 }
 
 const START_CENTER = cityCenter("دمياط الجديدة");
@@ -74,6 +145,12 @@ function readUserProperties(): Property[] {
   } catch {
     return [];
   }
+}
+
+/** حجم المستند بصيغة مقروءة */
+function formatSize(bytes: number): string {
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
 
 /** ضغط الصورة قبل تخزينها كـ base64 لتقليل حجم localStorage */
@@ -132,6 +209,8 @@ const initial: FormState = {
   lng: START_CENTER.lng,
   imageName: "",
   imagePreview: "",
+  documents: {},
+  ack: false,
 };
 
 const FIELD =
@@ -160,7 +239,7 @@ function SectionHead({
           {step}
         </p>
         <h2 className="text-[15px] font-black text-ocean-900">{title}</h2>
-        {desc && <p className="mt-0.5 text-[11.5px] text-sand-700">{desc}</p>}
+        {desc && <p className="mt-0.5 text-[11.5px] leading-6 text-sand-700">{desc}</p>}
       </div>
     </div>
   );
@@ -172,8 +251,10 @@ export default function AddPropertyPage() {
   const { formatWithSymbol } = useCurrency();
   const [form, setForm] = useState<FormState>(initial);
   const [error, setError] = useState<MessageKey | "">("");
-  const [saved, setSaved] = useState(false);
+  const [submitted, setSubmitted] = useState<SubmittedRequest | null>(null);
   const [checking, setChecking] = useState(true);
+  /** إعادة تصفير حقول الملفات بعد حذف مستند حتى يمكن رفع نفس الملف مرة أخرى */
+  const [docNonce, setDocNonce] = useState(0);
 
   /** Auth Guard — يعرض null (لا محتوى) حتى يكتمل التحقق */
   useEffect(() => {
@@ -226,10 +307,64 @@ export default function AddPropertyPage() {
     }));
   };
 
+  const onDocument =
+    (spec: (typeof DOCUMENTS)[number]) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const isPdf = file.type === "application/pdf";
+      const isImage = file.type.startsWith("image/");
+      if (!isPdf && !isImage) {
+        setError("addProperty.errorDocType");
+        return;
+      }
+      if (file.size > MAX_DOC_SIZE) {
+        setError("addProperty.errorDocSize");
+        return;
+      }
+
+      setError("");
+      setForm((prev) => ({
+        ...prev,
+        documents: {
+          ...prev.documents,
+          [spec.key]: {
+            key: spec.key,
+            label: spec.labelAr,
+            name: file.name,
+            size: file.size,
+            type: file.type,
+          },
+        },
+      }));
+    };
+
+  const removeDocument = (key: DocKey) => {
+    setForm((prev) => {
+      const next = { ...prev.documents };
+      delete next[key];
+      return { ...prev, documents: next };
+    });
+    setDocNonce((value) => value + 1);
+  };
+
   const pricePerMeter =
     Number(form.price) > 0 && Number(form.area) > 0
       ? Math.round(Number(form.price) / Number(form.area))
       : null;
+
+  const uploadedRequired = REQUIRED_DOCS.filter(
+    (doc) => form.documents[doc.key]
+  ).length;
+
+  const resetForm = () => {
+    setForm(initial);
+    setError("");
+    setSubmitted(null);
+    setDocNonce((value) => value + 1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -257,11 +392,32 @@ export default function AddPropertyPage() {
       return;
     }
 
+    /* الصورة إلزامية — لا نشر بدون صورة حقيقية للعقار */
+    if (!form.imagePreview) {
+      setError("addProperty.errorImageRequired");
+      return;
+    }
+
+    /* كل المستندات الأساسية إلزامية قبل إرسال الطلب */
+    if (uploadedRequired < REQUIRED_DOCS.length) {
+      setError("addProperty.errorDocuments");
+      return;
+    }
+
+    if (!form.ack) {
+      setError("addProperty.errorAck");
+      return;
+    }
+
     setError("");
 
     const id = `user-${Date.now()}`;
-    const image =
-      form.imagePreview || `https://picsum.photos/seed/${id}/800/600`;
+    const reference = `AQF-${new Date().getFullYear()}-${String(
+      Date.now()
+    ).slice(-4)}`;
+    const documents = DOCUMENTS.map((doc) => form.documents[doc.key]).filter(
+      (doc): doc is PropertyDocument => Boolean(doc)
+    );
 
     const property: Property = {
       id,
@@ -277,10 +433,15 @@ export default function AddPropertyPage() {
       sellerType: form.sellerType,
       whatsapp,
       description: form.description.trim(),
-      image,
-      images: [image],
+      image: form.imagePreview,
+      images: [form.imagePreview],
       lat: form.lat,
       lng: form.lng,
+      /* لا نشر تلقائي: الطلب يبقى «قيد المراجعة» حتى موافقة الإدارة */
+      status: "pending",
+      documents,
+      submittedAt: new Date().toISOString(),
+      reference,
     };
 
     const list = readUserProperties();
@@ -294,16 +455,122 @@ export default function AddPropertyPage() {
       return;
     }
 
-    // تأكيد الحفظ ثم تحويل تلقائي للصفحة الرئيسية لرؤية العقار
-    setSaved(true);
-    setTimeout(() => router.push("/"), 700);
+    setSubmitted({ reference, title: property.title, city: property.city });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const steps = [
     { title: t("addProperty.steps.1.title"), desc: t("addProperty.steps.1.desc") },
     { title: t("addProperty.steps.2.title"), desc: t("addProperty.steps.2.desc") },
     { title: t("addProperty.steps.3.title"), desc: t("addProperty.steps.3.desc") },
+    { title: t("addProperty.steps.4.title"), desc: t("addProperty.steps.4.desc") },
   ];
+
+  /* ====================== شاشة نجاح الإرسال ====================== */
+  if (submitted) {
+    const reviewSteps = [
+      {
+        title: t("addProperty.success.step1.title"),
+        desc: t("addProperty.success.step1.desc"),
+      },
+      {
+        title: t("addProperty.success.step2.title"),
+        desc: t("addProperty.success.step2.desc"),
+      },
+      {
+        title: t("addProperty.success.step3.title"),
+        desc: t("addProperty.success.step3.desc"),
+      },
+      {
+        title: t("addProperty.success.step4.title"),
+        desc: t("addProperty.success.step4.desc"),
+      },
+    ];
+
+    return (
+      <div className="bg-sand-50">
+        <div className="mx-auto w-full max-w-[780px] px-4 py-10 sm:px-6">
+          <section className="overflow-hidden rounded-3xl border border-sand-200 bg-white p-6 shadow-[0_30px_80px_-70px_rgba(20,26,51,0.6)] sm:p-8">
+            <div className="text-center">
+              <span className="mx-auto grid h-16 w-16 place-items-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600">
+                <Check className="h-8 w-8" strokeWidth={3} />
+              </span>
+              <p className="mt-4 flex items-center justify-center gap-2 text-[10.5px] font-black uppercase tracking-[0.2em] text-gold-600">
+                <span aria-hidden className="h-px w-6 bg-gold-400/70" />
+                {t("addProperty.eyebrow")}
+              </p>
+              <h1 className="mt-1.5 text-[24px] font-black leading-9 text-ocean-900 sm:text-[28px]">
+                {t("addProperty.success.title")}
+              </h1>
+              <p className="mx-auto mt-2 max-w-xl text-[12.5px] leading-7 text-sand-800">
+                {t("addProperty.success.desc")}
+              </p>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-gold-200 bg-gold-50 px-4 py-4 text-center">
+              <p className="text-[10.5px] font-black uppercase tracking-[0.18em] text-gold-700">
+                {t("addProperty.success.reference")}
+              </p>
+              <p
+                className="mt-1 text-[26px] font-black tracking-[0.16em] text-ocean-900"
+                dir="ltr"
+              >
+                {submitted.reference}
+              </p>
+              <p className="mt-1 text-[11.5px] font-semibold text-sand-700">
+                {submitted.title} — {cityLabel(submitted.city, t)}
+              </p>
+            </div>
+
+            <div className="mt-6">
+              <p className="flex items-center gap-2 text-[10.5px] font-black uppercase tracking-[0.18em] text-gold-600">
+                <span aria-hidden className="h-px w-5 bg-gold-400/70" />
+                {t("addProperty.success.stepsTitle")}
+              </p>
+              <ol className="mt-4 space-y-3.5">
+                {reviewSteps.map((step, index) => (
+                  <li key={step.title} className="flex gap-3">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gold-300/70 bg-gold-50 text-[11px] font-black text-gold-700">
+                      {index + 1}
+                    </span>
+                    <div>
+                      <p className="text-[12.5px] font-extrabold text-ocean-900">
+                        {step.title}
+                      </p>
+                      <p className="mt-0.5 text-[11px] leading-5 text-sand-700">
+                        {step.desc}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            <p className="mt-5 flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-[11.5px] font-semibold leading-6 text-amber-900">
+              <Clock className="mt-0.5 h-4 w-4 shrink-0" />
+              {t("addProperty.success.warning")}
+            </p>
+
+            <div className="mt-6 flex flex-wrap justify-center gap-2.5">
+              <button
+                type="button"
+                onClick={resetForm}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-l from-gold-500 to-gold-400 px-6 py-3 text-[12.5px] font-black text-ocean-950 shadow-[0_18px_38px_-24px_rgba(201,146,42,0.95)] transition hover:-translate-y-0.5"
+              >
+                {t("addProperty.success.addAnother")}
+              </button>
+              <Link
+                href="/"
+                className="rounded-full border border-sand-200 px-6 py-3 text-[12.5px] font-bold text-ocean-800 transition hover:border-gold-300 hover:bg-gold-50/50"
+              >
+                {t("addProperty.success.home")}
+              </Link>
+            </div>
+          </section>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-sand-50">
@@ -345,17 +612,13 @@ export default function AddPropertyPage() {
                 </span>
               ))}
             </div>
-          </div>
-        </header>
 
-        {saved && (
-          <div className="mt-4 flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-            <Check className="h-4 w-4 shrink-0 text-emerald-600" strokeWidth={3} />
-            <p className="text-[12.5px] font-bold text-emerald-800">
-              {t("addProperty.saved")}
+            <p className="mt-4 flex items-start gap-2.5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-[11.5px] font-semibold leading-6 text-amber-900">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+              {t("addProperty.reviewNotice")}
             </p>
           </div>
-        )}
+        </header>
 
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_336px]">
           {/* ====================== FORM ====================== */}
@@ -659,6 +922,126 @@ export default function AddPropertyPage() {
               </div>
             </section>
 
+            {/* ---------- المستندات القانونية ---------- */}
+            <section className="rounded-3xl border border-sand-200 bg-white p-5 shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)] sm:p-6">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <SectionHead
+                  step="05"
+                  title={t("addProperty.sectionDocs")}
+                  desc={t("addProperty.sectionDocs.desc")}
+                  Icon={FileCheck2}
+                />
+                <span
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-[10.5px] font-black ${
+                    uploadedRequired === REQUIRED_DOCS.length
+                      ? "bg-emerald-50 text-emerald-700"
+                      : "bg-sand-100 text-sand-700"
+                  }`}
+                >
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  {uploadedRequired} / {REQUIRED_DOCS.length}
+                </span>
+              </div>
+
+              <p className="mt-3 text-[11px] font-medium text-sand-600">
+                {t("addProperty.doc.hint")}
+              </p>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {DOCUMENTS.map((spec) => {
+                  const doc = form.documents[spec.key];
+                  const uploaded = Boolean(doc);
+
+                  return (
+                    <div
+                      key={spec.key}
+                      className={`rounded-2xl border p-3.5 transition ${
+                        uploaded
+                          ? "border-emerald-200 bg-emerald-50/40"
+                          : "border-sand-200 bg-sand-50/60"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-[12px] font-extrabold leading-5 text-ocean-900">
+                            {t(spec.labelKey)}
+                          </p>
+                          <span
+                            className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[9.5px] font-black ${
+                              uploaded
+                                ? "bg-emerald-100 text-emerald-700"
+                                : spec.required
+                                  ? "bg-amber-100 text-amber-800"
+                                  : "bg-sand-200/70 text-sand-700"
+                            }`}
+                          >
+                            {uploaded
+                              ? t("addProperty.doc.uploaded")
+                              : spec.required
+                                ? t("addProperty.doc.required")
+                                : t("addProperty.doc.optional")}
+                          </span>
+                        </div>
+                        {uploaded ? (
+                          <FileCheck2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                        ) : (
+                          <Upload className="h-4 w-4 shrink-0 text-sand-500" />
+                        )}
+                      </div>
+
+                      {doc ? (
+                        <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-emerald-200/70 bg-white px-2.5 py-2">
+                          <span className="min-w-0">
+                            <span className="block truncate text-[10.5px] font-bold text-ocean-900">
+                              {doc.name}
+                            </span>
+                            <span className="block text-[9.5px] font-semibold text-sand-500">
+                              {formatSize(doc.size)}
+                            </span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeDocument(spec.key)}
+                            aria-label={t("addProperty.doc.remove")}
+                            className="grid h-7 w-7 shrink-0 place-items-center rounded-lg border border-rose-200 text-rose-600 transition hover:bg-rose-50"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="mt-3 inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-ocean-200 bg-white px-3 py-1.5 text-[11px] font-bold text-ocean-800 transition hover:border-gold-400 hover:bg-gold-50">
+                          <Upload className="h-3.5 w-3.5" />
+                          {t("addProperty.doc.upload")}
+                          <input
+                            key={`${spec.key}-${docNonce}`}
+                            type="file"
+                            accept="image/*,application/pdf"
+                            onChange={onDocument(spec)}
+                            className="sr-only"
+                          />
+                        </label>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* ---------- الإقرار ---------- */}
+            <label className="flex cursor-pointer items-start gap-3 rounded-3xl border border-sand-200 bg-white p-4 transition hover:border-gold-300 sm:p-5">
+              <input
+                type="checkbox"
+                checked={form.ack}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, ack: e.target.checked }))
+                }
+                className="mt-0.5 h-4 w-4 shrink-0 accent-[#c9922a]"
+              />
+              <span className="text-[11.5px] font-semibold leading-6 text-sand-800">
+                {t("addProperty.ack")}
+              </span>
+            </label>
+
             {error && (
               <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-[12.5px] font-bold text-rose-700">
                 {t(error)}
@@ -668,10 +1051,10 @@ export default function AddPropertyPage() {
             <div className="flex flex-wrap items-center gap-2.5 rounded-3xl border border-sand-200 bg-white p-4 sm:p-5">
               <button
                 type="submit"
-                disabled={saved}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-l from-gold-500 to-gold-400 px-7 py-3 text-[13px] font-black text-ocean-950 shadow-[0_18px_38px_-24px_rgba(201,146,42,0.95)] transition hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-l from-gold-500 to-gold-400 px-7 py-3 text-[13px] font-black text-ocean-950 shadow-[0_18px_38px_-24px_rgba(201,146,42,0.95)] transition hover:-translate-y-0.5"
               >
-                {saved ? t("addProperty.saving") : t("addProperty.submit")}
+                <ShieldCheck className="h-4 w-4" />
+                {t("addProperty.submit")}
               </button>
               <Link
                 href="/"

@@ -24,6 +24,7 @@ import { useI18n } from "@/lib/i18n";
 import { cityLabel } from "@/lib/i18n/cities";
 import { useCurrency } from "@/lib/currency";
 import { telHref, useSiteSettings } from "@/lib/site-settings";
+import { filterPublishedProperties } from "@/lib/public-listings";
 
 /** قراءة إعلانات المستخدم المحفوظة محلياً — تُستخدم لربط العروض بأصحابها */
 function readUserProperties(): Property[] {
@@ -53,7 +54,7 @@ export default function OffersPage() {
   }, []);
 
   const allProperties = useMemo(
-    () => [...userProperties, ...mockProperties],
+    () => filterPublishedProperties([...userProperties, ...mockProperties]),
     [userProperties]
   );
 

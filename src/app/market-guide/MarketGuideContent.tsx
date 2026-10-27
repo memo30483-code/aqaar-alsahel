@@ -8,6 +8,7 @@ import { useT, type MessageKey } from "@/lib/i18n";
 import { useCurrency } from "@/lib/currency";
 import { cityLabel } from "@/lib/i18n/cities";
 import { demandLabel } from "@/lib/i18n/taxonomy";
+import { filterPublishedProperties } from "@/lib/public-listings";
 
 type Demand = "مرتفع" | "موسمي" | "مستقر";
 
@@ -158,7 +159,7 @@ export default function MarketGuideContent() {
   }, []);
 
   const allProperties = useMemo(
-    () => [...userProperties, ...mockProperties],
+    () => filterPublishedProperties([...userProperties, ...mockProperties]),
     [userProperties]
   );
 
