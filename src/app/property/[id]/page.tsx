@@ -14,7 +14,7 @@ export function generateStaticParams() {
 export function generateMetadata({ params }: PageProps): Metadata {
   const property = getPropertyById(params.id);
   if (!property) {
-    return { title: "تفاصيل العقار | عقار الساحل" };
+    return { title: "تفاصيل العقار | عقار FAMILY" };
   }
   /* التوليد على السيرفر لا يملك وصولاً لتفضيل العملة المحفوظ محلياً، لذا تُستخدم EGP كعملة افتراضية */
   const price = formatConvertedPrice(
@@ -23,16 +23,18 @@ export function generateMetadata({ params }: PageProps): Metadata {
     "ar"
   );
   return {
-    title: `${property.title} | عقار الساحل`,
+    title: `${property.title} | عقار FAMILY`,
     description: `${property.title} في ${property.district}، ${property.city} — ${price}`,
   };
 }
 
 export default function PropertyPage({ params }: PageProps) {
+  const property = getPropertyById(params.id);
   return (
     <PropertyDetailClient
       id={params.id}
-      initialProperty={getPropertyById(params.id)}
+      /* لا تُمرَّر بيانات تواصل المالك للعميل — كل التواصل عبر إدارة الموقع */
+      initialProperty={property ? { ...property, whatsapp: "" } : undefined}
     />
   );
 }

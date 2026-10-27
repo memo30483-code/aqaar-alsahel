@@ -4,10 +4,10 @@
  */
 export const commonMessages = {
   /* ---------- الهوية ---------- */
-  "brand.name": { ar: "عقار الساحل", en: "Aqaar Alsahel" },
+  "brand.name": { ar: "عقار FAMILY", en: "Aqaar FAMILY" },
   "brand.tagline": {
-    ar: "سوق عقارات الساحل المفتوح",
-    en: "The open coastal real-estate market",
+    ar: "عقار أحلامك · 6 مدن",
+    en: "Your dream home · 6 cities",
   },
 
   /* ---------- التنقّل ---------- */
@@ -17,6 +17,9 @@ export const commonMessages = {
   "nav.legal": { ar: "الاستشارات القانونية", en: "Legal consultations" },
   "nav.login": { ar: "تسجيل الدخول / حساب جديد", en: "Sign in / New account" },
   "nav.loginShort": { ar: "تسجيل الدخول", en: "Sign in" },
+  "nav.account": { ar: "الحساب", en: "Account" },
+  "nav.logout": { ar: "تسجيل الخروج", en: "Sign out" },
+  "nav.adminPanel": { ar: "لوحة التحكم", en: "Admin dashboard" },
   "nav.addProperty": { ar: "أضف عقارك", en: "List your property" },
   "nav.menu": { ar: "القائمة", en: "Menu" },
   "nav.sectionCities": { ar: "المدن", en: "Cities" },
@@ -25,8 +28,8 @@ export const commonMessages = {
   /* ---------- صفحة تسجيل الدخول ---------- */
   "login.title": { ar: "تسجيل الدخول", en: "Sign in" },
   "login.hero.desc": {
-    ar: "أدخل بياناتك للدخول إلى حسابك على منصة عقار الساحل.",
-    en: "Enter your credentials to sign in to your Aqaar Alsahel account.",
+    ar: "أدخل بياناتك للدخول إلى حسابك على منصة عقار FAMILY.",
+    en: "Enter your credentials to sign in to your Aqaar FAMILY account.",
   },
   "login.email": { ar: "البريد الإلكتروني", en: "Email" },
   "login.password": { ar: "كلمة السر", en: "Password" },
@@ -58,16 +61,16 @@ export const commonMessages = {
 
   /* ---------- قائمة الشركات العقارية ---------- */
   "companies.heading": {
-    ar: "الشركات العقارية في الساحل",
-    en: "Real-estate companies on the coast",
+    ar: "الشركات العقارية في الدلتا",
+    en: "Real-estate companies in the Delta",
   },
   "companies.developers": {
     ar: "المطورون العقاريون",
     en: "Real-estate developers",
   },
   "companies.developersDesc": {
-    ar: "شركات التطوير ومشاريعها في مدن الساحل الست",
-    en: "Development companies and their projects across the 6 coastal cities",
+    ar: "شركات التطوير ومشاريعها في مدن الدلتا الست",
+    en: "Development companies and their projects across the six Delta cities",
   },
   "companies.brokers": {
     ar: "المسوقون والوسطاء العقاريون",
@@ -133,13 +136,39 @@ export const commonMessages = {
 
   /* ---------- الفوتر ---------- */
   "footer.tagline": {
-    ar: "سوق عقاري مفتوح لمدن الساحل الجديدة",
-    en: "An open real-estate market for the new coastal cities",
+    ar: "سوق عقاري موثّق في ست مدن",
+    en: "A documented real-estate market across six cities",
   },
   "footer.home": { ar: "الرئيسية", en: "Home" },
+  "footer.about": {
+    ar: "منصة عقارية موثّقة في رأس البر، دمياط، دمياط الجديدة، فارسكور، جمصة، والمنصورة الجديدة. كل عرض يتم التحقق من مستنداته وسلامته القانونية قبل النشر، وكل تواصل يتم عبر إدارة الموقع.",
+    en: "A documented real-estate platform across Ras El Bar, Damietta, New Damietta, Faraskur, Gamasa and New Mansoura. Every listing is checked for documents and legal safety before publishing, and all contact goes through site management.",
+  },
+  "footer.quickLinks": { ar: "روابط سريعة", en: "Quick links" },
+  "footer.cities": { ar: "المدن", en: "Cities" },
+  "footer.newsletter.title": { ar: "خليك على اطلاع", en: "Stay in the loop" },
+  "footer.newsletter.desc": {
+    ar: "اشترك لتصلك أفضل الفرص العقارية في المدن الست قبل غيرك.",
+    en: "Subscribe to get the best property opportunities across the six cities.",
+  },
+  "footer.newsletter.placeholder": { ar: "بريدك الإلكتروني", en: "Your email" },
+  "footer.newsletter.cta": { ar: "اشترك", en: "Subscribe" },
+  "footer.newsletter.success": {
+    ar: "تم تسجيل بريدك — هنبعتلك أول الفرص.",
+    en: "You're subscribed — we'll send you the best opportunities.",
+  },
+  "footer.managementNote": {
+    ar: "كل التواصل عبر إدارة الموقع",
+    en: "All contact goes through site management",
+  },
+  "footer.contact.title": { ar: "خدمة العملاء", en: "Customer service" },
+  "footer.links.privacy": { ar: "سياسة الخصوصية", en: "Privacy policy" },
+  "footer.links.terms": { ar: "الشروط والأحكام", en: "Terms & conditions" },
+  "footer.links.advertise": { ar: "أعلن معنا", en: "Advertise" },
+  "footer.links.sitemap": { ar: "خريطة الموقع", en: "Sitemap" },
   "footer.rights": {
-    ar: "© {year} عقار الساحل — MVP تجريبي ببيانات وهمية",
-    en: "© {year} Aqaar Alsahel — Demo MVP with mock data",
+    ar: "© {year} عقار FAMILY — جميع الحقوق محفوظة",
+    en: "© {year} Aqaar FAMILY — All rights reserved",
   },
 
   /* ---------- وسائل التواصل والدعم الفني ---------- */

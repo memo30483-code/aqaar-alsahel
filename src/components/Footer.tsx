@@ -1,16 +1,11 @@
 "use client";
 
-import { Headset, Mail, Phone, Clock3 } from "lucide-react";
-import { useI18n } from "@/lib/i18n";
-
-/* أيقونات تواصل اجتماعي مخصصة (ليست متوفرة في lucide-react) */
-function WhatsAppIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.297-.497.1-.198.05-.371-.025-.52-.074-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
-    </svg>
-  );
-}
+import Link from "next/link";
+import { useState } from "react";
+import { Check, Clock3, Mail, MapPin, Phone, Send, ShieldCheck } from "lucide-react";
+import { useI18n, type MessageKey } from "@/lib/i18n";
+import { CITY_KEYS } from "@/lib/i18n/cities";
+import BrandLogo from "@/components/BrandLogo";
 
 function XIcon({ className }: { className?: string }) {
   return (
@@ -23,17 +18,26 @@ function XIcon({ className }: { className?: string }) {
 function FacebookIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
-      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
     </svg>
   );
 }
 
 function InstagramIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
-      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
     </svg>
   );
 }
@@ -41,74 +45,190 @@ function InstagramIcon({ className }: { className?: string }) {
 function YouTubeIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
-      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
     </svg>
   );
 }
 
-/** الروابط الاجتماعية مع أنماط التحويم الخاصة بكل منصة */
 const SOCIAL_LINKS = [
-  { label: "WhatsApp", href: "https://wa.me/201001234567", icon: WhatsAppIcon, hover: "hover:bg-emerald-500/20 hover:text-emerald-300" },
-  { label: "Facebook", href: "https://facebook.com", icon: FacebookIcon, hover: "hover:bg-blue-500/20 hover:text-blue-300" },
-  { label: "X", href: "https://x.com", icon: XIcon, hover: "hover:bg-white/20 hover:text-white" },
-  { label: "Instagram", href: "https://instagram.com", icon: InstagramIcon, hover: "hover:bg-pink-500/20 hover:text-pink-300" },
-  { label: "YouTube", href: "https://youtube.com", icon: YouTubeIcon, hover: "hover:bg-red-500/20 hover:text-red-300" },
+  { label: "Facebook", href: "https://facebook.com", icon: FacebookIcon },
+  { label: "X", href: "https://x.com", icon: XIcon },
+  { label: "Instagram", href: "https://instagram.com", icon: InstagramIcon },
+  { label: "YouTube", href: "https://youtube.com", icon: YouTubeIcon },
 ];
 
+const QUICK_LINKS: { key: MessageKey; href: string }[] = [
+  { key: "home.listings.heading", href: "/#properties" },
+  { key: "home.projects.title", href: "/#projects" },
+  { key: "nav.compass", href: "/market-guide" },
+  { key: "nav.legal", href: "/legal-consultational" },
+  { key: "nav.addProperty", href: "/add-property" },
+];
+
+/** فوتر غامق بثلاثة أعمدة + نشرة بريدية + ملاحظة «كل التواصل عبر الإدارة» */
 export default function Footer() {
   const { t } = useI18n();
+  const [email, setEmail] = useState("");
+  const [subscribed, setSubscribed] = useState(false);
+
+  const handleSubscribe = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!email.trim()) return;
+    setSubscribed(true);
+    setEmail("");
+  };
 
   return (
-    <footer className="border-t border-ocean-800/20 bg-ocean-950 text-ocean-100">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        {/* شريط بيانات الدعم الفني وساعات العمل - السطر الرئيسي */}
-        <section
-          aria-labelledby="footer-support-title"
-          className="flex flex-col gap-3 py-2 sm:flex-row sm:items-center sm:justify-between"
-        >
-          <div className="flex flex-col gap-2 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-5">
-            <a
-              href="tel:+201001234567"
-              className="flex items-center gap-1.5 font-semibold text-white transition hover:text-gold-300"
-              dir="ltr"
-            >
-              <Phone className="h-4 w-4 text-gold-300" />
-              +20 100 123 4567
-            </a>
-            <a
-              href="mailto:support@aqaar-alsahel.com"
-              className="flex items-center gap-1.5 font-semibold text-white transition hover:text-gold-300"
-              dir="ltr"
-            >
-              <Mail className="h-4 w-4 text-gold-300" />
-              support@aqaar-alsahel.com
-            </a>
-            <span className="flex items-center gap-1.5 font-semibold text-white">
-              <Clock3 className="h-4 w-4 text-gold-300" />
-              {t("footer.support.hoursValue")}
+    <footer className="relative overflow-hidden border-t border-gold-500/25 bg-[#0f1428] text-sand-200">
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -left-40 -top-56 h-[480px] w-[480px] rounded-full bg-[radial-gradient(circle,rgba(201,146,42,0.18),transparent_62%)]"
+      />
+      <div className="relative mx-auto w-full max-w-[1240px] px-4 pb-0 pt-14 sm:px-6">
+        <div className="grid gap-10 pb-10 md:grid-cols-2 lg:grid-cols-[1.4fr_0.8fr_0.8fr_1.1fr] lg:gap-12">
+          {/* الهوية + نبذة + سوشيال */}
+          <div>
+            <Link href="/" aria-label={t("brand.name")} className="inline-flex">
+              <BrandLogo tone="dark" />
+            </Link>
+            <p className="mt-4 max-w-[330px] text-xs leading-7 text-[#98a1b8]">
+              {t("footer.about")}
+            </p>
+            <div className="mt-4 flex gap-2">
+              {SOCIAL_LINKS.map(({ label, href, icon: Icon }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.06] text-[#c9d0e2] transition hover:border-gold-400/40 hover:bg-gold-400/15 hover:text-gold-200"
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* روابط سريعة */}
+          <nav aria-label={t("footer.quickLinks")}>
+            <h2 className="mb-4 text-xs font-extrabold tracking-wide text-gold-300">
+              {t("footer.quickLinks")}
+            </h2>
+            <ul className="flex flex-col gap-3 text-xs font-medium text-[#aab2c7]">
+              {QUICK_LINKS.map(({ key, href }) => (
+                <li key={key}>
+                  <Link href={href} className="transition hover:text-gold-200">
+                    {t(key)}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* المدن الست */}
+          <nav aria-label={t("footer.cities")}>
+            <h2 className="mb-4 text-xs font-extrabold tracking-wide text-gold-300">
+              {t("footer.cities")}
+            </h2>
+            <ul className="flex flex-col gap-3 text-xs font-medium text-[#aab2c7]">
+              {CITY_KEYS.map((key) => (
+                <li key={key}>
+                  <Link
+                    href="/#properties"
+                    className="inline-flex items-center gap-1.5 transition hover:text-gold-200"
+                  >
+                    <MapPin className="h-3 w-3 text-gold-500/70" />
+                    {t(key)}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* النشرة البريدية + التواصل */}
+          <div>
+            <h2 className="mb-4 text-xs font-extrabold tracking-wide text-gold-300">
+              {t("footer.newsletter.title")}
+            </h2>
+            <p className="text-xs leading-6 text-[#98a1b8]">
+              {t("footer.newsletter.desc")}
+            </p>
+            <form onSubmit={handleSubscribe} className="mt-3.5">
+              <div className="flex overflow-hidden rounded-xl border border-white/10 bg-white/[0.06]">
+                <label htmlFor="footer-newsletter" className="sr-only">
+                  {t("footer.newsletter.placeholder")}
+                </label>
+                <input
+                  id="footer-newsletter"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder={t("footer.newsletter.placeholder")}
+                  className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-xs text-white outline-none placeholder:text-[#7f89a2]"
+                />
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-1 bg-gold-500 px-3.5 text-[11px] font-extrabold text-white transition hover:bg-gold-600"
+                >
+                  {t("footer.newsletter.cta")}
+                </button>
+              </div>
+              {subscribed && (
+                <p className="mt-2 flex items-center gap-1 text-[10px] font-bold text-emerald-300">
+                  <Check className="h-3 w-3" />
+                  {t("footer.newsletter.success")}
+                </p>
+              )}
+            </form>
+
+            <div className="mt-5 space-y-2 text-[11px] text-[#8d97b0]">
+              <a
+                href="tel:+201001234567"
+                className="flex items-center gap-2 transition hover:text-gold-200"
+                dir="ltr"
+              >
+                <Phone className="h-3.5 w-3.5 text-gold-400" />
+                +20 100 123 4567
+              </a>
+              <a
+                href="mailto:info@aqarfamily.com"
+                className="flex items-center gap-2 transition hover:text-gold-200"
+                dir="ltr"
+              >
+                <Mail className="h-3.5 w-3.5 text-gold-400" />
+                info@aqarfamily.com
+              </a>
+              <p className="flex items-center gap-2">
+                <Clock3 className="h-3.5 w-3.5 text-gold-400" />
+                {t("footer.support.hoursValue")}
+              </p>
+              <p className="flex items-center gap-1.5 pt-1 font-bold text-gold-300">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                {t("footer.managementNote")}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center justify-between gap-3 border-t border-white/[0.08] py-5 text-[10.5px] text-[#7d879f] sm:flex-row">
+          <span>{t("footer.rights", { year: new Date().getFullYear() })}</span>
+          <div className="flex flex-wrap items-center gap-4">
+            <Link href="/#properties" className="transition hover:text-gold-200">
+              {t("footer.links.privacy")}
+            </Link>
+            <Link href="/#properties" className="transition hover:text-gold-200">
+              {t("footer.links.terms")}
+            </Link>
+            <Link href="/add-property" className="transition hover:text-gold-200">
+              {t("footer.links.advertise")}
+            </Link>
+            <span className="inline-flex items-center gap-1">
+              <Send className="h-3 w-3 text-gold-500" />
+              {t("footer.links.sitemap")}
             </span>
           </div>
-
-          {/* أيقونات السوشيال ميديا */}
-          <div className="flex items-center gap-1.5">
-            {SOCIAL_LINKS.map(({ label, href, icon: Icon, hover }) => (
-              <a
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={label}
-                className={`flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 text-ocean-200 transition ${hover}`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-              </a>
-            ))}
-          </div>
-        </section>
-
-        {/* حقوق النشر */}
-        <div className="border-t border-white/10 py-2 text-center text-xs text-ocean-400">
-          {t("footer.rights", { year: new Date().getFullYear() })}
         </div>
       </div>
     </footer>

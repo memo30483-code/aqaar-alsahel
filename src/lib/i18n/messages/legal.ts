@@ -162,7 +162,7 @@ export const legalMessages = {
   /* ---------- المحامون المعتمدون ---------- */
   "legal.lawyers.title": { ar: "المحامون المعتمدون", en: "Licensed lawyers" },
   "legal.lawyers.subtitle": {
-    ar: "محامون مرخصون يغطون مدن الساحل الخمس، وتقدر تتواصل معاهم مباشرة.",
+    ar: "محامون مرخصون يغطون مدن الدلتا الست، وتقدر تتواصل معاهم مباشرة.",
     en: "Licensed lawyers covering the five coastal cities; you can contact them directly.",
   },
   "legal.lawyers.badge": { ar: "محامي معتمد", en: "Licensed lawyer" },

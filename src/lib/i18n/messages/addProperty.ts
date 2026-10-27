@@ -37,6 +37,10 @@ export const addPropertyMessages = {
   "addProperty.fieldArea": { ar: "المساحة (م²) *", en: "Area (m²) *" },
   "addProperty.fieldPrice": { ar: "السعر (ج.م) *", en: "Price (EGP) *" },
   "addProperty.fieldRooms": { ar: "عدد الغرف *", en: "Number of rooms *" },
+  "addProperty.fieldBathrooms": {
+    ar: "عدد الحمامات *",
+    en: "Number of bathrooms *",
+  },
   "addProperty.pricePerMeter": {
     ar: "سعر المتر المحسوب: {price}",
     en: "Computed price per meter: {price}",
@@ -51,11 +55,14 @@ export const addPropertyMessages = {
   },
 
   /* ---------- بيانات التواصل ---------- */
-  "addProperty.sectionContact": { ar: "بيانات التواصل", en: "Contact details" },
+  "addProperty.sectionContact": {
+    ar: "بيانات التواصل (للإدارة فقط)",
+    en: "Contact details (management only)",
+  },
   "addProperty.fieldSellerType": { ar: "نوع البائع *", en: "Seller type *" },
   "addProperty.fieldWhatsapp": {
-    ar: "رقم الواتساب *",
-    en: "WhatsApp number *",
+    ar: "رقم التواصل * — لا يظهر للزوار",
+    en: "Contact number * — hidden from visitors",
   },
 
   /* ---------- الصورة والموقع ---------- */
@@ -78,6 +85,18 @@ export const addPropertyMessages = {
   "addProperty.errorPositive": {
     ar: "المساحة والسعر يجب أن يكونا أكبر من صفر.",
     en: "Area and price must be greater than zero.",
+  },
+  "addProperty.errorWhatsapp": {
+    ar: "رقم الواتساب غير صحيح، اكتب رقماً مصرياً مثل 01012345678.",
+    en: "Invalid WhatsApp number; enter an Egyptian number like 01012345678.",
+  },
+  "addProperty.errorStorage": {
+    ar: "تعذّر حفظ العقار لأن مساحة التخزين ممتلئة. احذف بعض الإعلانات القديمة ثم حاول مرة أخرى.",
+    en: "The property could not be saved because storage is full. Delete some old listings and try again.",
+  },
+  "addProperty.errorImageType": {
+    ar: "من فضلك اختر ملف صورة صالحاً.",
+    en: "Please choose a valid image file.",
   },
   "addProperty.saving": { ar: "جاري الحفظ...", en: "Saving..." },
   "addProperty.submit": { ar: "حفظ العقار ونشره", en: "Save and publish property" },

@@ -5,8 +5,8 @@ export const registerMessages = {
   /* ---------- الهيدر (Hero) ---------- */
   "register.badge": { ar: "توثيق إجباري 100%", en: "100% mandatory verification" },
   "register.hero.title": {
-    ar: "توثيق حساب موثّق على منصة عقار الساحل",
-    en: "Verify an account on the Aqaar Alsahel platform",
+    ar: "توثيق حساب موثّق على منصة عقار FAMILY",
+    en: "Verify an account on the Aqaar FAMILY platform",
   },
   "register.hero.desc": {
     ar: "لا يمكن إتمام التسجيل أو نشر أي عقار إلا بعد استكمال كافة البيانات ورفع الوثائق الرسمية المطلوبة. الهدف: حماية المشترين والبائعين من الإعلانات الوهمية ومنع التعامل مع هويات غير موثقة.",

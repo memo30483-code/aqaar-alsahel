@@ -18,7 +18,7 @@ export default function LoginPage() {
   /** قراءة هدف التوجيه بعد إتمام تسجيل الدخول (مثل ?redirect=/add-property) */
   useEffect(() => {
     const target = new URLSearchParams(window.location.search).get("redirect");
-    if (target && target.startsWith("/")) {
+    if (target && target.startsWith("/") && !target.startsWith("//")) {
       sessionStorage.setItem("aqaar-login-redirect", target);
     }
   }, []);
@@ -42,6 +42,14 @@ export default function LoginPage() {
 
     /** محاكاة عملية تسجيل الدخول عبر API — الآن عبر حسابات تجريبية */
     setTimeout(() => {
+      /* الهدف المحفوظ من ?redirect= — يُستخدم بعد الدخول ثم يُمسح */
+      const requested = sessionStorage.getItem("aqaar-login-redirect");
+      sessionStorage.removeItem("aqaar-login-redirect");
+      const safeTarget =
+        requested && requested.startsWith("/") && !requested.startsWith("//")
+          ? requested
+          : "/add-property";
+
       if (trimmedEmail === MOCK_ADMIN.email && password === MOCK_ADMIN.password) {
         saveSession({
           name: MOCK_ADMIN.name,
@@ -63,26 +71,27 @@ export default function LoginPage() {
         accountType: "individual",
         verifiedAt: new Date().toISOString(),
       });
-      router.push("/add-property");
+      /* لا نوجّه المستخدم العادي إلى لوحة الإدارة */
+      router.push(safeTarget === "/admin" ? "/add-property" : safeTarget);
     }, 600);
   };
 
   return (
-    <div className="h-full flex flex-col bg-gray-50 overflow-hidden">
-      {/* Hero — شريط أسود مضغوط */}
-      <section className="bg-black text-white py-2 md:py-3 px-6 text-right shrink-0">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-lg md:text-xl font-bold mt-0.5">
-            {t("login.title")}
-          </h1>
-          <p className="text-xs text-gray-400 mt-0.5">
-            {t("login.hero.desc")}
-          </p>
-        </div>
-      </section>
+        <div className="flex-1 flex flex-col bg-gray-50 overflow-hidden">
+          {/* Hero — شريط أسود مضغوط */}
+          <section className="bg-black text-white py-2 md:py-3 px-6 text-right shrink-0">
+            <div className="max-w-7xl mx-auto">
+              <h1 className="text-lg md:text-xl font-bold mt-0.5">
+                {t("login.title")}
+              </h1>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {t("login.hero.desc")}
+              </p>
+            </div>
+          </section>
 
-      {/* منطقة المحتوى — بطاقة تسجيل الدخول متمركزة في منتصف المساحة المتاحة */}
-      <div className="flex-1 flex items-center justify-center px-3 py-1 shrink-0 min-h-0">
+          {/* منطقة المحتوى — بطاقة تسجيل الدخول متمركزة في منتصف المساحة المتاحة */}
+          <div className="flex-1 flex items-center justify-center px-3 py-1 shrink-0 min-h-0">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-5">
           <form onSubmit={onSubmit} className="space-y-3">
             <div>

@@ -97,7 +97,8 @@ export default function LegalConsultationalPage() {
       setError("legal.form.errorRequired");
       return;
     }
-    if (phone.replace(/\D/g, "").length < 10) {
+    /** أرقام مصرية: 010xxxxxxxx أو 2010xxxxxxxx أو 10xxxxxxxx */
+    if (!/^(20)?0?1[0125]\d{8}$/.test(phone.replace(/\D/g, ""))) {
       setError("legal.form.errorPhone");
       return;
     }
@@ -148,7 +149,7 @@ export default function LegalConsultationalPage() {
 
           <div className="mt-10 grid gap-4 sm:grid-cols-3">
             {[
-              { value: "4", label: t("legal.stat.lawyers") },
+              { value: String(LAWYERS.length), label: t("legal.stat.lawyers") },
               {
                 value: String(legalCities.length),
                 label: t("legal.stat.cities"),
@@ -225,7 +226,7 @@ export default function LegalConsultationalPage() {
                 </p>
                 <div className="mt-5 flex flex-wrap gap-3">
                   <a
-                    href={`https://wa.me/201000000001?text=${encodeURIComponent(
+                    href={`https://wa.me/${LAWYERS[0]?.whatsapp ?? "201000000001"}?text=${encodeURIComponent(
                       t("legal.form.whatsappText", {
                         name,
                         propertyType: propertyTypeLabel(propertyType, t),

@@ -57,10 +57,10 @@ export const marketGuideMessages = {
     en: "Real-estate prices & the meter index",
   },
   "marketGuide.card.meters.description": {
-    ar: "متوسط سعر المتر للشقق والفيلات في مدن الساحل والدلتا الخمس، محسوباً من إعلانات المنصة المعروضة حالياً.",
+    ar: "متوسط سعر المتر للشقق والفيلات في مدن الدلتا الست، محسوباً من إعلانات المنصة المعروضة حالياً.",
     en: "The average price per meter for apartments and villas across the five coastal and Delta cities, calculated from the listings currently shown on the platform.",
   },
-  "marketGuide.card.meters.badge": { ar: "5 مدن", en: "5 cities" },
+  "marketGuide.card.meters.badge": { ar: "6 مدن", en: "6 cities" },
 
   "marketGuide.card.demand.title": {
     ar: "المؤشر العقاري وتحليل الطلب",
@@ -127,7 +127,7 @@ export const marketGuideMessages = {
     en: "Price-per-meter index",
   },
   "marketGuide.meters.subheading": {
-    ar: "متوسط سعر المتر للشقق والفيلات في المدن الخمس، محسوب من العقارات المعروضة على المنصة.",
+    ar: "متوسط سعر المتر للشقق والفيلات في المدن الست، محسوب من العقارات المعروضة على المنصة.",
     en: "The average price per meter for apartments and villas in the five cities, calculated from the properties listed on the platform.",
   },
   "marketGuide.meters.apartments": {
@@ -239,8 +239,16 @@ export const marketGuideMessages = {
     en: "Family demand for permanent housing",
   },
   "marketGuide.city.oldDamietta.summary": {
-    ar: "أسعار المتر الأقل بين المدن الخمس مع طلب ثابت من السكان المحليين وطلبات الإحلال والتجديد في وسط البلد والكورنيش.",
+    ar: "أسعار المتر الأقل بين المدن الست مع طلب ثابت من السكان المحليين وطلبات الإحلال والتجديد في وسط البلد والكورنيش.",
     en: "The lowest price per meter among the five cities, with steady demand from local residents and replacement and renovation requests in the city centre and on the corniche.",
+  },
+  "marketGuide.city.faraskur.note": {
+    ar: "طلب عائلي مستقر وأسعار متر مناسبة",
+    en: "Steady family demand and affordable prices per meter",
+  },
+  "marketGuide.city.faraskur.summary": {
+    ar: "مدينة داخلية هادئة قريبة من دمياط، الطلب فيها على السكن العائلي الدائم والأراضي، وأسعار المتر أقل من المدن الساحلية.",
+    en: "A quiet inland city close to Damietta, with demand for permanent family housing and land, and lower prices per meter than the coastal cities.",
   },
   "marketGuide.city.gamasa.note": {
     ar: "إقبال صيفي على المصيف والاستثمار الفندقي",

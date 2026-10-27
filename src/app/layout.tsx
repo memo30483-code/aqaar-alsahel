@@ -13,9 +13,9 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
-  title: "عقار الساحل | سوق عقارات الساحل المفتوح",
+  title: "عقار FAMILY | عقار أحلامك بثقة موثّقة",
   description:
-    "بيع واشتري عقارات مباشرة في رأس البر ودمياط الجديدة ودمياط القديمة والمنصورة الجديدة وجمصة — شقق، فلل، محلات وأراضي.",
+    "سوق عقاري موثّق في رأس البر، دمياط، دمياط الجديدة، فارسكور، جمصة والمنصورة الجديدة — شقق، فلل، شاليهات، محلات وأراضي بعد التحقق من المستندات والسلامة القانونية.",
 };
 
 export default function RootLayout({
@@ -28,7 +28,7 @@ export default function RootLayout({
       <body className={`${cairo.variable} font-sans antialiased min-h-screen flex flex-col`}>
         <AppProviders>
           <Header />
-          <main className="flex-1 min-h-0">{children}</main>
+          <main className="flex-1 min-h-0 flex flex-col">{children}</main>
           <Footer />
           <FeaturedAds />
         </AppProviders>

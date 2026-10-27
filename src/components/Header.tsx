@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Building2,
@@ -9,18 +10,26 @@ import {
   Compass,
   Coins,
   Languages,
+  LogOut,
   MapPin,
   Menu,
   Plus,
   Scale,
+  ShieldCheck,
   User,
   X,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { CITY_KEYS } from "@/lib/i18n/cities";
 import { CURRENCIES, useCurrency, type CurrencyCode } from "@/lib/currency";
-import { getSession } from "@/lib/session";
+import {
+  clearSession,
+  getSession,
+  hasAdminAccess,
+  type Session,
+} from "@/lib/session";
 import { MashrabiyaLayer } from "@/components/Ornaments";
+import BrandLogo from "@/components/BrandLogo";
 
 /** نمط موحّد لروابط التنقّل الرئيسية */
 const NAV_LINK =
@@ -106,16 +115,31 @@ export default function Header() {
   const { t, locale, setLocale } = useI18n();
   const { currency, setCurrency, live, updatedAt } = useCurrency();
   const [open, setOpen] = useState(false);
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
 
+  /** تحديث حالة الجلسة بعد الدخول/الخروج أو تغيير الصفحة */
   useEffect(() => {
-    setLoggedIn(Boolean(getSession()));
-  }, []);
+    setSession(getSession());
+  }, [pathname]);
 
-  /** في حالة عدم وجود جلسة نشطة نوجّه المستخدم للتسجيل ثم نعيده لصفحة إضافة العقار */
-  const addPropertyHref = loggedIn
-    ? "/add-property"
-    : "/register?redirect=/add-property";
+  const handleLogout = () => {
+    clearSession();
+    setSession(null);
+    setOpen(false);
+    router.push("/");
+  };
+
+  /** اسمع حالة الدخول في الوقت المناسب؛ التحقق عند النقر كانوني أمانًا أكثر */
+  const handleAddPropertyClick = () => {
+    const session = getSession();
+    if (session) {
+      router.push("/add-property");
+    } else {
+      router.push("/login?redirect=/add-property");
+    }
+  };
 
   const updatedLabel = updatedAt
     ? new Date(updatedAt).toLocaleTimeString(locale === "ar" ? "ar-EG" : "en-US", {
@@ -127,23 +151,22 @@ export default function Header() {
   const closeMobile = () => setOpen(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/60 bg-white/70 shadow-[0_10px_30px_-20px_rgba(7,34,49,0.55)] backdrop-blur-xl supports-[backdrop-filter]:bg-white/60">
+    <header className="sticky top-0 z-50 border-b border-sand-200 bg-white/90 shadow-[0_10px_30px_-24px_rgba(20,26,51,0.45)] backdrop-blur-xl supports-[backdrop-filter]:bg-white/80">
+      {/* خط ذهبي علوي رفيع — توقيع الهوية */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-l from-gold-600 via-gold-300 to-gold-200"
+      />
       {/* خلفية النقوش الإسلامية الهندسية (شفافة خفيفة جداً) */}
       <MashrabiyaLayer tone="light" className="opacity-[0.05]" />
       <div className="relative mx-auto flex w-full max-w-[1440px] items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:py-3.5">
         {/* الشعار */}
-        <Link href="/" className="group flex shrink-0 items-center gap-2.5">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-ocean-600 to-ocean-800 text-lg font-bold text-white shadow-soft transition duration-200 group-hover:scale-105 group-hover:shadow-lg">
-            ع
-          </span>
-          <span className="flex flex-col leading-none">
-            <span className="text-lg font-black tracking-tight text-ocean-900 sm:text-xl">
-              {t("brand.name")}
-            </span>
-            <span className="mt-1 hidden text-[10px] font-medium text-ocean-500 sm:block">
-              {t("brand.tagline")}
-            </span>
-          </span>
+        <Link
+          href="/"
+          aria-label={t("brand.name")}
+          className="group flex shrink-0 items-center gap-2.5"
+        >
+          <BrandLogo markClassName="h-10 w-10 transition duration-200 group-hover:scale-105" />
         </Link>
 
         <nav className="hidden items-center gap-1 xl:flex">
@@ -339,18 +362,63 @@ export default function Header() {
             )}
           </Dropdown>
 
-          <Link href="/login" className={NAV_LINK}>
-            <User className="h-4 w-4 text-ocean-500" />
-            {t("nav.login")}
-          </Link>
+          {session ? (
+            <Dropdown
+              ariaLabel={t("nav.account")}
+              trigger={
+                <>
+                  <User className="h-4 w-4 text-ocean-500" />
+                  <span className="max-w-[9rem] truncate">
+                    {session.name.split(" ")[0] || t("nav.account")}
+                  </span>
+                </>
+              }
+              panelClassName={`${PANEL} w-[250px]`}
+            >
+              {(close) => (
+                <div className="space-y-0.5">
+                  <p className="truncate px-2.5 pb-1 pt-1 text-[11px] font-bold text-ocean-400">
+                    {session.email}
+                  </p>
+                  {hasAdminAccess(session) && (
+                    <Link
+                      href="/admin"
+                      className={MENU_ITEM}
+                      onClick={close}
+                    >
+                      <ShieldCheck className="h-4 w-4 shrink-0 text-gold-600" />
+                      {t("nav.adminPanel")}
+                    </Link>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      close();
+                      handleLogout();
+                    }}
+                    className={`${MENU_ITEM} w-full text-rose-700 hover:bg-rose-50`}
+                  >
+                    <LogOut className="h-4 w-4 shrink-0" />
+                    {t("nav.logout")}
+                  </button>
+                </div>
+              )}
+            </Dropdown>
+          ) : (
+            <Link href="/login" className={NAV_LINK}>
+              <User className="h-4 w-4 text-ocean-500" />
+              {t("nav.login")}
+            </Link>
+          )}
 
-          <Link
-            href={addPropertyHref}
+          <button
+            type="button"
+            onClick={handleAddPropertyClick}
             className="mr-1 flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-gradient-to-br from-ocean-600 to-ocean-800 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-ocean-700/25 transition duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-ocean-700/40"
           >
             <Plus className="h-4 w-4" />
             {t("nav.addProperty")}
-          </Link>
+          </button>
         </nav>
 
         <button
@@ -451,22 +519,51 @@ export default function Header() {
               {updatedLabel ? ` — ${t("pref.updatedAt")}: ${updatedLabel}` : ""}
             </p>
 
-            <Link
-              href="/login"
-              className={`${NAV_LINK} mt-2`}
-              onClick={closeMobile}
-            >
-              <User className="h-4 w-4 text-ocean-500" />
-              {t("nav.login")}
-            </Link>
-            <Link
-              href={addPropertyHref}
+            {session ? (
+              <>
+                <p className="truncate px-3 pt-2 text-[11px] font-bold text-ocean-500">
+                  {session.email}
+                </p>
+                {hasAdminAccess(session) && (
+                  <Link
+                    href="/admin"
+                    className={NAV_LINK}
+                    onClick={closeMobile}
+                  >
+                    <ShieldCheck className="h-4 w-4 text-gold-600" />
+                    {t("nav.adminPanel")}
+                  </Link>
+                )}
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className={`${NAV_LINK} text-rose-700 hover:bg-rose-50`}
+                >
+                  <LogOut className="h-4 w-4" />
+                  {t("nav.logout")}
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className={`${NAV_LINK} mt-2`}
+                onClick={closeMobile}
+              >
+                <User className="h-4 w-4 text-ocean-500" />
+                {t("nav.login")}
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                handleAddPropertyClick();
+                closeMobile();
+              }}
               className="mt-1 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-ocean-600 to-ocean-800 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-ocean-700/25"
-              onClick={closeMobile}
             >
               <Plus className="h-4 w-4" />
               {t("nav.addProperty")}
-            </Link>
+            </button>
           </div>
         </div>
       )}

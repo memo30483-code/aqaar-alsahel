@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { mockProperties } from "@/data/properties";
-import { City, PropertyType } from "@/types/property";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { mockProperties, USER_PROPERTIES_KEY } from "@/data/properties";
+import { City, Property, PropertyType } from "@/types/property";
 import { useT, type MessageKey } from "@/lib/i18n";
 import { useCurrency } from "@/lib/currency";
 import { cityLabel } from "@/lib/i18n/cities";
@@ -18,7 +18,7 @@ interface CityProfile {
   summaryKey: MessageKey;
 }
 
-/** ترتيب وبيانات المدن المعتمدة الخمس — بيانات تحريرية خاصة بهذه الصفحة */
+/** ترتيب وبيانات المدن المعتمدة الست — بيانات تحريرية خاصة بهذه الصفحة */
 const CITY_PROFILES: CityProfile[] = [
   {
     city: "رأس البر",
@@ -37,6 +37,12 @@ const CITY_PROFILES: CityProfile[] = [
     demand: "مستقر",
     noteKey: "marketGuide.city.oldDamietta.note",
     summaryKey: "marketGuide.city.oldDamietta.summary",
+  },
+  {
+    city: "فارسكور",
+    demand: "مستقر",
+    noteKey: "marketGuide.city.faraskur.note",
+    summaryKey: "marketGuide.city.faraskur.summary",
   },
   {
     city: "جمصة",
@@ -111,12 +117,16 @@ const GUIDE_CARDS: GuideCard[] = [
   },
 ];
 
-function cityProperties(city: City) {
-  return mockProperties.filter((p) => p.city === city);
+function cityProperties(properties: Property[], city: City) {
+  return properties.filter((p) => p.city === city);
 }
 
-function avgPricePerMeter(city: City, type: PropertyType): number | null {
-  const items = cityProperties(city).filter(
+function avgPricePerMeter(
+  properties: Property[],
+  city: City,
+  type: PropertyType
+): number | null {
+  const items = cityProperties(properties, city).filter(
     (p) => p.type === type && p.area > 0
   );
   if (items.length === 0) return null;
@@ -124,36 +134,61 @@ function avgPricePerMeter(city: City, type: PropertyType): number | null {
   return Math.round(total / items.length);
 }
 
-function districtsOf(city: City): string[] {
-  return Array.from(new Set(cityProperties(city).map((p) => p.district)));
+function districtsOf(properties: Property[], city: City): string[] {
+  return Array.from(
+    new Set(cityProperties(properties, city).map((p) => p.district))
+  );
 }
-
-const TOTAL_LISTINGS = mockProperties.length;
-
-const OVERALL_AVG_METER = Math.round(
-  mockProperties.reduce((sum, p) => sum + p.price / p.area, 0) /
-    mockProperties.length
-);
-
-const STATS = CITY_PROFILES.map((profile) => {
-  const listings = cityProperties(profile.city);
-  return {
-    ...profile,
-    listings: listings.length,
-    apartments: avgPricePerMeter(profile.city, "شقة"),
-    villas: avgPricePerMeter(profile.city, "فيلا"),
-    districts: districtsOf(profile.city),
-  };
-});
-
-const MAX_METER = Math.max(
-  ...STATS.map((s) => s.apartments ?? 0),
-  ...STATS.map((s) => s.villas ?? 0)
-);
 
 export default function MarketGuideContent() {
   const t = useT();
   const { formatWithSymbol } = useCurrency();
+
+  /** إعلانات المستخدمين المحفوظة محلياً — تُضاف إلى مؤشر السوق */
+  const [userProperties, setUserProperties] = useState<Property[]>([]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(USER_PROPERTIES_KEY);
+      const parsed: unknown = stored ? JSON.parse(stored) : [];
+      if (Array.isArray(parsed)) setUserProperties(parsed as Property[]);
+    } catch {
+      setUserProperties([]);
+    }
+  }, []);
+
+  const allProperties = useMemo(
+    () => [...userProperties, ...mockProperties],
+    [userProperties]
+  );
+
+  const totalListings = allProperties.length;
+  const overallAvgMeter =
+    allProperties.length > 0
+      ? Math.round(
+          allProperties.reduce(
+            (sum, p) => sum + p.price / (p.area || 1),
+            0
+          ) / allProperties.length
+        )
+      : 0;
+
+  const stats = CITY_PROFILES.map((profile) => {
+    const listings = cityProperties(allProperties, profile.city);
+    return {
+      ...profile,
+      listings: listings.length,
+      apartments: avgPricePerMeter(allProperties, profile.city, "شقة"),
+      villas: avgPricePerMeter(allProperties, profile.city, "فيلا"),
+      districts: districtsOf(allProperties, profile.city),
+    };
+  });
+
+  const maxMeter = Math.max(
+    1,
+    ...stats.map((s) => s.apartments ?? 0),
+    ...stats.map((s) => s.villas ?? 0)
+  );
 
   const heroStats = [
     {
@@ -164,11 +199,11 @@ export default function MarketGuideContent() {
     },
     {
       label: t("marketGuide.stat.listings"),
-      value: t("marketGuide.stat.listingsValue", { count: TOTAL_LISTINGS }),
+      value: t("marketGuide.stat.listingsValue", { count: totalListings }),
     },
     {
       label: t("marketGuide.stat.avgMeter"),
-      value: formatWithSymbol(OVERALL_AVG_METER),
+      value: formatWithSymbol(overallAvgMeter),
     },
   ];
 
@@ -299,7 +334,7 @@ export default function MarketGuideContent() {
           </div>
 
           <div className="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {STATS.map((row) => (
+            {stats.map((row) => (
               <article
                 key={row.city}
                 className="flex h-full flex-col rounded-3xl border border-gray-200 bg-white p-6 transition hover:-translate-y-1 hover:shadow-xl"
@@ -370,7 +405,7 @@ export default function MarketGuideContent() {
           </p>
 
           <div className="mt-6 space-y-5 rounded-3xl border border-gray-200 bg-white p-5 sm:p-7">
-            {STATS.map((row) => (
+            {stats.map((row) => (
               <div key={row.city}>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-sm font-bold text-gray-900">
@@ -385,7 +420,7 @@ export default function MarketGuideContent() {
                     className="h-full rounded-full bg-black"
                     style={{
                       width: `${Math.round(
-                        ((row.apartments ?? 0) / MAX_METER) * 100
+                        ((row.apartments ?? 0) / maxMeter) * 100
                       )}%`,
                     }}
                   />
@@ -403,7 +438,7 @@ export default function MarketGuideContent() {
                     className="h-full rounded-full bg-ocean-600"
                     style={{
                       width: `${Math.round(
-                        ((row.villas ?? 0) / MAX_METER) * 100
+                        ((row.villas ?? 0) / maxMeter) * 100
                       )}%`,
                     }}
                   />
@@ -423,7 +458,7 @@ export default function MarketGuideContent() {
           </p>
 
           <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {STATS.map((row) => (
+            {stats.map((row) => (
               <article
                 key={row.city}
                 className="flex h-full flex-col rounded-3xl border border-gray-200 bg-white p-6 transition hover:-translate-y-1 hover:shadow-xl"

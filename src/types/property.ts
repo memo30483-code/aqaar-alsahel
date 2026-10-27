@@ -52,10 +52,13 @@ export interface PropertyFilters {
   priceMin: number;
   priceMax: number;
   rooms: RoomsFilter;
+  /** هل عدّل المستخدم نطاق السعر؟ إن لم يعدّله لا يُطبَّق أي حد سعري */
+  priceActive: boolean;
 }
 
-export const PRICE_FILTER_MIN = 500_000;
-export const PRICE_FILTER_MAX = 5_000_000;
+/** حدود السلايدر المعروضة — غير مفعّلة افتراضياً حتى لا تُخفى أي إعلانات */
+export const PRICE_FILTER_MIN = 0;
+export const PRICE_FILTER_MAX = 50_000_000;
 
 export const defaultPropertyFilters: PropertyFilters = {
   city: "",
@@ -64,4 +67,5 @@ export const defaultPropertyFilters: PropertyFilters = {
   priceMin: PRICE_FILTER_MIN,
   priceMax: PRICE_FILTER_MAX,
   rooms: "",
+  priceActive: false,
 };

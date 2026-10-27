@@ -19,6 +19,7 @@ import {
   sellerTypeLabel,
 } from "@/lib/i18n/taxonomy";
 import { useCurrency } from "@/lib/currency";
+import { getSession } from "@/lib/session";
 import LocationPickerDynamic from "@/components/LocationPickerDynamic";
 
 interface FormState {
@@ -29,6 +30,7 @@ interface FormState {
   area: string;
   price: string;
   rooms: string;
+  bathrooms: string;
   sellerType: SellerType | "";
   whatsapp: string;
   description: string;
@@ -41,6 +43,68 @@ interface FormState {
 
 const START_CENTER = cityCenter("دمياط الجديدة");
 
+/** أرقام مصرية محلية (01xxxxxxxxx) أو دولية (201xxxxxxxxx) أو بدون الصفر */
+const WHATSAPP_PATTERN = /^(20)?0?1[0125]\d{8}$/;
+
+/** تحويل رقم الواتساب إلى الصيغة الدولية 20xxxxxxxxxx أو null عند عدم الصلاحية */
+function normalizeWhatsApp(raw: string): string | null {
+  const digits = raw.replace(/\D/g, "");
+  if (!WHATSAPP_PATTERN.test(digits)) return null;
+  if (digits.startsWith("20")) return digits;
+  if (digits.startsWith("0")) return `20${digits.slice(1)}`;
+  return `20${digits}`;
+}
+
+/** قراءة الإعلانات المحفوظة بأمان — أي تلف في التخزين لا يعطّل الحفظ */
+function readUserProperties(): Property[] {
+  try {
+    const stored = localStorage.getItem(USER_PROPERTIES_KEY);
+    const parsed: unknown = stored ? JSON.parse(stored) : [];
+    return Array.isArray(parsed) ? (parsed as Property[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** ضغط الصورة قبل تخزينها كـ base64 لتقليل حجم localStorage */
+function compressImage(file: File): Promise<string> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onerror = () => resolve("");
+    reader.onload = () => {
+      const source = String(reader.result ?? "");
+      if (!source) {
+        resolve("");
+        return;
+      }
+      const image = new Image();
+      image.onerror = () => resolve(source);
+      image.onload = () => {
+        try {
+          const scale = Math.min(
+            1,
+            1400 / Math.max(image.width, image.height)
+          );
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, Math.round(image.width * scale));
+          canvas.height = Math.max(1, Math.round(image.height * scale));
+          const context = canvas.getContext("2d");
+          if (!context) {
+            resolve(source);
+            return;
+          }
+          context.drawImage(image, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", 0.8));
+        } catch {
+          resolve(source);
+        }
+      };
+      image.src = source;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 const initial: FormState = {
   title: "",
   purpose: "بيع",
@@ -49,6 +113,7 @@ const initial: FormState = {
   area: "",
   price: "",
   rooms: "",
+  bathrooms: "1",
   sellerType: "",
   whatsapp: "",
   description: "",
@@ -66,12 +131,32 @@ export default function AddPropertyPage() {
   const [form, setForm] = useState<FormState>(initial);
   const [error, setError] = useState<MessageKey | "">("");
   const [saved, setSaved] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  /** Auth Guard — يعرض null (لا محتوى) حتى يكتمل التحقق */
+  useEffect(() => {
+    const session = getSession();
+    if (!session) {
+      router.replace("/login?redirect=/add-property");
+      return;
+    }
+    setChecking(false);
+  }, [router]);
 
   useEffect(() => {
     if (!form.city) return;
     const center = cityCenter(form.city);
     setForm((prev) => ({ ...prev, lat: center.lat, lng: center.lng }));
   }, [form.city]);
+
+  /** Auth Guard — لا تعرض الفورم إلا بعد تأكيد وجود جلسة */
+  if (checking) {
+    return (
+      <div className="flex-1 flex items-center justify-center min-h-0 bg-gray-50">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-ocean-200 border-t-ocean-700" />
+      </div>
+    );
+  }
 
   const set =
     (key: keyof FormState) =>
@@ -83,17 +168,20 @@ export default function AddPropertyPage() {
       setForm((prev) => ({ ...prev, [key]: e.target.value }));
     };
 
-  const onImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () =>
-      setForm((prev) => ({
-        ...prev,
-        imageName: file.name,
-        imagePreview: String(reader.result),
-      }));
-    reader.readAsDataURL(file);
+    if (!file.type.startsWith("image/")) {
+      setError("addProperty.errorImageType");
+      return;
+    }
+    setError("");
+    const preview = await compressImage(file);
+    setForm((prev) => ({
+      ...prev,
+      imageName: file.name,
+      imagePreview: preview,
+    }));
   };
 
   const pricePerMeter =
@@ -121,6 +209,12 @@ export default function AddPropertyPage() {
       return;
     }
 
+    const whatsapp = normalizeWhatsApp(form.whatsapp);
+    if (!whatsapp) {
+      setError("addProperty.errorWhatsapp");
+      return;
+    }
+
     setError("");
 
     const id = `user-${Date.now()}`;
@@ -136,10 +230,10 @@ export default function AddPropertyPage() {
       type: form.type,
       area: Number(form.area),
       rooms: Number(form.rooms) || 0,
-      bathrooms: 1,
+      bathrooms: Number(form.bathrooms) || 0,
       price: Number(form.price),
       sellerType: form.sellerType,
-      whatsapp: form.whatsapp.trim(),
+      whatsapp,
       description: form.description.trim(),
       image,
       images: [image],
@@ -147,12 +241,16 @@ export default function AddPropertyPage() {
       lng: form.lng,
     };
 
-    const stored = localStorage.getItem(USER_PROPERTIES_KEY);
-    const list: Property[] = stored ? JSON.parse(stored) : [];
-    localStorage.setItem(
-      USER_PROPERTIES_KEY,
-      JSON.stringify([...list, property])
-    );
+    const list = readUserProperties();
+    try {
+      localStorage.setItem(
+        USER_PROPERTIES_KEY,
+        JSON.stringify([...list, property])
+      );
+    } catch {
+      setError("addProperty.errorStorage");
+      return;
+    }
 
     // تأكيد الحفظ ثم تحويل تلقائي للصفحة الرئيسية لرؤية العقار
     setSaved(true);
@@ -265,7 +363,7 @@ export default function AddPropertyPage() {
             {t("addProperty.sectionDetails")}
           </h2>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <label className="block">
               <span className={labelClass}>{t("addProperty.fieldType")}</span>
               <select
@@ -315,6 +413,20 @@ export default function AddPropertyPage() {
                 min={0}
                 value={form.rooms}
                 onChange={set("rooms")}
+                className={fieldClass}
+              />
+            </label>
+
+            <label className="block">
+              <span className={labelClass}>
+                {t("addProperty.fieldBathrooms")}
+              </span>
+              <input
+                required
+                type="number"
+                min={0}
+                value={form.bathrooms}
+                onChange={set("bathrooms")}
                 className={fieldClass}
               />
             </label>

@@ -76,11 +76,7 @@ export default function PropertyDetail({ property }: Props) {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[340px_1fr] lg:items-start xl:grid-cols-[380px_1fr]">
         {/* في RTL العمود الأول يظهر يمين — كارت السعر والتواصل */}
-        <InstallmentCard
-          price={property.price}
-          whatsapp={property.whatsapp}
-          title={property.title}
-        />
+        <InstallmentCard price={property.price} title={property.title} />
 
         <div className="space-y-6">
           <header className="rounded-2xl border border-ocean-100 bg-white p-5 shadow-soft sm:p-6">
