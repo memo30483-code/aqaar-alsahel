@@ -46,6 +46,7 @@ import { useI18n, type MessageKey } from "@/lib/i18n";
 import { cityLabel } from "@/lib/i18n/cities";
 import { propertyTypeLabel } from "@/lib/i18n/taxonomy";
 import { useCurrency } from "@/lib/currency";
+import { blockOrder, isBlockEnabled, type BlockKey } from "@/lib/admin-system";
 
 type SortKey = "newest" | "priceDesc" | "priceAsc";
 
@@ -85,6 +86,20 @@ export default function HomePage() {
   const [sort, setSort] = useState<SortKey>("newest");
   const [showAll, setShowAll] = useState(false);
   const [userProperties, setUserProperties] = useState<Property[]>([]);
+  /* ===== إعدادات لوحة التحكم: إظهار/إخفاء بلوكات الرئيسية ===== */
+  const [blocks, setBlocks] = useState<Record<string, boolean> | null>(null);
+
+  useEffect(() => {
+    const keys: BlockKey[] = ["hero","verify_strip","marquee","featured_listings","projects_slider","ai_assistant","inline_ad","ad_band","market_panel","story_dossier","manage_note"];
+    const next: Record<string, boolean> = {};
+    keys.forEach((key) => {
+      next[key] = isBlockEnabled(key);
+    });
+    setBlocks(next);
+  }, []);
+
+  const showBlock = (key: BlockKey) => blocks === null || blocks[key] !== false;
+  const orderOf = (key: BlockKey) => (blocks === null ? 0 : blockOrder(key));
 
   useEffect(() => {
     try {
@@ -256,6 +271,9 @@ export default function HomePage() {
 
   return (
     <>
+      <div className="flex w-full flex-col">
+      {showBlock("hero") && (
+      <div key="hero" style={{ order: orderOf("hero") }} className="w-full">
       {/* ====================== HERO ====================== */}
       <section className="relative overflow-hidden bg-ocean-950">
         <div className="absolute inset-0">
@@ -533,7 +551,11 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+      </div>
+      )}
 
+      {showBlock("verify_strip") && (
+      <div key="verify_strip" style={{ order: orderOf("verify_strip") }} className="w-full">
       {/* ====================== VERIFY STRIP ====================== */}
       <section className="border-b border-sand-200 bg-white pb-6 pt-10">
         <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-6 px-4 sm:px-6 xl:flex-row xl:items-center">
@@ -608,10 +630,18 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+      </div>
+      )}
 
+      {showBlock("marquee") && (
+      <div key="marquee" style={{ order: orderOf("marquee") }} className="w-full">
       {/* ====================== MARQUEE ====================== */}
       <MarqueeStrip />
+      </div>
+      )}
 
+      {showBlock("featured_listings") && (
+      <div key="featured_listings" style={{ order: orderOf("featured_listings") }} className="w-full">
       {/* ====================== LISTINGS ====================== */}
       <section id="properties" className="scroll-mt-24 bg-sand-50 py-12 sm:py-16">
         <div className="mx-auto w-full max-w-[1240px] px-4 sm:px-6">
@@ -749,7 +779,7 @@ export default function HomePage() {
               {shown.map((property, index) => (
                 <Fragment key={property.id}>
                   <PropertyCard property={property} />
-                  {index === 5 && (
+                  {index === 5 && showBlock("inline_ad") && (
                     <FeaturedAdSlot className="sm:col-span-2 lg:col-span-3" />
                   )}
                 </Fragment>
@@ -771,13 +801,25 @@ export default function HomePage() {
           )}
         </div>
       </section>
+      </div>
+      )}
 
+      {showBlock("ad_band") && (
+      <div key="ad_band" style={{ order: orderOf("ad_band") }} className="w-full">
       {/* ====================== AD BAND ====================== */}
       <AdBand />
+      </div>
+      )}
 
+      {showBlock("projects_slider") && (
+      <div key="projects_slider" style={{ order: orderOf("projects_slider") }} className="w-full">
       {/* ====================== PROJECTS ====================== */}
       <ProjectsSlider />
+      </div>
+      )}
 
+      {showBlock("market_panel") && (
+      <div key="market_panel" style={{ order: orderOf("market_panel") }} className="w-full">
       {/* ====================== MAP + MARKET ====================== */}
       <section className="border-t border-sand-200 bg-sand-50 py-12 sm:py-14">
         <div className="mx-auto grid w-full max-w-[1240px] gap-5 px-4 sm:px-6 lg:grid-cols-[1.5fr_0.7fr]">
@@ -821,7 +863,11 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      </div>
+      )}
 
+      {showBlock("ai_assistant") && (
+      <div key="ai_assistant" style={{ order: orderOf("ai_assistant") }} className="w-full">
       {/* ====================== AI ASSISTANT ====================== */}
       <section id="assistant" className="scroll-mt-24 border-t border-sand-200 bg-gradient-to-b from-sand-50 to-white py-14 sm:py-16">
         <div className="mx-auto grid w-full max-w-[1240px] items-center gap-8 px-4 sm:px-6 lg:grid-cols-[1fr_0.92fr] lg:gap-14">
@@ -864,7 +910,11 @@ export default function HomePage() {
           <AiAssistant />
         </div>
       </section>
+      </div>
+      )}
 
+      {showBlock("story_dossier") && (
+      <div key="story_dossier" style={{ order: orderOf("story_dossier") }} className="w-full">
       {/* ====================== STORY + DOSSIER ====================== */}
       <section className="relative overflow-hidden bg-[radial-gradient(120%_120%_at_85%_0%,#28325f_0%,#141a33_55%,#0f1428_100%)] py-16 text-white">
         <MashrabiyaLayer tone="dark" className="opacity-[0.10]" />
@@ -1054,7 +1104,11 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      </div>
+      )}
 
+      {showBlock("manage_note") && (
+      <div key="manage_note" style={{ order: orderOf("manage_note") }} className="w-full">
       {/* شريط صغير يذكّر بسياسة التواصل قبل الفوتر */}
       <section className="border-t border-sand-200 bg-white">
         <div className="mx-auto flex w-full max-w-[1240px] flex-wrap items-center justify-center gap-2 px-4 py-4 text-[11px] font-bold text-sand-700 sm:px-6">
@@ -1065,6 +1119,9 @@ export default function HomePage() {
           {t("home.dossier.hiddenTitle")}
         </div>
       </section>
+      </div>
+      )}
+      </div>
     </>
   );
 }

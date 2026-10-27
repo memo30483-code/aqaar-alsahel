@@ -1,20 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Megaphone, Newspaper, ShieldCheck } from "lucide-react";
-import { useI18n, type MessageKey } from "@/lib/i18n";
-
-const PARTNERS: MessageKey[] = [
-  "home.marquee.partner1",
-  "home.marquee.partner2",
-  "home.marquee.partner3",
-  "home.marquee.partner4",
-];
-
-const NEWS: MessageKey[] = [
-  "home.marquee.news1",
-  "home.marquee.news2",
-  "home.marquee.news3",
-];
+import { useI18n } from "@/lib/i18n";
+import { getMarqueeItems, type MarqueeItem } from "@/lib/admin-system";
 
 function Diamond() {
   return (
@@ -27,29 +16,51 @@ function Diamond() {
 
 /** شريط متحرك لشركاء النجاح والأخبار — يُعرَض كمساحة إعلانية موسومة */
 export default function MarqueeStrip() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const [items, setItems] = useState<MarqueeItem[]>([]);
+
+  useEffect(() => {
+    setItems(getMarqueeItems().filter((item) => item.enabled));
+  }, []);
+
+  const label = (item: MarqueeItem) => (locale === "ar" ? item.textAr : item.textEn);
 
   const renderItems = (prefix: string) => (
     <>
-      {PARTNERS.map((key, index) => (
-        <div key={`${prefix}-${key}`} className="flex shrink-0 items-center gap-3">
+      {items.map((item, index) => (
+        <div key={`${prefix}-${item.id}`} className="flex shrink-0 items-center gap-3">
           <span className="flex items-center gap-2 text-[13px] font-extrabold text-ocean-900">
             <span
               aria-hidden
               className="h-3.5 w-3.5 shrink-0 rotate-45 rounded-[3px] border-2 border-gold-500"
             />
-            {t(key)}
+            {label(item)}
           </span>
           <Diamond />
-          <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-sand-200 bg-sand-50 px-3 py-1.5 text-[11px] font-bold text-ocean-700">
-            <Newspaper className="h-3 w-3 shrink-0 text-gold-600" />
-            {t(NEWS[index % NEWS.length])}
-          </span>
+          {item.type === "ad" ? (
+            <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-gold-300 bg-gold-50 px-3 py-1.5 text-[11px] font-bold text-gold-800">
+              {t("ads.label")}
+            </span>
+          ) : (
+            <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-sand-200 bg-sand-50 px-3 py-1.5 text-[11px] font-bold text-ocean-700">
+              <Newspaper className="h-3 w-3 shrink-0 text-gold-600" />
+              {item.type === "partner"
+                ? locale === "ar"
+                  ? "شريك نجاح"
+                  : "Success partner"
+                : locale === "ar"
+                  ? "خبر"
+                  : "News"}
+            </span>
+          )}
           <Diamond />
+          {index === items.length - 1 && null}
         </div>
       ))}
     </>
   );
+
+  if (items.length === 0) return null;
 
   return (
     <section

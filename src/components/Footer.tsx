@@ -6,6 +6,7 @@ import { Check, Clock3, Mail, MapPin, Phone, Send, ShieldCheck } from "lucide-re
 import { useI18n, type MessageKey } from "@/lib/i18n";
 import { CITY_KEYS } from "@/lib/i18n/cities";
 import BrandLogo from "@/components/BrandLogo";
+import { telHref, useSiteSettings } from "@/lib/site-settings";
 
 function XIcon({ className }: { className?: string }) {
   return (
@@ -68,6 +69,7 @@ const QUICK_LINKS: { key: MessageKey; href: string }[] = [
 /** فوتر غامق بثلاثة أعمدة + نشرة بريدية + ملاحظة «كل التواصل عبر الإدارة» */
 export default function Footer() {
   const { t } = useI18n();
+  const site = useSiteSettings();
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
@@ -185,20 +187,20 @@ export default function Footer() {
 
             <div className="mt-5 space-y-2 text-[11px] text-[#8d97b0]">
               <a
-                href="tel:+201001234567"
+                href={telHref(site.managementPhone)}
                 className="flex items-center gap-2 transition hover:text-gold-200"
                 dir="ltr"
               >
                 <Phone className="h-3.5 w-3.5 text-gold-400" />
-                +20 100 123 4567
+                {site.managementPhone}
               </a>
               <a
-                href="mailto:info@aqarfamily.com"
+                href={`mailto:${site.managementEmail}`}
                 className="flex items-center gap-2 transition hover:text-gold-200"
                 dir="ltr"
               >
                 <Mail className="h-3.5 w-3.5 text-gold-400" />
-                info@aqarfamily.com
+                {site.managementEmail}
               </a>
               <p className="flex items-center gap-2">
                 <Clock3 className="h-3.5 w-3.5 text-gold-400" />

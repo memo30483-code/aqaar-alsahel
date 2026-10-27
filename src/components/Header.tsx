@@ -30,6 +30,7 @@ import {
 } from "@/lib/session";
 import { MashrabiyaLayer } from "@/components/Ornaments";
 import BrandLogo from "@/components/BrandLogo";
+import OffersHeaderLink from "@/components/OffersHeaderLink";
 
 /** نمط موحّد لروابط التنقّل الرئيسية */
 const NAV_LINK =
@@ -252,6 +253,8 @@ export default function Header() {
             <Scale className="h-4 w-4 text-ocean-500" />
             {t("nav.legal")}
           </Link>
+
+          <OffersHeaderLink />
 
           {/* مبدّل اللغة */}
           <Dropdown
@@ -478,6 +481,10 @@ export default function Header() {
               <Scale className="h-4 w-4 text-ocean-500" />
               {t("nav.legal")}
             </Link>
+
+            <div className="px-1 py-1">
+              <OffersHeaderLink />
+            </div>
 
             <p className="px-3 pb-1 pt-3 text-[11px] font-bold uppercase tracking-wide text-ocean-400">
               {t("pref.language")} · {t("pref.currency")}

@@ -4,6 +4,7 @@ import AppProviders from "@/components/AppProviders";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FeaturedAds from "@/components/FeaturedAds";
+import OffersFloatingBanner from "@/components/OffersFloatingBanner";
 import "./globals.css";
 
 const cairo = Cairo({
@@ -31,6 +32,7 @@ export default function RootLayout({
           <main className="flex-1 min-h-0 flex flex-col">{children}</main>
           <Footer />
           <FeaturedAds />
+          <OffersFloatingBanner />
         </AppProviders>
       </body>
     </html>

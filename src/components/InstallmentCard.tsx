@@ -4,9 +4,7 @@ import { useMemo, useState } from "react";
 import { Headset, ShieldCheck } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { CURRENCIES, useCurrency } from "@/lib/currency";
-
-/** رقم إدارة الموقع — كل التواصل يمر من هنا، بدون أرقام ملاك */
-const MANAGEMENT_PHONE = "+201001234567";
+import { telHref, useSiteSettings } from "@/lib/site-settings";
 
 interface Props {
   price: number;
@@ -16,6 +14,7 @@ interface Props {
 export default function InstallmentCard({ price, title }: Props) {
   const { t, locale } = useI18n();
   const { formatWithSymbol } = useCurrency();
+  const site = useSiteSettings();
   const egpSymbol = CURRENCIES[0].symbol[locale];
 
   const defaultDown = Math.round(price * 0.2);
@@ -29,7 +28,7 @@ export default function InstallmentCard({ price, title }: Props) {
     return (price - down) / (y * 12);
   }, [downPayment, years, price]);
 
-  const managementMail = `mailto:info@aqarfamily.com?subject=${encodeURIComponent(
+  const managementMail = `mailto:${site.managementEmail}?subject=${encodeURIComponent(
     title
   )}`;
 
@@ -106,11 +105,11 @@ export default function InstallmentCard({ price, title }: Props) {
           {t("home.dossier.cta")}
         </a>
         <a
-          href={`tel:${MANAGEMENT_PHONE}`}
+          href={telHref(site.managementPhone)}
           className="flex items-center justify-center gap-2 rounded-xl border border-ocean-200 bg-white px-4 py-3.5 text-sm font-bold text-ocean-800 transition hover:bg-ocean-50"
           dir="ltr"
         >
-          {MANAGEMENT_PHONE}
+          {site.managementPhone}
         </a>
       </div>
 
