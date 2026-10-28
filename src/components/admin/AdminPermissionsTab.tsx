@@ -29,6 +29,7 @@ const CATEGORY_LABEL: Record<string, string> = {
   site: "الموقع",
   banners: "البنرات",
   logs: "السجلات",
+  professionals: "المهنيون",
   settings: "إعدادات عامة",
 };
 

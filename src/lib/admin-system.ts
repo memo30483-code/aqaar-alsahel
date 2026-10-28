@@ -26,7 +26,15 @@ export interface Permission {
   key: string;
   labelAr: string;
   labelEn: string;
-  category: "listings" | "users" | "offers" | "site" | "banners" | "logs" | "settings";
+  category:
+    | "listings"
+    | "users"
+    | "offers"
+    | "site"
+    | "banners"
+    | "logs"
+    | "professionals"
+    | "settings";
 }
 
 export interface AdminPermissionSet {
@@ -176,7 +184,15 @@ export interface MarqueeItem {
 export interface AdminLog {
   id: string;
   action: string;
-  category: "listings" | "users" | "offers" | "site" | "banners" | "auth" | "settings";
+  category:
+    | "listings"
+    | "users"
+    | "offers"
+    | "site"
+    | "banners"
+    | "auth"
+    | "professionals"
+    | "settings";
   performedBy: string;
   performedByName: string;
   performedByRole: UserRole;
@@ -219,6 +235,8 @@ export const ALL_PERMISSIONS: Permission[] = [
   { id: "p20", key: "banners.manage", labelAr: "إدارة البنرات والشريط المتحرك", labelEn: "Manage Banners & Marquee", category: "banners" },
   { id: "p21", key: "logs.view", labelAr: "عرض سجل النشاطات", labelEn: "View Activity Logs", category: "logs" },
   { id: "p22", key: "settings.full", labelAr: "تحكم كامل في كل الإعدادات", labelEn: "Full Control of All Settings", category: "settings" },
+  { id: "p23", key: "professionals.view", labelAr: "عرض دليل المهنيين", labelEn: "View Professionals Directory", category: "professionals" },
+  { id: "p24", key: "professionals.manage", labelAr: "إدارة المهنيين والاعتماد", labelEn: "Manage Professionals & Approvals", category: "professionals" },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {
@@ -231,6 +249,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     "offers.view", "offers.manage", "offers.publish",
     "site.blocks", "site.settings", "site.contact",
     "banners.manage",
+    "professionals.view", "professionals.manage",
     "logs.view"
   ],
   moderator: [

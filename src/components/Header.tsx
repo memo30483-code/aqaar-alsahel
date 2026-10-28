@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
+  BadgeCheck,
   Building2,
   Check,
   ChevronDown,
@@ -215,7 +216,7 @@ export default function Header() {
                 <p className="px-2.5 pb-0.5 pt-1 text-[11px] font-bold uppercase tracking-wide text-ocean-400">
                   {t("companies.heading")}
                 </p>
-                <Link href="/#properties" className={MENU_ITEM} onClick={close}>
+                <Link href="/developers" className={MENU_ITEM} onClick={close}>
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-ocean-50 text-ocean-600">
                     <Building2 className="h-4 w-4" />
                   </span>
@@ -228,7 +229,7 @@ export default function Header() {
                     </span>
                   </span>
                 </Link>
-                <Link href="/#properties" className={MENU_ITEM} onClick={close}>
+                <Link href="/brokers" className={MENU_ITEM} onClick={close}>
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-ocean-50 text-ocean-600">
                     <Scale className="h-4 w-4" />
                   </span>
@@ -238,6 +239,32 @@ export default function Header() {
                     </span>
                     <span className="block text-xs text-gray-500">
                       {t("companies.brokersDesc")}
+                    </span>
+                  </span>
+                </Link>
+                <Link href="/lawyers" className={MENU_ITEM} onClick={close}>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-ocean-50 text-ocean-600">
+                    <Scale className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block font-bold text-gray-900">
+                      {t("companies.lawyers")}
+                    </span>
+                    <span className="block text-xs text-gray-500">
+                      {t("companies.lawyersDesc")}
+                    </span>
+                  </span>
+                </Link>
+                <Link href="/join" className={MENU_ITEM} onClick={close}>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gold-50 text-gold-600">
+                    <BadgeCheck className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block font-bold text-gray-900">
+                      {t("companies.join")}
+                    </span>
+                    <span className="block text-xs text-gray-500">
+                      {t("companies.joinDesc")}
                     </span>
                   </span>
                 </Link>
@@ -457,13 +484,21 @@ export default function Header() {
             <p className="px-3 pb-1 pt-3 text-[11px] font-bold uppercase tracking-wide text-ocean-400">
               {t("nav.companies")}
             </p>
-            <Link href="/#properties" className={NAV_LINK} onClick={closeMobile}>
+            <Link href="/developers" className={NAV_LINK} onClick={closeMobile}>
               <Building2 className="h-4 w-4 text-ocean-500" />
               {t("companies.developers")}
             </Link>
-            <Link href="/#properties" className={NAV_LINK} onClick={closeMobile}>
+            <Link href="/brokers" className={NAV_LINK} onClick={closeMobile}>
               <Scale className="h-4 w-4 text-ocean-500" />
               {t("companies.brokers")}
+            </Link>
+            <Link href="/lawyers" className={NAV_LINK} onClick={closeMobile}>
+              <Scale className="h-4 w-4 text-ocean-500" />
+              {t("companies.lawyers")}
+            </Link>
+            <Link href="/join" className={NAV_LINK} onClick={closeMobile}>
+              <BadgeCheck className="h-4 w-4 text-gold-500" />
+              {t("companies.join")}
             </Link>
 
             <p className="px-3 pb-1 pt-3 text-[11px] font-bold uppercase tracking-wide text-ocean-400">

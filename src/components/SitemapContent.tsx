@@ -38,6 +38,10 @@ const GROUPS: Group[] = [
     links: [
       { ar: "البوصلة العقارية", en: "Market guide", href: "/market-guide", Icon: Compass },
       { ar: "الاستشارات القانونية", en: "Legal consultations", href: "/legal-consultational", Icon: Scale },
+      { ar: "دليل المطورين", en: "Developers directory", href: "/developers", Icon: Building2 },
+      { ar: "دليل المسوقين", en: "Marketers directory", href: "/brokers", Icon: UserPlus },
+      { ar: "دليل المحامين", en: "Lawyers directory", href: "/lawyers", Icon: Scale },
+      { ar: "انضم إلى الدليل", en: "Join the directory", href: "/join", Icon: ShieldCheck },
       { ar: "أضف عقارك", en: "List your property", href: "/add-property", Icon: FileText },
     ],
   },

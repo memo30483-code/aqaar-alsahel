@@ -24,7 +24,6 @@ import {
   DEFAULT_SITE_SETTINGS,
   getAdminLogs,
   getAdminPermissions,
-  getDevelopers,
   getListings,
   getMarqueeItems,
   getOffers,
@@ -32,7 +31,6 @@ import {
   getSiteSettings,
   getUsers,
   hasPermission,
-  type AdminDeveloper,
   type AdminListing,
   type AdminLog,
   type AdminUser,
@@ -49,7 +47,7 @@ import AdminMarqueeTab from "@/components/admin/AdminMarqueeTab";
 import AdminUsersTab from "@/components/admin/AdminUsersTab";
 import AdminPermissionsTab from "@/components/admin/AdminPermissionsTab";
 import AdminLogsTab from "@/components/admin/AdminLogsTab";
-import AdminDevelopersTab from "@/components/admin/AdminDevelopersTab";
+import AdminProfessionalsTab from "@/components/admin/AdminProfessionalsTab";
 import AdminCitiesTab from "@/components/admin/AdminCitiesTab";
 import AdminCompanyTab from "@/components/admin/AdminCompanyTab";
 import AdminHomeBuilderTab from "@/components/admin/AdminHomeBuilderTab";
@@ -67,7 +65,7 @@ type TabKey =
   | "marquee"
   | "users"
   | "permissions"
-  | "developers"
+  | "professionals"
   | "logs";
 
 const TABS: {
@@ -92,7 +90,7 @@ const TABS: {
   { key: "marquee", label: "البنرات والشريط", Icon: Megaphone, permission: "banners.manage" },
   { key: "users", label: "المستخدمون", Icon: Users, permission: "users.view" },
   { key: "permissions", label: "الصلاحيات", Icon: ShieldCheck, permission: "users.roles" },
-  { key: "developers", label: "المطورون", Icon: Building2, permission: "site.settings" },
+  { key: "professionals", label: "المهنيون", Icon: Building2, permission: "professionals.view" },
   { key: "logs", label: "سجل النشاطات", Icon: ListChecks, permission: "logs.view" },
 ];
 
@@ -110,7 +108,6 @@ export default function AdminDashboard() {
   const [tab, setTab] = useState<TabKey>("overview");
   const [listings, setListings] = useState<AdminListing[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
-  const [developers, setDevelopers] = useState<AdminDeveloper[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [offersSettings, setOffersSettings] = useState<OffersSettings>(DEFAULT_OFFERS_SETTINGS);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS);
@@ -127,7 +124,6 @@ export default function AdminDashboard() {
       const userList = getUsers();
       setUsers(userList);
       setListings(getListings());
-      setDevelopers(getDevelopers());
       setOffers(getOffers());
       setOffersSettings(getOffersSettings());
       setSiteSettings(getSiteSettings());
@@ -375,13 +371,11 @@ export default function AdminDashboard() {
           />
         )}
 
-        {tab === "developers" && (
-          <AdminDevelopersTab
-            developers={developers}
-            onChange={setDevelopers}
+        {tab === "professionals" && (
+          <AdminProfessionalsTab
+            can={can}
             notify={notify}
             reloadLogs={reloadLogs}
-            canManage={can("site.settings")}
           />
         )}
 

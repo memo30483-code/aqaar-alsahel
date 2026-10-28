@@ -16,6 +16,7 @@ const CATEGORY_LABEL: Record<AdminLog["category"], string> = {
   site: "الموقع",
   banners: "البنرات",
   auth: "الدخول",
+  professionals: "المهنيون",
   settings: "الإعدادات",
 };
 

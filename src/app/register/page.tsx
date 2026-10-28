@@ -12,10 +12,16 @@ import {
 } from "react";
 import { saveSession } from "@/lib/session";
 import { useT, type MessageKey } from "@/lib/i18n";
+import { readCompressedImage } from "@/lib/image-upload";
+import {
+  addProfessional,
+  type ProfessionalDocument,
+  type ProfessionalKind,
+} from "@/lib/professionals-store";
 
 /* ============================ الأنواع ============================ */
 
-type AccountType = "individual" | "developer" | "lawyer";
+type AccountType = "individual" | "developer" | "marketer" | "lawyer";
 type IndividualRole = "seeker" | "owner";
 
 type TextFieldName =
@@ -133,6 +139,19 @@ const ACCOUNT_TYPES: {
         strokeLinejoin="round"
         strokeWidth={1.8}
         d="M3.75 21V7.5L12 3l8.25 4.5V21M9 21v-6h6v6M7.5 10.5h1.5m6 0h1.5M7.5 14.25h1.5m6 0h1.5"
+      />
+    ),
+  },
+  {
+    id: "marketer",
+    titleKey: "register.account.marketer.title",
+    noteKey: "register.account.marketer.note",
+    icon: (
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M3 10.5v3a1.5 1.5 0 001.5 1.5h1.75l4.5 3.75V5.25L6.25 9H4.5A1.5 1.5 0 003 10.5zM15 9.75a3 3 0 010 4.5M17.25 7.5a6 6 0 010 9"
       />
     ),
   },
@@ -298,6 +317,7 @@ const TYPE_FIELDS: Record<AccountType, Field[]> = {
       hintKey: "register.hint.clearTaxCard",
     },
   ],
+  marketer: [],
   lawyer: [
     {
       kind: "text",
@@ -365,6 +385,9 @@ const TYPE_FIELDS: Record<AccountType, Field[]> = {
     },
   ],
 };
+
+/** المسوق يحتاج نفس مستندات المطور: سجل تجاري + بطاقة ضريبية + بطاقة المسؤول */
+TYPE_FIELDS.marketer = TYPE_FIELDS.developer;
 
 const STEPS: { id: number; titleKey: MessageKey; descKey: MessageKey }[] = [
   {
@@ -710,10 +733,10 @@ export default function RegisterPage() {
     e.target.value = "";
     if (!file) return;
     markTouched(name);
-    const reader = new FileReader();
-    reader.onload = () =>
-      setDocuments((prev) => ({ ...prev, [name]: String(reader.result) }));
-    reader.readAsDataURL(file);
+    /* نُصغّر الصورة قبل التخزين حتى لا نتجاوز مساحة التخزين المحلية */
+    void readCompressedImage(file).then((dataUrl) =>
+      setDocuments((prev) => ({ ...prev, [name]: dataUrl }))
+    );
   };
 
   const removeDocument = (name: FileFieldName) =>
@@ -755,9 +778,42 @@ export default function RegisterPage() {
       phone: details.phone,
       accountType,
       verifiedAt: new Date().toISOString(),
-      /* المطوّر العقاري يُمنح دور «مسوّق» تلقائياً، وما عدا ذلك مستخدم عادي */
-      role: accountType === "developer" ? "agent" : "user",
+      /* المطوّر والمسوق يُمنحان دور «مسوق»، والمحامي مستخدم عادي حتى الاعتماد */
+      role:
+        accountType === "developer" || accountType === "marketer"
+          ? "agent"
+          : "user",
     });
+
+    /* إنشاء سجل مهني بحالة «قيد المراجعة» — لا يظهر للزوار قبل موافقة الإدارة */
+    if (accountType !== "individual") {
+      const kind: ProfessionalKind = accountType;
+      const documentList: ProfessionalDocument[] = fileFields
+        .filter((field) => documents[field.name])
+        .map((field) => ({
+          id: `doc-${field.name}`,
+          type: field.name,
+          label: t(field.labelKey),
+          fileName: field.name,
+          dataUrl: documents[field.name],
+          uploadedAt: new Date().toISOString(),
+        }));
+
+      addProfessional({
+        kind,
+        nameAr:
+          accountType === "lawyer"
+            ? details.fullTripleName
+            : details.legalOfficerName || details.companyName,
+        companyAr: accountType === "lawyer" ? "" : details.companyName,
+        phone: details.phone,
+        email: details.email,
+        documents: documentList,
+        status: "pending",
+        verified: false,
+      });
+    }
+
     setVerified(true);
   };
 
@@ -815,7 +871,11 @@ export default function RegisterPage() {
                   {t("register.success.title")}
                 </h2>
                 <p className="mt-2 text-[12px] leading-6 text-sand-600">
-                  {t("register.success.desc")}
+                  {t(
+                    accountType === "individual"
+                      ? "register.success.desc"
+                      : "register.success.pendingDesc"
+                  )}
                 </p>
                 <dl className="mx-auto mt-6 max-w-md space-y-2 rounded-2xl border border-sand-200 bg-sand-50/70 p-4 text-right text-[12.5px]">
                   <div className="flex justify-between gap-3">
@@ -860,8 +920,18 @@ export default function RegisterPage() {
                     <dt className="font-bold text-sand-700">
                       {t("register.success.status")}
                     </dt>
-                    <dd className="font-bold text-emerald-600">
-                      {t("register.success.verified")}
+                    <dd
+                      className={`font-bold ${
+                        accountType === "individual"
+                          ? "text-emerald-600"
+                          : "text-amber-600"
+                      }`}
+                    >
+                      {t(
+                        accountType === "individual"
+                          ? "register.success.verified"
+                          : "register.success.pendingReview"
+                      )}
                     </dd>
                   </div>
                 </dl>
@@ -898,7 +968,7 @@ export default function RegisterPage() {
                   <p className="mt-1 text-[11.5px] leading-6 text-sand-600">
                     {t("register.section.accountTypeDesc")}
                   </p>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     {ACCOUNT_TYPES.map((type) => {
                       const active = accountType === type.id;
                       return (

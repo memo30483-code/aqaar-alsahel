@@ -24,53 +24,7 @@ import { cityLabel } from "@/lib/i18n/cities";
 import { PROPERTY_TYPES, propertyTypeLabel } from "@/lib/i18n/taxonomy";
 import { useCurrency } from "@/lib/currency";
 import { telHref, useSiteSettings } from "@/lib/site-settings";
-
-interface Lawyer {
-  name: string;
-  specialty: string;
-  license: string;
-  experience: string;
-  coverage: string;
-}
-
-/** كروت محامين تجريبية (بيانات وهمية للعرض) — بدون أي أرقام تواصل مباشرة */
-const LAWYERS: Lawyer[] = [
-  {
-    name: "أ. محمود عبد السلام",
-    specialty: "عقود البيع الابتدائي والتصرفات العقارية",
-    license: "CAR-1284",
-    experience: "14 سنة خبرة",
-    coverage: "دمياط الجديدة — رأس البر",
-  },
-  {
-    name: "أ. هدى الشربيني",
-    specialty: "فحص الملكية والرهون والحجوزات",
-    license: "CAR-2091",
-    experience: "11 سنة خبرة",
-    coverage: "دمياط القديمة — جمصة",
-  },
-  {
-    name: "أ. كريم الدسوقي",
-    specialty: "عقود المطورين ووحدات التقسيط",
-    license: "CAR-3377",
-    experience: "9 سنوات خبرة",
-    coverage: "المنصورة الجديدة — دمياط الجديدة",
-  },
-  {
-    name: "أ. سارة النحاس",
-    specialty: "التسجيل العقاري والشهر العقاري",
-    license: "CAR-4160",
-    experience: "7 سنوات خبرة",
-    coverage: "رأس البر — جمصة — دمياط",
-  },
-];
-
-/** حقول بيانات المحامي النصية التي تحتاج ترجمة */
-type LawyerTextField = "name" | "specialty" | "experience" | "coverage";
-
-/** مفتاح ترجمة لحقل نصي من بيانات محامٍ معيّن */
-const lawyerTextKey = (index: number, field: LawyerTextField): MessageKey =>
-  `legal.lawyer.${index}.${field}` as MessageKey;
+import { usePublicProfessionals } from "@/lib/professionals-store";
 
 const REVIEW_POINTS: {
   title: MessageKey;
@@ -118,6 +72,7 @@ export default function LegalConsultationalPage() {
   const { t, locale } = useI18n();
   const { formatWithSymbol } = useCurrency();
   const site = useSiteSettings();
+  const lawyers = usePublicProfessionals("lawyer");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [propertyType, setPropertyType] = useState<PropertyType | "">("");
@@ -203,7 +158,7 @@ export default function LegalConsultationalPage() {
 
           <div className="mt-9 grid gap-3 sm:grid-cols-3">
             {[
-              { value: String(LAWYERS.length), label: t("legal.stat.lawyers") },
+              { value: String(lawyers.length), label: t("legal.stat.lawyers") },
               { value: String(legalCities.length), label: t("legal.stat.cities") },
               {
                 value: t("legal.stat.responseValue"),
@@ -470,71 +425,95 @@ export default function LegalConsultationalPage() {
               {t("legal.lawyers.subtitle")}
             </p>
           </div>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-gold-300/70 bg-gold-50 px-3 py-1.5 text-[10.5px] font-extrabold text-gold-800">
-            <ShieldCheck className="h-3.5 w-3.5 text-gold-500" />
-            {t("legal.lawyers.badge")}
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-gold-300/70 bg-gold-50 px-3 py-1.5 text-[10.5px] font-extrabold text-gold-800">
+              <ShieldCheck className="h-3.5 w-3.5 text-gold-500" />
+              {t("legal.lawyers.badge")}
+            </span>
+            <Link
+              href="/lawyers"
+              className="inline-flex items-center gap-1.5 rounded-full border border-ocean-900/15 bg-white px-3 py-1.5 text-[10.5px] font-extrabold text-ocean-800 transition hover:border-gold-300 hover:bg-gold-50/60"
+            >
+              {t("prof.lawyers.eyebrow")}
+              <ArrowLeft className="h-3 w-3 rtl:rotate-180" />
+            </Link>
+          </div>
         </div>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {LAWYERS.map((lawyer, index) => (
-            <div
-              key={lawyer.license}
-              className="flex flex-col rounded-3xl border border-sand-200 bg-white p-5 shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)] transition hover:-translate-y-1 hover:border-gold-300/70"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#141a33,#2d3875)] text-[15px] font-black text-gold-300 ring-2 ring-gold-200/40">
-                  {t(lawyerTextKey(index, "name")).replace("أ. ", "").charAt(0)}
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-extrabold text-emerald-700">
-                  <Check className="h-3 w-3" strokeWidth={3} />
-                  {t("legal.lawyers.badge")}
-                </span>
-              </div>
-
-              <h3 className="mt-3.5 text-[13.5px] font-black text-ocean-900">
-                {t(lawyerTextKey(index, "name"))}
-              </h3>
-              <p className="mt-1 text-[11px] leading-5 text-sand-700">
-                {t(lawyerTextKey(index, "specialty"))}
-              </p>
-
-              <dl className="mt-3.5 space-y-1.5 rounded-2xl border border-sand-200 bg-sand-50/70 p-3 text-[10.5px]">
-                <div className="flex items-center justify-between gap-2">
-                  <dt className="font-bold text-sand-600">
-                    {t("legal.lawyers.license")}
-                  </dt>
-                  <dd className="font-mono font-bold text-ocean-900" dir="ltr">
-                    {lawyer.license}
-                  </dd>
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                  <dt className="font-bold text-sand-600">
-                    {t("legal.lawyers.experience")}
-                  </dt>
-                  <dd className="font-bold text-ocean-900">
-                    {t(lawyerTextKey(index, "experience"))}
-                  </dd>
-                </div>
-              </dl>
-
-              <p className="mt-2.5 flex items-start gap-1.5 text-[10.5px] leading-5 text-sand-600">
-                <MapPin className="mt-0.5 h-3 w-3 shrink-0 text-gold-500" />
-                {t("legal.lawyers.coverage", {
-                  coverage: t(lawyerTextKey(index, "coverage")),
-                })}
-              </p>
-
-              <a
-                href="#consult-form"
-                className="mt-3.5 inline-flex items-center justify-center gap-1.5 rounded-xl border border-sand-200 bg-white px-4 py-2.5 text-[11.5px] font-extrabold text-ocean-800 transition hover:border-gold-300 hover:bg-gold-50/60"
+          {lawyers.map((lawyer) => {
+            const initials = lawyer.nameAr.replace("أ. ", "").charAt(0) || "؟";
+            return (
+              <div
+                key={lawyer.id}
+                className="flex flex-col rounded-3xl border border-sand-200 bg-white p-5 shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)] transition hover:-translate-y-1 hover:border-gold-300/70"
               >
-                {t("legal.lawyers.request")}
-                <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
-              </a>
-            </div>
-          ))}
+                <div className="flex items-start justify-between gap-2">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#141a33,#2d3875)] text-[15px] font-black text-gold-300 ring-2 ring-gold-200/40">
+                    {initials}
+                  </span>
+                  {lawyer.verified && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-extrabold text-emerald-700">
+                      <Check className="h-3 w-3" strokeWidth={3} />
+                      {t("legal.lawyers.badge")}
+                    </span>
+                  )}
+                </div>
+
+                <h3 className="mt-3.5 text-[13.5px] font-black text-ocean-900">
+                  {lawyer.nameAr}
+                </h3>
+                <p className="mt-1 text-[11px] leading-5 text-sand-700">
+                  {lawyer.titleAr || (lawyer.specialtiesAr ?? []).join(" · ")}
+                </p>
+
+                <dl className="mt-3.5 space-y-1.5 rounded-2xl border border-sand-200 bg-sand-50/70 p-3 text-[10.5px]">
+                  <div className="flex items-center justify-between gap-2">
+                    <dt className="font-bold text-sand-600">
+                      {t("legal.lawyers.license")}
+                    </dt>
+                    <dd className="font-mono font-bold text-ocean-900" dir="ltr">
+                      {lawyer.licenseNumber || "—"}
+                    </dd>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <dt className="font-bold text-sand-600">
+                      {t("legal.lawyers.experience")}
+                    </dt>
+                    <dd className="font-bold text-ocean-900">
+                      {typeof lawyer.yearsExperience === "number"
+                        ? `${lawyer.yearsExperience} سنة خبرة`
+                        : "—"}
+                    </dd>
+                  </div>
+                </dl>
+
+                {(lawyer.coverageAr ?? []).length > 0 && (
+                  <p className="mt-2.5 flex items-start gap-1.5 text-[10.5px] leading-5 text-sand-600">
+                    <MapPin className="mt-0.5 h-3 w-3 shrink-0 text-gold-500" />
+                    {t("legal.lawyers.coverage", {
+                      coverage: (lawyer.coverageAr ?? []).join(" — "),
+                    })}
+                  </p>
+                )}
+
+                <a
+                  href="#consult-form"
+                  className="mt-3.5 inline-flex items-center justify-center gap-1.5 rounded-xl border border-sand-200 bg-white px-4 py-2.5 text-[11.5px] font-extrabold text-ocean-800 transition hover:border-gold-300 hover:bg-gold-50/60"
+                >
+                  {t("legal.lawyers.request")}
+                  <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
+                </a>
+              </div>
+            );
+          })}
         </div>
+
+        {lawyers.length === 0 && (
+          <p className="mt-6 rounded-3xl border border-dashed border-sand-300 bg-white p-8 text-center text-[12px] font-bold text-sand-500">
+            {t("prof.empty.title")}
+          </p>
+        )}
 
         <p className="mt-4 text-[10.5px] leading-5 text-sand-500">
           {t("legal.lawyers.note")}
