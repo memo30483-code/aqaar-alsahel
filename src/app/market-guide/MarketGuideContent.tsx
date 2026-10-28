@@ -128,7 +128,7 @@ function avgPricePerMeter(
   type: PropertyType
 ): number | null {
   const items = cityProperties(properties, city).filter(
-    (p) => p.type === type && p.area > 0
+    (p) => p.type === type && p.area > 0 && !p.priceByAdmin
   );
   if (items.length === 0) return null;
   const total = items.reduce((sum, p) => sum + p.price / p.area, 0);
@@ -164,13 +164,16 @@ export default function MarketGuideContent() {
   );
 
   const totalListings = allProperties.length;
+  const pricedProperties = allProperties.filter(
+    (p) => !p.priceByAdmin && p.area > 0
+  );
   const overallAvgMeter =
-    allProperties.length > 0
+    pricedProperties.length > 0
       ? Math.round(
-          allProperties.reduce(
+          pricedProperties.reduce(
             (sum, p) => sum + p.price / (p.area || 1),
             0
-          ) / allProperties.length
+          ) / pricedProperties.length
         )
       : 0;
 

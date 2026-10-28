@@ -54,6 +54,10 @@ export interface AdminListing {
   city: string;
   type: string;
   price: number;
+  /** قابلية التفاوض على السعر */
+  negotiable?: boolean;
+  /** السعر تحدده إدارة المنصة */
+  priceByAdmin?: boolean;
   sellerType: string;
   status: ListingStatus;
   source: "user" | "demo";
@@ -565,6 +569,8 @@ export function getListings(): AdminListing[] {
       city: property.city,
       type: property.type,
       price: override?.price ?? property.price,
+      negotiable: property.negotiable,
+      priceByAdmin: property.priceByAdmin,
       sellerType: property.sellerType,
       status: override?.status ?? (source === "user" ? "pending" : defaultStatus(property.id)),
       source,

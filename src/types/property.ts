@@ -68,6 +68,10 @@ export interface Property {
   submittedAt?: string;
   /** رقم مرجعي يظهر لصاحب العقار لمتابعة الطلب */
   reference?: string;
+  /** هل سعر البيع قابل للتفاوض؟ (يحدده البائع) */
+  negotiable?: boolean;
+  /** البائع ترك تحديد السعر لإدارة المنصة — يُعطّل السعر والتفاوض */
+  priceByAdmin?: boolean;
 }
 
 export interface PropertyFilters {

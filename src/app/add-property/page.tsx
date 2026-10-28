@@ -36,11 +36,15 @@ import { useCurrency } from "@/lib/currency";
 import { getSession } from "@/lib/session";
 import {
   ADD_PROPERTY_FIELDS_EVENT,
+  ADD_PROPERTY_OPTIONS_EVENT,
   DEFAULT_ADD_PROPERTY_FIELD_SETTINGS,
+  DEFAULT_ADD_PROPERTY_OPTIONS,
   documentFieldKey,
   getAddPropertyFieldSettings,
+  getAddPropertyOptions,
   type AddPropertyFieldKey,
   type AddPropertyFieldSettings,
+  type AddPropertyOptions,
 } from "@/lib/add-property-fields";
 import LocationPickerDynamic from "@/components/LocationPickerDynamic";
 
@@ -100,6 +104,10 @@ interface FormState {
   district: string;
   area: string;
   price: string;
+  /** قابل للتفاوض؟ "" لم يُحدَّد بعد */
+  negotiable: "" | "yes" | "no";
+  /** البائع اختار أن تحدد إدارة المنصة السعر */
+  priceByAdmin: boolean;
   rooms: string;
   bathrooms: string;
   sellerType: SellerType | "";
@@ -197,6 +205,8 @@ const initial: FormState = {
   district: "",
   area: "",
   price: "",
+  negotiable: "",
+  priceByAdmin: false,
   rooms: "",
   bathrooms: "1",
   sellerType: "",
@@ -255,6 +265,10 @@ export default function AddPropertyPage() {
   const [fieldSettings, setFieldSettings] = useState<AddPropertyFieldSettings>(
     DEFAULT_ADD_PROPERTY_FIELD_SETTINGS
   );
+  /** إعدادات الأدمن: إظهار التفاوض وإتاحة «السعر تحدده المنصة» */
+  const [options, setOptions] = useState<AddPropertyOptions>(
+    DEFAULT_ADD_PROPERTY_OPTIONS
+  );
   /** إعادة تصفير حقول الملفات بعد حذف مستند حتى يمكن رفع نفس الملف مرة أخرى */
   const [docNonce, setDocNonce] = useState(0);
 
@@ -266,17 +280,30 @@ export default function AddPropertyPage() {
       return;
     }
     setFieldSettings(getAddPropertyFieldSettings());
+    setOptions(getAddPropertyOptions());
     setChecking(false);
   }, [router]);
 
   /* تحديث الإعدادات لو عدّلها الأدمن في تبويب آخر */
   useEffect(() => {
-    const sync = () => setFieldSettings(getAddPropertyFieldSettings());
+    const sync = () => {
+      setFieldSettings(getAddPropertyFieldSettings());
+      const nextOptions = getAddPropertyOptions();
+      setOptions(nextOptions);
+      /* لو أوقف الأدمن خيار سعر المنصة أثناء تعبئة الفورم */
+      if (!nextOptions.platformPriceEnabled) {
+        setForm((prev) =>
+          prev.priceByAdmin ? { ...prev, priceByAdmin: false } : prev
+        );
+      }
+    };
     window.addEventListener("storage", sync);
     window.addEventListener(ADD_PROPERTY_FIELDS_EVENT, sync);
+    window.addEventListener(ADD_PROPERTY_OPTIONS_EVENT, sync);
     return () => {
       window.removeEventListener("storage", sync);
       window.removeEventListener(ADD_PROPERTY_FIELDS_EVENT, sync);
+      window.removeEventListener(ADD_PROPERTY_OPTIONS_EVENT, sync);
     };
   }, []);
 
@@ -309,6 +336,20 @@ export default function AddPropertyPage() {
   const requiredDocuments = DOCUMENTS.filter((doc) =>
     needs(documentFieldKey(doc.key))
   );
+
+  /** خيار «السعر تحدده المنصة» لا يُطبَّق إلا إذا سمح به الأدمن */
+  const priceByAdmin = form.priceByAdmin && options.platformPriceEnabled;
+  const negotiableEnabled = options.negotiableEnabled;
+
+  /** اختيار «السعر تحدده المنصة» يُغلق السعر وقائمة التفاوض ويفرّغهما */
+  const togglePriceByAdmin = (checked: boolean) => {
+    setForm((prev) => ({
+      ...prev,
+      priceByAdmin: checked,
+      price: checked ? "" : prev.price,
+      negotiable: checked ? "" : prev.negotiable,
+    }));
+  };
 
   const set =
     (key: keyof FormState) =>
@@ -379,7 +420,7 @@ export default function AddPropertyPage() {
   };
 
   const pricePerMeter =
-    Number(form.price) > 0 && Number(form.area) > 0
+    !priceByAdmin && Number(form.price) > 0 && Number(form.area) > 0
       ? Math.round(Number(form.price) / Number(form.area))
       : null;
 
@@ -425,8 +466,11 @@ export default function AddPropertyPage() {
     if (needs("area") && (empty(form.area) || Number(form.area) <= 0)) {
       missing.push(labelFor("area", "addProperty.fieldArea"));
     }
-    if (needs("price") && (empty(form.price) || Number(form.price) <= 0)) {
+    if (needs("price") && !priceByAdmin && (empty(form.price) || Number(form.price) <= 0)) {
       missing.push(labelFor("price", "addProperty.fieldPrice"));
+    }
+    if (needs("negotiable") && negotiableEnabled && !priceByAdmin && !form.negotiable) {
+      missing.push(labelFor("negotiable", "addProperty.fieldNegotiable"));
     }
     if (needs("rooms") && empty(form.rooms)) {
       missing.push(labelFor("rooms", "addProperty.fieldRooms"));
@@ -501,7 +545,13 @@ export default function AddPropertyPage() {
       area: Number(form.area) || 0,
       rooms: Number(form.rooms) || 0,
       bathrooms: Number(form.bathrooms) || 0,
-      price: Number(form.price) || 0,
+      price: priceByAdmin ? 0 : Number(form.price) || 0,
+      priceByAdmin: priceByAdmin || undefined,
+      negotiable: priceByAdmin
+        ? undefined
+        : negotiableEnabled && form.negotiable
+          ? form.negotiable === "yes"
+          : undefined,
       sellerType: form.sellerType || "فرد",
       whatsapp,
       description: form.description.trim(),
@@ -809,18 +859,94 @@ export default function AddPropertyPage() {
                     />
                   </label>
 
-                  <label className="block">
-                    <span className={LABEL}>
-                      {labelFor("price", "addProperty.fieldPrice")}
-                    </span>
-                    <input
-                      type="number"
-                      min={0}
-                      value={form.price}
-                      onChange={set("price")}
-                      className={FIELD}
-                    />
-                  </label>
+                  <div className="rounded-2xl border border-sand-200 bg-sand-50/60 p-3.5 sm:col-span-2 lg:col-span-3">
+                    <div
+                      className={`grid gap-3.5 ${
+                        negotiableEnabled ? "sm:grid-cols-2" : ""
+                      }`}
+                    >
+                      <label className="block">
+                        <span className={LABEL}>
+                          {labelFor(
+                            "price",
+                            form.purpose === "إيجار"
+                              ? "addProperty.fieldRentPrice"
+                              : "addProperty.fieldPrice"
+                          )}
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={form.price}
+                          onChange={set("price")}
+                          disabled={priceByAdmin}
+                          className={`${FIELD} ${
+                            priceByAdmin
+                              ? "cursor-not-allowed bg-sand-100 text-sand-500"
+                              : ""
+                          }`}
+                        />
+                      </label>
+
+                      {negotiableEnabled && (
+                        <label className="block">
+                          <span className={LABEL}>
+                            {labelFor("negotiable", "addProperty.fieldNegotiable")}
+                          </span>
+                          <select
+                            value={form.negotiable}
+                            onChange={(e) =>
+                              setForm((prev) => ({
+                                ...prev,
+                                negotiable: e.target
+                                  .value as FormState["negotiable"],
+                              }))
+                            }
+                            disabled={priceByAdmin}
+                            className={`${FIELD} ${
+                              priceByAdmin
+                                ? "cursor-not-allowed bg-sand-100 text-sand-500"
+                                : ""
+                            }`}
+                          >
+                            <option value="">{t("addProperty.select")}</option>
+                            <option value="yes">
+                              {t("addProperty.negotiable.yes")}
+                            </option>
+                            <option value="no">
+                              {t("addProperty.negotiable.no")}
+                            </option>
+                          </select>
+                        </label>
+                      )}
+                    </div>
+
+                    {options.platformPriceEnabled && (
+                      <label className="mt-3 flex cursor-pointer items-start gap-2 rounded-xl border border-sand-200 bg-white px-3 py-2.5 transition hover:border-gold-300">
+                        <input
+                          type="checkbox"
+                          checked={form.priceByAdmin}
+                          onChange={(e) => togglePriceByAdmin(e.target.checked)}
+                          className="mt-0.5 h-4 w-4 shrink-0 accent-gold-600"
+                        />
+                        <span>
+                          <span className="block text-[11.5px] font-extrabold leading-5 text-ocean-900">
+                            {t("addProperty.platformPrice")}
+                          </span>
+                          <span className="mt-0.5 block text-[10.5px] font-semibold leading-5 text-sand-600">
+                            {t("addProperty.platformPriceHint")}
+                          </span>
+                        </span>
+                      </label>
+                    )}
+
+                    {priceByAdmin && (
+                      <p className="mt-2.5 flex items-start gap-1.5 rounded-xl border border-gold-200 bg-gold-50 px-3 py-2 text-[10.5px] font-bold leading-5 text-gold-800">
+                        <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                        {t("addProperty.platformPriceActive")}
+                      </p>
+                    )}
+                  </div>
 
                   <label className="block">
                     <span className={LABEL}>

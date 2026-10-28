@@ -5,12 +5,17 @@ import { Check, Lock, RotateCcw, ShieldCheck } from "lucide-react";
 import {
   ADD_PROPERTY_FIELDS,
   ADD_PROPERTY_FIELD_GROUPS,
+  DEFAULT_ADD_PROPERTY_OPTIONS,
   countAddPropertyFields,
   getAddPropertyFieldSettings,
+  getAddPropertyOptions,
   resetAddPropertyFieldSettings,
+  resetAddPropertyOptions,
   saveAddPropertyFieldSettings,
+  saveAddPropertyOptions,
   type AddPropertyFieldKey,
   type AddPropertyFieldSettings,
+  type AddPropertyOptions,
 } from "@/lib/add-property-fields";
 import { addAdminLog } from "@/lib/admin-system";
 import { getSession } from "@/lib/session";
@@ -36,13 +41,26 @@ export default function AdminAddPropertyFieldsTab({
   );
   const [baseline, setBaseline] = useState<AddPropertyFieldSettings>(draft);
 
+  /** خيارات السعر: قائمة التفاوض وخيار «السعر تحدده المنصة» */
+  const [optionsDraft, setOptionsDraft] = useState<AddPropertyOptions>(
+    getAddPropertyOptions
+  );
+  const [optionsBaseline, setOptionsBaseline] = useState<AddPropertyOptions>(
+    optionsDraft
+  );
+
   const manage = can("site.settings");
 
   const counts = useMemo(() => countAddPropertyFields(draft), [draft]);
   const dirty = useMemo(
     () =>
-      ADD_PROPERTY_FIELDS.some((field) => draft[field.key] !== baseline[field.key]),
-    [draft, baseline]
+      ADD_PROPERTY_FIELDS.some(
+        (field) => draft[field.key] !== baseline[field.key]
+      ) ||
+      (Object.keys(DEFAULT_ADD_PROPERTY_OPTIONS) as (keyof AddPropertyOptions)[]).some(
+        (key) => optionsDraft[key] !== optionsBaseline[key]
+      ),
+    [draft, baseline, optionsDraft, optionsBaseline]
   );
 
   const logChange = (details: string) => {
@@ -64,23 +82,33 @@ export default function AdminAddPropertyFieldsTab({
 
   const save = () => {
     saveAddPropertyFieldSettings(draft);
+    saveAddPropertyOptions(optionsDraft);
     const next = getAddPropertyFieldSettings();
+    const nextOptions = getAddPropertyOptions();
     setDraft(next);
     setBaseline(next);
+    setOptionsDraft(nextOptions);
+    setOptionsBaseline(nextOptions);
     const nextCounts = countAddPropertyFields(next);
     logChange(
-      `حفظ إعدادات حقول إضافة العقار — إجباري: ${nextCounts.required}، اختياري: ${nextCounts.optional}`
+      `حفظ إعدادات حقول إضافة العقار — إجباري: ${nextCounts.required}، اختياري: ${nextCounts.optional}، قائمة التفاوض: ${
+        nextOptions.negotiableEnabled ? "مفعّلة" : "موقوفة"
+      }، سعر المنصة: ${nextOptions.platformPriceEnabled ? "متاح" : "موقوف"}`
     );
-    notify("تم حفظ إعدادات الحقول وتطبيقها على كل طلبات النشر");
+    notify("تم حفظ إعدادات الحقول والخيارات وتطبيقها على كل طلبات النشر");
   };
 
   const reset = () => {
     resetAddPropertyFieldSettings();
+    resetAddPropertyOptions();
     const next = getAddPropertyFieldSettings();
+    const nextOptions = getAddPropertyOptions();
     setDraft(next);
     setBaseline(next);
-    logChange("استعادة الإعدادات الافتراضية لحقول إضافة العقار");
-    notify("تم استعادة الإعدادات الافتراضية للحقول");
+    setOptionsDraft(nextOptions);
+    setOptionsBaseline(nextOptions);
+    logChange("استعادة الإعدادات الافتراضية لحقول إضافة العقار وخيارات السعر");
+    notify("تم استعادة الإعدادات الافتراضية للحقول وخيارات السعر");
   };
 
   return (
@@ -173,12 +201,20 @@ export default function AdminAddPropertyFieldsTab({
                       hint={
                         field.locked
                           ? "حقل أساسي في بنية الإعلان — إجباري دائماً"
-                          : draft[field.key]
-                            ? "إجباري: لا يُقبل الطلب بدونه"
-                            : "اختياري: يمكن تركه فارغاً"
+                          : field.key === "negotiable" &&
+                              !optionsDraft.negotiableEnabled
+                            ? "قائمة التفاوض موقوفة من «خيارات السعر والتفاوض» بالأسفل"
+                            : draft[field.key]
+                              ? "إجباري: لا يُقبل الطلب بدونه"
+                              : "اختياري: يمكن تركه فارغاً"
                       }
                       checked={draft[field.key]}
-                      disabled={!manage || field.locked}
+                      disabled={
+                        !manage ||
+                        field.locked ||
+                        (field.key === "negotiable" &&
+                          !optionsDraft.negotiableEnabled)
+                      }
                       onChange={(value) => toggle(field.key, value)}
                     />
                   ))}
@@ -187,6 +223,53 @@ export default function AdminAddPropertyFieldsTab({
             );
           })}
         </div>
+      </Panel>
+
+      <Panel
+        title="خيارات السعر والتفاوض"
+        desc="تحكم كامل في الخيارات التي تظهر للبائع بجوار خانة سعر البيع."
+      >
+        <div className="grid gap-2 sm:grid-cols-2">
+          <ToggleRow
+            title="قائمة «قابل للتفاوض / غير قابل للتفاوض»"
+            hint={
+              optionsDraft.negotiableEnabled
+                ? "تظهر للبائع بجوار خانة السعر، وإجباريتها يحددها مفتاح «قابلية التفاوض على السعر» بالأعلى."
+                : "مخفية تماماً من صفحة إضافة العقار."
+            }
+            checked={optionsDraft.negotiableEnabled}
+            disabled={!manage}
+            onChange={(value) =>
+              setOptionsDraft((current) => ({
+                ...current,
+                negotiableEnabled: value,
+              }))
+            }
+          />
+          <ToggleRow
+            title="خيار «يحدد السعر من قبل إدارة الموقع/المنصة»"
+            hint={
+              optionsDraft.platformPriceEnabled
+                ? "يستطيع البائع تفويض تحديد السعر للإدارة، فتُغلق خانة السعر وقائمة التفاوض."
+                : "مخفي — يبقى السعر على البائع حسب إجبارية حقل السعر."
+            }
+            checked={optionsDraft.platformPriceEnabled}
+            disabled={!manage}
+            onChange={(value) =>
+              setOptionsDraft((current) => ({
+                ...current,
+                platformPriceEnabled: value,
+              }))
+            }
+          />
+        </div>
+
+        <p className="mt-3 flex items-start gap-2 rounded-2xl border border-gold-200 bg-gold-50 px-3.5 py-3 text-[11.5px] font-semibold leading-6 text-gold-900">
+          <Lock className="mt-0.5 h-4 w-4 shrink-0" />
+          عند اختيار البائع «السعر تحدده الإدارة» يُحفظ الطلب بدون سعر بعلامة
+          «السعر تحدده الإدارة»، وتُلغى مطالبته بالسعر والتفاوض. الإعلان يظل
+          «قيد المراجعة» ولا يُنشر إلا بموافقتك.
+        </p>
       </Panel>
 
       <Panel title="ملاحظات مهمة" desc="كيف يظهر أثر الإعدادات على الزوار والإدارة؟">

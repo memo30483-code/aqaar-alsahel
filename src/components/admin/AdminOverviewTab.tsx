@@ -111,7 +111,10 @@ export default function AdminOverviewTab({
                 <div className="min-w-0">
                   <p className="truncate text-sm font-bold text-ocean-900">{listing.title}</p>
                   <p className="text-[11px] text-sand-600">
-                    {listing.city} • {format(listing.price)}
+                    {listing.city} •{" "}
+                    {listing.priceByAdmin
+                      ? "السعر تحدده الإدارة"
+                      : format(listing.price)}
                   </p>
                 </div>
                 <span

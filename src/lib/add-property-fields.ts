@@ -13,6 +13,7 @@ export type AddPropertyFieldKey =
   | "type"
   | "area"
   | "price"
+  | "negotiable"
   | "rooms"
   | "bathrooms"
   | "description"
@@ -62,7 +63,7 @@ export const ADD_PROPERTY_FIELD_GROUPS: {
   {
     key: "details",
     label: "تفاصيل العقار",
-    desc: "النوع والمساحة والسعر والغرف والوصف.",
+    desc: "النوع والمساحة والسعر وقابلية التفاوض والغرف والوصف.",
   },
   {
     key: "contact",
@@ -123,6 +124,13 @@ export const ADD_PROPERTY_FIELDS: AddPropertyFieldDef[] = [
     key: "price",
     label: "السعر (ج.م)",
     labelKey: "addProperty.fieldPrice",
+    group: "details",
+    defaultRequired: true,
+  },
+  {
+    key: "negotiable",
+    label: "قابلية التفاوض على السعر",
+    labelKey: "addProperty.fieldNegotiable",
     group: "details",
     defaultRequired: true,
   },
@@ -294,4 +302,71 @@ export function countAddPropertyFields(settings: AddPropertyFieldSettings): {
     else optional += 1;
   }
   return { required, optional };
+}
+
+/* ============================================================
+ * خيارات السعر التي يتحكم فيها الأدمن
+ * ============================================================ */
+
+export interface AddPropertyOptions {
+  /** إظهار قائمة «قابل للتفاوض / غير قابل للتفاوض» بجوار السعر */
+  negotiableEnabled: boolean;
+  /** إتاحة خيار «يحدد السعر من قبل إدارة الموقع/المنصة» */
+  platformPriceEnabled: boolean;
+}
+
+export const ADD_PROPERTY_OPTIONS_KEY = "aqaar-add-property-options";
+
+/** حدث يُطلق عند تغيير خيارات السعر من لوحة التحكم */
+export const ADD_PROPERTY_OPTIONS_EVENT = "aqaar:add-property-options";
+
+export const DEFAULT_ADD_PROPERTY_OPTIONS: AddPropertyOptions = {
+  negotiableEnabled: true,
+  platformPriceEnabled: true,
+};
+
+/** قراءة خيارات السعر مع دمج الافتراضي */
+export function getAddPropertyOptions(): AddPropertyOptions {
+  const options = { ...DEFAULT_ADD_PROPERTY_OPTIONS };
+  if (typeof window === "undefined") return options;
+
+  try {
+    const raw = window.localStorage.getItem(ADD_PROPERTY_OPTIONS_KEY);
+    const stored: unknown = raw ? JSON.parse(raw) : null;
+    if (!stored || typeof stored !== "object") return options;
+
+    for (const key of Object.keys(options) as (keyof AddPropertyOptions)[]) {
+      const value = (stored as Record<string, unknown>)[key];
+      if (typeof value === "boolean") options[key] = value;
+    }
+  } catch {
+    /* تجاهل أي تلف في التخزين والعودة للافتراضي */
+  }
+
+  return options;
+}
+
+/** حفظ خيارات السعر */
+export function saveAddPropertyOptions(options: AddPropertyOptions): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(
+      ADD_PROPERTY_OPTIONS_KEY,
+      JSON.stringify(options)
+    );
+    window.dispatchEvent(new Event(ADD_PROPERTY_OPTIONS_EVENT));
+  } catch {
+    /* تجاهل أخطاء التخزين */
+  }
+}
+
+/** استعادة خيارات السعر الافتراضية */
+export function resetAddPropertyOptions(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(ADD_PROPERTY_OPTIONS_KEY);
+    window.dispatchEvent(new Event(ADD_PROPERTY_OPTIONS_EVENT));
+  } catch {
+    /* تجاهل أخطاء التخزين */
+  }
 }

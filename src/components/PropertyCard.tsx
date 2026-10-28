@@ -62,12 +62,20 @@ export default function PropertyCard({ property, compact = false }: Props) {
 
       <div className={`flex flex-1 flex-col ${compact ? "p-3.5" : "p-4"}`}>
         <div className="flex items-baseline justify-between gap-2">
-          <p className="text-xl font-black tracking-tight text-ocean-900">
-            {formatWithSymbol(property.price)}
-          </p>
-          <p className="whitespace-nowrap text-[10.5px] font-semibold text-sand-600">
-            {formatWithSymbol(pricePerMeter)}/{t("common.sqm")}
-          </p>
+          {property.priceByAdmin ? (
+            <p className="text-[12px] font-black leading-5 text-gold-700">
+              {t("property.priceByAdmin")}
+            </p>
+          ) : (
+            <p className="text-xl font-black tracking-tight text-ocean-900">
+              {formatWithSymbol(property.price)}
+            </p>
+          )}
+          {!property.priceByAdmin && (
+            <p className="whitespace-nowrap text-[10.5px] font-semibold text-sand-600">
+              {formatWithSymbol(pricePerMeter)}/{t("common.sqm")}
+            </p>
+          )}
         </div>
 
         <Link href={`/property/${property.id}`}>
@@ -95,6 +103,19 @@ export default function PropertyCard({ property, compact = false }: Props) {
           <span className="rounded-md bg-ocean-50 px-2 py-1 text-[10.5px] font-bold text-ocean-700">
             {propertyTypeLabel(property.type, t)}
           </span>
+          {!property.priceByAdmin && property.negotiable !== undefined && (
+            <span
+              className={`rounded-md px-2 py-1 text-[10.5px] font-bold ${
+                property.negotiable
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "bg-sand-100 text-sand-700"
+              }`}
+            >
+              {property.negotiable
+                ? t("property.negotiable")
+                : t("property.nonNegotiable")}
+            </span>
+          )}
         </div>
 
         <p className="mt-3 flex items-center gap-1.5 text-[10px] font-bold text-sand-600">

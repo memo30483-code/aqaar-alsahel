@@ -16,6 +16,16 @@ export const propertyMessages = {
   "property.seller": { ar: "البائع", en: "Seller" },
   "property.roomsCount": { ar: "{count} غرف", en: "{count} rooms" },
   "property.totalPrice": { ar: "السعر الإجمالي", en: "Total price" },
+  "property.negotiable": { ar: "قابل للتفاوض", en: "Negotiable" },
+  "property.nonNegotiable": { ar: "غير قابل للتفاوض", en: "Non-negotiable" },
+  "property.priceByAdmin": {
+    ar: "السعر تحدده إدارة المنصة",
+    en: "Price set by management",
+  },
+  "property.priceByAdminHint": {
+    ar: "البائع ترك تحديد السعر لإدارة عقار FAMILY بعد المعاينة — تواصل مع الإدارة لمعرفة السعر النهائي.",
+    en: "The seller left pricing to Aqaar FAMILY management after inspection — contact management for the final price.",
+  },
   "property.whatsappCta": { ar: "تواصل واتساب", en: "Chat on WhatsApp" },
   "property.call": { ar: "اتصال", en: "Call" },
   "property.details": { ar: "التفاصيل", en: "Details" },

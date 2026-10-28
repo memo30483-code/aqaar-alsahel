@@ -9,9 +9,18 @@ import { telHref, useSiteSettings } from "@/lib/site-settings";
 interface Props {
   price: number;
   title: string;
+  /** السعر تحدده إدارة المنصة */
+  priceByAdmin?: boolean;
+  /** قابلية التفاوض على السعر */
+  negotiable?: boolean;
 }
 
-export default function InstallmentCard({ price, title }: Props) {
+export default function InstallmentCard({
+  price,
+  title,
+  priceByAdmin = false,
+  negotiable,
+}: Props) {
   const { t } = useI18n();
   const { formatWithSymbol } = useCurrency();
   const site = useSiteSettings();
@@ -46,8 +55,28 @@ export default function InstallmentCard({ price, title }: Props) {
               {t("property.totalPrice")}
             </p>
             <p className="mt-2 text-[27px] font-black leading-tight tracking-tight">
-              {formatWithSymbol(price)}
+              {priceByAdmin ? (
+                <span className="text-[17px] leading-7">
+                  {t("property.priceByAdmin")}
+                </span>
+              ) : (
+                formatWithSymbol(price)
+              )}
             </p>
+            {priceByAdmin ? (
+              <p className="mt-2 rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-[10.5px] font-semibold leading-5 text-white/85">
+                {t("property.priceByAdminHint")}
+              </p>
+            ) : (
+              negotiable !== undefined && (
+                <p className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-bold text-white/85">
+                  <ShieldCheck className="h-3 w-3 text-gold-300" />
+                  {negotiable
+                    ? t("property.negotiable")
+                    : t("property.nonNegotiable")}
+                </p>
+              )
+            )}
             <p className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-bold text-white/85">
               <ShieldCheck className="h-3 w-3 text-gold-300" />
               {t("home.listings.manage")}
@@ -55,55 +84,57 @@ export default function InstallmentCard({ price, title }: Props) {
           </div>
         </div>
 
-        {/* ===== حاسبة الأقساط ===== */}
-        <div className="p-5">
-          <h3 className="text-[13px] font-black text-ocean-900">
-            {t("property.installments.title")}
-          </h3>
-          <div className="mt-3 space-y-2.5">
-            <label className="block">
-              <span className="mb-1 block text-[10.5px] font-bold text-sand-700">
-                {t("property.installments.down")}
-              </span>
-              <input
-                type="number"
-                min={0}
-                max={price}
-                value={downPayment}
-                onChange={(e) => setDownPayment(e.target.value)}
-                className="w-full rounded-xl border border-sand-200 bg-sand-50/60 px-3 py-2.5 text-[13px] font-semibold text-ocean-900 outline-none transition focus:border-gold-400 focus:bg-white focus:ring-2 focus:ring-gold-200/60"
-              />
-            </label>
-            <label className="block">
-              <span className="mb-1 block text-[10.5px] font-bold text-sand-700">
-                {t("property.installments.years")}
-              </span>
-              <select
-                value={years}
-                onChange={(e) => setYears(e.target.value)}
-                className="w-full rounded-xl border border-sand-200 bg-sand-50/60 px-3 py-2.5 text-[13px] font-semibold text-ocean-900 outline-none transition focus:border-gold-400 focus:bg-white focus:ring-2 focus:ring-gold-200/60"
-              >
-                {[1, 2, 3, 4, 5, 7, 10].map((y) => (
-                  <option key={y} value={y}>
-                    {y} {y === 1 ? t("property.years.one") : t("property.years.many")}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
+        {/* ===== حاسبة الأقساط — تختفي لو السعر تحدده الإدارة ===== */}
+        {!priceByAdmin && (
+          <div className="p-5">
+            <h3 className="text-[13px] font-black text-ocean-900">
+              {t("property.installments.title")}
+            </h3>
+            <div className="mt-3 space-y-2.5">
+              <label className="block">
+                <span className="mb-1 block text-[10.5px] font-bold text-sand-700">
+                  {t("property.installments.down")}
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  max={price}
+                  value={downPayment}
+                  onChange={(e) => setDownPayment(e.target.value)}
+                  className="w-full rounded-xl border border-sand-200 bg-sand-50/60 px-3 py-2.5 text-[13px] font-semibold text-ocean-900 outline-none transition focus:border-gold-400 focus:bg-white focus:ring-2 focus:ring-gold-200/60"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-[10.5px] font-bold text-sand-700">
+                  {t("property.installments.years")}
+                </span>
+                <select
+                  value={years}
+                  onChange={(e) => setYears(e.target.value)}
+                  className="w-full rounded-xl border border-sand-200 bg-sand-50/60 px-3 py-2.5 text-[13px] font-semibold text-ocean-900 outline-none transition focus:border-gold-400 focus:bg-white focus:ring-2 focus:ring-gold-200/60"
+                >
+                  {[1, 2, 3, 4, 5, 7, 10].map((y) => (
+                    <option key={y} value={y}>
+                      {y} {y === 1 ? t("property.years.one") : t("property.years.many")}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
 
-          <div className="mt-3 flex items-end justify-between rounded-2xl border border-gold-200/70 bg-gold-50/60 px-3 py-2.5">
-            <span className="text-[10.5px] font-bold text-gold-800">
-              {t("property.installments.monthly")}
-            </span>
-            <p className="text-[17px] font-black text-ocean-900">
-              {formatWithSymbol(Math.max(0, Math.round(installment)))}
+            <div className="mt-3 flex items-end justify-between rounded-2xl border border-gold-200/70 bg-gold-50/60 px-3 py-2.5">
+              <span className="text-[10.5px] font-bold text-gold-800">
+                {t("property.installments.monthly")}
+              </span>
+              <p className="text-[17px] font-black text-ocean-900">
+                {formatWithSymbol(Math.max(0, Math.round(installment)))}
+              </p>
+            </div>
+            <p className="mt-1.5 text-[10px] font-medium text-sand-600">
+              {t("property.installments.formula")}
             </p>
           </div>
-          <p className="mt-1.5 text-[10px] font-medium text-sand-600">
-            {t("property.installments.formula")}
-          </p>
-        </div>
+        )}
       </div>
 
       {/* ===== التواصل ===== */}

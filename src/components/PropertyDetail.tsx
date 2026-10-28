@@ -50,7 +50,9 @@ export default function PropertyDetail({ property }: Props) {
     locale === "ar" ? "ar-EG" : "en-US"
   );
   const pricePerMeter =
-    property.area > 0 ? Math.round(property.price / property.area) : 0;
+    !property.priceByAdmin && property.area > 0
+      ? Math.round(property.price / property.area)
+      : 0;
   const badge =
     property.type === "فيلا" || property.price >= 3_000_000
       ? t("property.badge.featured")
@@ -97,7 +99,9 @@ export default function PropertyDetail({ property }: Props) {
     {
       Icon: Tag,
       label: t("property.pricePerMeter"),
-      value: formatWithSymbol(pricePerMeter),
+      value: property.priceByAdmin
+        ? t("property.priceByAdmin")
+        : formatWithSymbol(pricePerMeter),
     },
     {
       Icon: ScanLine,
@@ -171,6 +175,24 @@ export default function PropertyDetail({ property }: Props) {
                 <span className="rounded-lg border border-sand-200 bg-sand-50 px-2.5 py-1 text-[10.5px] font-semibold text-sand-700">
                   {sellerTypeLabel(property.sellerType, t)}
                 </span>
+                {!property.priceByAdmin && property.negotiable !== undefined && (
+                  <span
+                    className={`rounded-lg px-2.5 py-1 text-[10.5px] font-bold ${
+                      property.negotiable
+                        ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                        : "border border-sand-200 bg-sand-50 text-sand-700"
+                    }`}
+                  >
+                    {property.negotiable
+                      ? t("property.negotiable")
+                      : t("property.nonNegotiable")}
+                  </span>
+                )}
+                {property.priceByAdmin && (
+                  <span className="rounded-lg border border-gold-300/70 bg-gold-50 px-2.5 py-1 text-[10.5px] font-bold text-gold-800">
+                    {t("property.priceByAdmin")}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -178,15 +200,28 @@ export default function PropertyDetail({ property }: Props) {
               <p className="text-[11px] font-bold text-sand-600">
                 {t("property.totalPrice")}
               </p>
-              <p className="mt-1 text-2xl font-black tracking-tight text-ocean-900">
-                {formatWithSymbol(property.price)}
-              </p>
-              <p className="mt-1.5 text-[11px] font-semibold text-sand-600">
-                {t("property.pricePerMeterEstimated")}{" "}
-                <span className="font-bold text-ocean-800">
-                  {formatWithSymbol(pricePerMeter)}
-                </span>
-              </p>
+              {property.priceByAdmin ? (
+                <>
+                  <p className="mt-1 text-[13.5px] font-black leading-6 text-gold-800">
+                    {t("property.priceByAdmin")}
+                  </p>
+                  <p className="mt-1.5 text-[10.5px] font-semibold leading-5 text-sand-600">
+                    {t("property.priceByAdminHint")}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="mt-1 text-2xl font-black tracking-tight text-ocean-900">
+                    {formatWithSymbol(property.price)}
+                  </p>
+                  <p className="mt-1.5 text-[11px] font-semibold text-sand-600">
+                    {t("property.pricePerMeterEstimated")}{" "}
+                    <span className="font-bold text-ocean-800">
+                      {formatWithSymbol(pricePerMeter)}
+                    </span>
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </header>
@@ -199,7 +234,12 @@ export default function PropertyDetail({ property }: Props) {
         {/* ====================== BODY ====================== */}
         <div className="mt-6 grid items-start gap-5 lg:grid-cols-[368px_minmax(0,1fr)] xl:grid-cols-[392px_minmax(0,1fr)]">
           {/* كارت السعر والتواصل — يظهر يمين الصفحة في RTL */}
-          <InstallmentCard price={property.price} title={property.title} />
+          <InstallmentCard
+            price={property.price}
+            title={property.title}
+            priceByAdmin={property.priceByAdmin}
+            negotiable={property.negotiable}
+          />
 
           <div className="min-w-0 space-y-5">
             {/* ---------- ملف التوثيق ---------- */}

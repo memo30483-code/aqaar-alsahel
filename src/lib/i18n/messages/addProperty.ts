@@ -35,7 +35,35 @@ export const addPropertyMessages = {
   "addProperty.fieldType": { ar: "نوع العقار *", en: "Property type *" },
   "addProperty.select": { ar: "اختر", en: "Select" },
   "addProperty.fieldArea": { ar: "المساحة (م²) *", en: "Area (m²) *" },
-  "addProperty.fieldPrice": { ar: "السعر (ج.م) *", en: "Price (EGP) *" },
+  "addProperty.fieldPrice": { ar: "سعر البيع (ج.م) *", en: "Sale price (EGP) *" },
+  "addProperty.fieldRentPrice": {
+    ar: "قيمة الإيجار (ج.م) *",
+    en: "Rent price (EGP) *",
+  },
+  "addProperty.fieldNegotiable": {
+    ar: "قابلية التفاوض على السعر *",
+    en: "Price negotiability *",
+  },
+  "addProperty.negotiable.yes": {
+    ar: "قابل للتفاوض",
+    en: "Negotiable",
+  },
+  "addProperty.negotiable.no": {
+    ar: "غير قابل للتفاوض",
+    en: "Non-negotiable",
+  },
+  "addProperty.platformPrice": {
+    ar: "يحدد السعر من قبل إدارة الموقع/المنصة",
+    en: "Price is set by site management",
+  },
+  "addProperty.platformPriceHint": {
+    ar: "عند اختيار هذا الخيار تُغلق خانة السعر وقائمة التفاوض، وتتولى إدارة المنصة تحديد السعر بعد المعاينة.",
+    en: "Choosing this closes the price field and the negotiation list; site management sets the price after inspection.",
+  },
+  "addProperty.platformPriceActive": {
+    ar: "اخترت أن تحدد إدارة المنصة السعر — خانة السعر وقائمة التفاوض معطّلتان الآن.",
+    en: "You chose management-set pricing — the price field and negotiation list are now disabled.",
+  },
   "addProperty.fieldRooms": { ar: "عدد الغرف *", en: "Number of rooms *" },
   "addProperty.fieldBathrooms": {
     ar: "عدد الحمامات *",

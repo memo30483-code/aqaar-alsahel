@@ -277,7 +277,26 @@ export default function AdminListingsTab({
                     </p>
                   </td>
                   <td className="p-3 text-sand-700">{listing.city}</td>
-                  <td className="p-3 font-semibold text-ocean-900">{format(listing.price)}</td>
+                  <td className="p-3 text-ocean-900">
+                    {listing.priceByAdmin ? (
+                      <span className="inline-flex rounded-full bg-gold-50 px-2 py-0.5 text-[10.5px] font-black text-gold-800">
+                        السعر تحدده الإدارة
+                      </span>
+                    ) : (
+                      <span className="font-semibold">{format(listing.price)}</span>
+                    )}
+                    {!listing.priceByAdmin && listing.negotiable !== undefined && (
+                      <span
+                        className={`mt-1 flex w-fit rounded-full px-2 py-0.5 text-[9.5px] font-black ${
+                          listing.negotiable
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-sand-100 text-sand-700"
+                        }`}
+                      >
+                        {listing.negotiable ? "قابل للتفاوض" : "غير قابل للتفاوض"}
+                      </span>
+                    )}
+                  </td>
                   <td className="p-3 text-[11px] text-sand-600">
                     <p>أضافه: {listing.addedByName ?? "—"}</p>
                     <p>المسئول: {listing.assignedToName ?? "غير معيّن"}</p>
