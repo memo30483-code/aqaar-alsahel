@@ -70,7 +70,8 @@ export default function LoginPage() {
           verifiedAt: new Date().toISOString(),
           role: MOCK_ADMIN.role,
         });
-        router.push("/admin");
+        /* المدير يذهب للوحة التحكم افتراضيًا، إلا إذا جاء من رابط يطلب وجهة محددة */
+        router.push(requested ? safeTarget : "/admin");
         return;
       }
 

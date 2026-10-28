@@ -42,6 +42,14 @@ export const professionalsMessages = {
     ar: "محامون مرّ كارنيه المحاماة على التحقق، متخصصون في فحص الملكية وصياغة العقود والتسجيل العقاري.",
     en: "Lawyers whose bar cards were verified, specialized in title search, contract drafting, and property registration.",
   },
+  "prof.lawyers.joinCta": {
+    ar: "انضم كمحامٍ معتمد",
+    en: "Join as a verified lawyer",
+  },
+  "prof.lawyers.joinHint": {
+    ar: "محامٍ جديد؟ سجّل حسابك وقدّم كارنيه المحاماة لمراجعة الإدارة.",
+    en: "New lawyer? Create your account and submit your bar card for management review.",
+  },
 
   "prof.stat.verified": { ar: "جهة موثّقة", en: "Verified entities" },
   "prof.stat.reels": { ar: "فيديو تعريفي", en: "Intro videos" },

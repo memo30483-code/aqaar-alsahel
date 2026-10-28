@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   Sparkles,
   UserCheck,
+  UserPlus,
 } from "lucide-react";
 import { useCityOptions } from "@/components/Filters";
 import { PropertyType } from "@/types/property";
@@ -437,6 +438,13 @@ export default function LegalConsultationalPage() {
               {t("prof.lawyers.eyebrow")}
               <ArrowLeft className="h-3 w-3 rtl:rotate-180" />
             </Link>
+            <Link
+              href="/login?redirect=%2Fjoin%3Frole%3Dlawyer"
+              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-l from-gold-500 to-gold-400 px-3.5 py-1.5 text-[10.5px] font-black text-ocean-950 shadow-[0_14px_30px_-20px_rgba(201,146,42,0.9)] transition hover:-translate-y-0.5"
+            >
+              <UserPlus className="h-3.5 w-3.5" />
+              {t("prof.lawyers.joinCta")}
+            </Link>
           </div>
         </div>
 
@@ -515,9 +523,15 @@ export default function LegalConsultationalPage() {
           </p>
         )}
 
-        <p className="mt-4 text-[10.5px] leading-5 text-sand-500">
-          {t("legal.lawyers.note")}
-        </p>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[10.5px] leading-5 text-sand-500">
+            {t("legal.lawyers.note")}
+          </p>
+          <p className="flex items-center gap-1.5 text-[10.5px] font-bold text-gold-700">
+            <UserPlus className="h-3 w-3" />
+            {t("prof.lawyers.joinHint")}
+          </p>
+        </div>
       </section>
 
       {/* ====================== MANAGEMENT BAND ====================== */}

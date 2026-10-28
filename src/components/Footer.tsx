@@ -68,7 +68,7 @@ const QUICK_LINKS: { key: MessageKey; href: string }[] = [
   { key: "companies.developers", href: "/developers" },
   { key: "companies.brokers", href: "/brokers" },
   { key: "companies.lawyers", href: "/lawyers" },
-  { key: "companies.join", href: "/join" },
+  { key: "companies.join", href: "/login?redirect=%2Fjoin" },
   { key: "nav.addProperty", href: "/add-property" },
 ];
 
