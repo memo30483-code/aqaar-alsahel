@@ -13,7 +13,8 @@ import {
   UserPlus,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
-import { CITY_KEYS } from "@/lib/i18n/cities";
+import { cityLabel } from "@/lib/i18n/cities";
+import { useActiveCities } from "@/lib/cities-store";
 
 interface Group {
   titleAr: string;
@@ -60,6 +61,7 @@ const GROUPS: Group[] = [
 
 export default function SitemapContent() {
   const { t, locale } = useI18n();
+  const cities = useActiveCities();
   const ar = locale === "ar";
 
   return (
@@ -79,8 +81,8 @@ export default function SitemapContent() {
           </h1>
           <p className="mt-3 max-w-2xl text-[12.5px] leading-8 text-white/70">
             {ar
-              ? "روابط سريعة لكل أقسام المنصة: العقارات، المدن الست، الخدمات، والحساب."
-              : "Quick links to every part of the platform: listings, the six cities, services, and your account."}
+              ? "روابط سريعة لكل أقسام المنصة: العقارات، المدن المعتمدة، الخدمات، والحساب."
+              : "Quick links to every part of the platform: listings, approved cities, services, and your account."}
           </p>
         </div>
       </section>
@@ -119,17 +121,17 @@ export default function SitemapContent() {
         <section className="mt-4 rounded-3xl border border-sand-200 bg-white p-5 shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)]">
           <h2 className="flex items-center gap-2 text-[10.5px] font-black uppercase tracking-[0.18em] text-gold-600">
             <span aria-hidden className="h-px w-5 bg-gold-400/70" />
-            {ar ? "المدن الست" : "The six cities"}
+            {ar ? "المدن المعتمدة" : "Approved cities"}
           </h2>
           <div className="mt-3 flex flex-wrap gap-2">
-            {CITY_KEYS.map((key) => (
+            {cities.map((city) => (
               <Link
-                key={key}
+                key={city.id}
                 href="/#properties"
                 className="inline-flex items-center gap-1.5 rounded-full border border-sand-200 bg-sand-50 px-3 py-1.5 text-[11px] font-bold text-ocean-800 transition hover:border-gold-300 hover:bg-gold-50/60"
               >
                 <MapPin className="h-3 w-3 text-gold-600" />
-                {t(key)}
+                {cityLabel(city.nameAr, t, locale)}
               </Link>
             ))}
           </div>

@@ -169,8 +169,8 @@ export const legalMessages = {
   "legal.lawyers.title": { ar: "المحامون المعتمدون", en: "Licensed lawyers" },
   "legal.lawyers.eyebrow": { ar: "الفريق القانوني", en: "Legal team" },
   "legal.lawyers.subtitle": {
-    ar: "محامون مرخصون يغطون مدن الدلتا الست — التنسيق والمواعيد كلها عبر إدارة الموقع.",
-    en: "Licensed lawyers covering the six Delta cities — all scheduling goes through site management.",
+    ar: "محامون مرخصون يغطون مدن الدلتا — التنسيق والمواعيد كلها عبر إدارة الموقع.",
+    en: "Licensed lawyers covering the Delta cities — all scheduling goes through site management.",
   },
   "legal.lawyers.badge": { ar: "محامي معتمد", en: "Licensed lawyer" },
   "legal.lawyers.license": { ar: "رقم الكارنيه", en: "License no." },

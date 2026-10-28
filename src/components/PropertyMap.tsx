@@ -14,7 +14,7 @@ import { Property } from "@/types/property";
 import { useI18n } from "@/lib/i18n";
 import { cityLabel } from "@/lib/i18n/cities";
 import { useCurrency } from "@/lib/currency";
-import { CityOption, cities } from "./Filters";
+import { CityOption, defaultCities } from "./Filters";
 
 /**
  * أيقونة مرسومة بالـ CSS بدل صور بعيدة — لا طلبات شبكة إضافية للـ markers
@@ -81,7 +81,7 @@ interface Props {
 
 export default function PropertyMap({
   properties,
-  selectedCity = cities[0],
+  selectedCity = defaultCities[0],
 }: Props) {
   const { t, locale } = useI18n();
   const { formatWithSymbol } = useCurrency();
@@ -125,7 +125,7 @@ export default function PropertyMap({
             {formatWithSymbol(p.price)}
             <br />
             <span className="text-xs">
-              {cityLabel(p.city, t)} · {numberFormat.format(p.area)}{" "}
+              {cityLabel(p.city, t, locale)} · {numberFormat.format(p.area)}{" "}
               {t("common.sqm")}
             </span>
           </Popup>

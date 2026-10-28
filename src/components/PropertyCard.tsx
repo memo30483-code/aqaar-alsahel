@@ -87,7 +87,7 @@ export default function PropertyCard({ property, compact = false }: Props) {
         <p className="mt-1.5 flex items-center gap-1 text-[11.5px] font-semibold text-sand-700">
           <MapPin className="h-3.5 w-3.5 shrink-0 text-gold-500" />
           <span className="line-clamp-1">
-            {cityLabel(property.city, t)} · {property.district}
+            {cityLabel(property.city, t, locale)} · {property.district}
           </span>
         </p>
 

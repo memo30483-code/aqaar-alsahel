@@ -1,6 +1,7 @@
 import type { MessageKey } from "./messages";
 import type { City } from "@/types/property";
 import { CITY_CENTERS } from "@/data/properties";
+import { getCityByName } from "@/lib/cities-store";
 
 /** ربط اسم المدينة العربي (كما هو في البيانات) بمفتاح الترجمة */
 export const CITY_MESSAGE_KEY: Record<string, MessageKey> = {
@@ -14,21 +15,6 @@ export const CITY_MESSAGE_KEY: Record<string, MessageKey> = {
   "المنصورة الجديدة": "city.newMansoura",
 };
 
-/** المدن المعتمدة بالترتيب المعتمد — بنفس القيم المخزّنة في البيانات */
-export const CITY_NAMES: City[] = [
-  "رأس البر",
-  "دمياط",
-  "دمياط الجديدة",
-  "فارسكور",
-  "جمصة",
-  "المنصورة الجديدة",
-];
-
-/** مفاتيح ترجمة المدن بنفس ترتيب CITY_NAMES */
-export const CITY_KEYS: MessageKey[] = CITY_NAMES.map(
-  (name) => CITY_MESSAGE_KEY[name]
-);
-
 /** مرادفات المدينة: فلتر «دمياط» يفتح أيضاً إعلانات «دمياط القديمة» */
 const CITY_ALIASES: Record<string, string[]> = {
   دمياط: ["دمياط القديمة"],
@@ -41,19 +27,31 @@ export function cityMatches(propertyCity: string, city: City | ""): boolean {
   return (CITY_ALIASES[city] ?? []).includes(propertyCity);
 }
 
-/** مركز المدينة على الخريطة — مع الرجوع لدمياط الجديدة للمدن غير المدرجة في البيانات */
+/** مركز المدينة على الخريطة — من سجل المدن الديناميكي مع رجوع آمن */
 export function cityCenter(city: City | ""): { lat: number; lng: number } {
-  if (city && city in CITY_CENTERS) {
-    return CITY_CENTERS[city as keyof typeof CITY_CENTERS];
+  if (city) {
+    const record = getCityByName(city);
+    if (record) return { lat: record.lat, lng: record.lng };
+    if (city in CITY_CENTERS) {
+      return CITY_CENTERS[city as keyof typeof CITY_CENTERS];
+    }
   }
   return CITY_CENTERS["دمياط الجديدة"];
 }
 
-/** ترجمة اسم مدينة قادم من البيانات إلى اللغة الحالية */
+/**
+ * اسم مدينة قادم من البيانات باللغة الحالية.
+ * المدن الافتراضية تستخدم مفاتيح الترجمة، والمدن المضافة من الأدمن
+ * تستخدم الاسمين المحفوظين في سجل المدن.
+ */
 export function cityLabel(
   name: string,
-  t: (key: MessageKey) => string
+  t: (key: MessageKey) => string,
+  locale: "ar" | "en" = "ar"
 ): string {
   const key = CITY_MESSAGE_KEY[name];
-  return key ? t(key) : name;
+  if (key) return t(key);
+  const record = getCityByName(name);
+  if (!record) return name;
+  return locale === "en" ? record.nameEn || record.nameAr : record.nameAr;
 }

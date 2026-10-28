@@ -126,7 +126,7 @@ const TERMS: { ar: DocSection[]; en: DocSection[] } = {
       id: "platform-role",
       title: "طبيعة المنصة ودورها",
       body: [
-        "عقار FAMILY منصة تنظيمية وتوثيقية للعروض العقارية في المدن الست المعتمدة، وليست طرفاً في البيع أو الشراء.",
+        "عقار FAMILY منصة تنظيمية وتوثيقية للعروض العقارية في المدن المعتمدة، وليست طرفاً في البيع أو الشراء.",
         "المنصة لا تتحمل مسؤولية أي اتفاق يتم خارج إطارها، ولا تضمن تنفيذ التزامات البائع أو المشتري بعد إتمام الصفقة.",
         "كل عرض يتم نشره بعد المرور على خطوات التحقق الموضحة، ورقم التوثيق دليل على المراجعة وقت النشر فقط.",
       ],
@@ -190,7 +190,7 @@ const TERMS: { ar: DocSection[]; en: DocSection[] } = {
       id: "platform-role",
       title: "The platform's role",
       body: [
-        "Aqaar FAMILY is an organizing and verification platform for property listings in the six approved cities; it is not a party to any sale or purchase.",
+        "Aqaar FAMILY is an organizing and verification platform for property listings in the approved cities; it is not a party to any sale or purchase.",
         "The platform is not responsible for agreements made outside it, and does not guarantee the performance of buyer or seller obligations after a deal closes.",
         "Every listing is published after the stated verification steps; the verification ID proves review at the time of publishing only.",
       ],

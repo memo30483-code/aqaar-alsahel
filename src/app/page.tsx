@@ -18,8 +18,8 @@ import {
 } from "lucide-react";
 import {
   CityOption,
-  cities,
   matchesCity,
+  useCityOptions,
 } from "@/components/Filters";
 import PropertyCard from "@/components/PropertyCard";
 import { FeaturedAdSlot } from "@/components/FeaturedAds";
@@ -76,8 +76,9 @@ const HERO_FALLBACK =
   "https://images.unsplash.com/photo-1473116763249-2faaef81ccda?w=1800&q=80";
 
 export default function HomePage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { formatWithSymbol } = useCurrency();
+  const cityOptions = useCityOptions();
   const [search, setSearch] = useState("");
   const [draftSearch, setDraftSearch] = useState("");
   const [filters, setFilters] = useState<PropertyFilters>(defaultPropertyFilters);
@@ -121,8 +122,10 @@ export default function HomePage() {
   );
 
   const selectedCity: CityOption = useMemo(
-    () => cities.find((city) => city.id === (filters.city || "all")) ?? cities[0],
-    [filters.city]
+    () =>
+      cityOptions.find((city) => city.id === (filters.city || "all")) ??
+      cityOptions[0],
+    [filters.city, cityOptions]
   );
 
   const visible = useMemo(() => {
@@ -154,7 +157,7 @@ export default function HomePage() {
     return purposed;
   }, [allProperties, filters, search, selectedCity, sort]);
 
-  const cityTitle = filters.city ? cityLabel(filters.city, t) : t("city.all");
+  const cityTitle = filters.city ? cityLabel(filters.city, t, locale) : t("city.all");
 
   const activeTags = useMemo(() => {
     const tags: { key: string; label: string; onRemove: () => void }[] = [];
@@ -162,7 +165,7 @@ export default function HomePage() {
     if (filters.city) {
       tags.push({
         key: "city",
-        label: cityLabel(filters.city, t),
+        label: cityLabel(filters.city, t, locale),
         onRemove: () => setFilters((current) => ({ ...current, city: "" })),
       });
     }
@@ -214,7 +217,7 @@ export default function HomePage() {
     }
 
     return tags;
-  }, [filters, search, t, formatWithSymbol]);
+  }, [filters, search, t, locale, formatWithSymbol]);
 
   const handleClear = () => {
     setFilters(defaultPropertyFilters);
@@ -316,7 +319,7 @@ export default function HomePage() {
               </div>
               <div className="ps-4 sm:border-e sm:border-white/[0.16] sm:px-7">
                 <p className="text-2xl font-black leading-none text-white">
-                  {cities.length - 1}
+                  {cityOptions.length - 1}
                 </p>
                 <p className="mt-2 text-[10.5px] font-semibold text-[#b9c1d6]">
                   {t("home.hero.stat.cities")}
@@ -396,11 +399,11 @@ export default function HomePage() {
                   className="h-12 w-full appearance-none rounded-xl border border-sand-300 bg-sand-50 px-3 pe-8 text-[13px] font-bold text-ocean-800 outline-none transition focus:border-ocean-500 focus:bg-white"
                 >
                   <option value="">{t("home.search.allCities")}</option>
-                  {cities
+                  {cityOptions
                     .filter((city) => city.id !== "all")
                     .map((city) => (
                       <option key={city.id} value={city.id}>
-                        {cityLabel(city.id, t)}
+                        {cityLabel(city.id, t, locale)}
                       </option>
                     ))}
                 </select>
@@ -496,24 +499,21 @@ export default function HomePage() {
 
           <div className="mt-3 flex flex-wrap items-center gap-2 text-[11.5px] text-sand-600">
             <span className="font-semibold">{t("home.search.quick")}</span>
-            {(
-              [
-                { key: "city.rasElBar", city: "رأس البر" },
-                { key: "city.newDamietta", city: "دمياط الجديدة" },
-                { key: "city.faraskur", city: "فارسكور" },
-              ] as { key: MessageKey; city: Property["city"] }[]
-            ).map((chip) => (
-              <button
-                key={chip.key}
-                type="button"
-                onClick={() =>
-                  setFilters((current) => ({ ...current, city: chip.city }))
-                }
-                className="rounded-full border border-sand-200 bg-sand-100 px-3 py-1.5 text-[11px] font-bold text-ocean-700 transition hover:border-gold-300 hover:bg-gold-50"
-              >
-                {t(chip.key)}
-              </button>
-            ))}
+            {cityOptions
+              .filter((chip) => chip.id !== "all")
+              .slice(0, 3)
+              .map((chip) => (
+                <button
+                  key={chip.id}
+                  type="button"
+                  onClick={() =>
+                    setFilters((current) => ({ ...current, city: chip.id }))
+                  }
+                  className="rounded-full border border-sand-200 bg-sand-100 px-3 py-1.5 text-[11px] font-bold text-ocean-700 transition hover:border-gold-300 hover:bg-gold-50"
+                >
+                  {cityLabel(chip.id, t, locale)}
+                </button>
+              ))}
             <button
               type="button"
               onClick={() =>
@@ -872,7 +872,7 @@ export default function HomePage() {
 
             <div className="mt-7 flex border-t border-white/10 pt-5">
               <div className="border-e border-white/10 pe-7">
-                <p className="text-2xl font-black">6</p>
+                <p className="text-2xl font-black">{cityOptions.length - 1}</p>
                 <p className="text-[10.5px] font-semibold text-[#98a2bb]">
                   {t("home.story.stat.cities")}
                 </p>
@@ -911,7 +911,7 @@ export default function HomePage() {
                     {dossierProperty
                       ? `${dossierProperty.type} · ${dossierProperty.area} ${t(
                           "common.sqm"
-                        )} · ${cityLabel(dossierProperty.city, t)}`
+                        )} · ${cityLabel(dossierProperty.city, t, locale)}`
                       : t("home.dossier.sampleNote")}
                   </p>
                 </div>

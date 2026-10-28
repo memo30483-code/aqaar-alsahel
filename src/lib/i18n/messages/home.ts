@@ -110,7 +110,7 @@ export const homeMessages = {
   "home.marquee.partner2": { ar: "الساحل للاستثمار", en: "Coast Investment" },
   "home.marquee.partner3": { ar: "حدائق المنصورة", en: "Mansoura Gardens" },
   "home.marquee.partner4": { ar: "أبراج رأس البر", en: "Ras El Bar Towers" },
-  "home.marquee.news1": { ar: "6 مدن مغطاة بالتوثيق", en: "6 cities covered by verification" },
+  "home.marquee.news1": { ar: "مدن معتمدة ومغطاة بالتوثيق", en: "Approved cities covered by verification" },
   "home.marquee.news2": {
     ar: "التوثيق مستقل تماماً عن الإعلانات المدفوعة",
     en: "Verification is fully independent of paid ads",
@@ -122,8 +122,8 @@ export const homeMessages = {
 
   "home.listings.eyebrow": { ar: "مختارة بعناية", en: "Carefully selected" },
   "home.listings.heading": {
-    ar: "أحدث العقارات في المدن الست",
-    en: "Latest properties across the six cities",
+    ar: "أحدث العقارات في المدن المعتمدة",
+    en: "Latest properties across the approved cities",
   },
   "home.listings.sub": {
     ar: "كل عقار اجتاز فحص المستندات والسلامة القانونية. المعاينة والتفاصيل عبر إدارة الموقع.",
@@ -179,7 +179,7 @@ export const homeMessages = {
     en: "Partnerships with verified developers",
   },
   "home.projects.title": { ar: "مشاريع مميزة", en: "Featured projects" },
-  "home.projects.sub": { ar: "مشاريع كاملة في المدن الست", en: "Full projects across the six cities" },
+  "home.projects.sub": { ar: "مشاريع كاملة في المدن المعتمدة", en: "Full projects across the approved cities" },
   "home.projects.ad": { ar: "إعلان", en: "Ad" },
   "home.projects.devBadge": { ar: "مطور معتمد", en: "Verified developer" },
   "home.projects.details": { ar: "تفاصيل المشروع", en: "Project details" },
@@ -204,8 +204,8 @@ export const homeMessages = {
     en: "Partners & developers",
   },
   "home.adstrip.sub": {
-    ar: "مساحات إعلانية متاحة لمشاريع المدن الست",
-    en: "Ad spaces available for projects in the six cities",
+    ar: "مساحات إعلانية متاحة لمشاريع المدن المعتمدة",
+    en: "Ad spaces available for projects in the approved cities",
   },
   "home.adstrip.cta": { ar: "كل المشاريع", en: "All projects" },
   "home.ai.panelNote": {
@@ -283,7 +283,7 @@ export const homeMessages = {
 
   "home.story.eyebrow": { ar: "ليه عقار FAMILY؟", en: "Why Aqaar FAMILY?" },
   "home.story.title1": { ar: "مش مجرد شاطئ…", en: "More than a beach…" },
-  "home.story.title2": { ar: "ده سوق كامل في ست مدن.", en: "it's a full market across six cities." },
+  "home.story.title2": { ar: "ده سوق كامل في مدن الدلتا.", en: "it's a full market across the Delta cities." },
   "home.story.lead": {
     ar: "رأس البر ودمياط ودمياط الجديدة وفارسكور وجمصة والمنصورة الجديدة مش سوق واحد — دي أسواق مختلفة في طبيعتها وأسعارها. عشان كده بنتحقق من كل عرض مستندياً وميدانياً، وكل تواصل بيتم عبر إدارة الموقع من غير أرقام ملاك أو وسطاء متداولة.",
     en: "Ras El Bar, Damietta, New Damietta, Faraskur, Gamasa and New Mansoura are not one market — they differ in nature and pricing. That's why every listing is verified on paper and on the ground, and all contact goes through site management with no owner numbers or brokers circulating.",

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { Check, Clock3, Mail, MapPin, Phone, Send, ShieldCheck } from "lucide-react";
 import { useI18n, type MessageKey } from "@/lib/i18n";
-import { CITY_KEYS } from "@/lib/i18n/cities";
+import { cityLabel } from "@/lib/i18n/cities";
+import { useActiveCities } from "@/lib/cities-store";
 import BrandLogo from "@/components/BrandLogo";
 import { telHref, useSiteSettings } from "@/lib/site-settings";
 
@@ -68,7 +69,8 @@ const QUICK_LINKS: { key: MessageKey; href: string }[] = [
 
 /** فوتر غامق بثلاثة أعمدة + نشرة بريدية + ملاحظة «كل التواصل عبر الإدارة» */
 export default function Footer() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const cities = useActiveCities();
   const site = useSiteSettings();
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
@@ -128,20 +130,20 @@ export default function Footer() {
             </ul>
           </nav>
 
-          {/* المدن الست */}
+          {/* المدن المعتمدة */}
           <nav aria-label={t("footer.cities")}>
             <h2 className="mb-4 text-xs font-extrabold tracking-wide text-gold-300">
               {t("footer.cities")}
             </h2>
             <ul className="flex flex-col gap-3 text-xs font-medium text-[#aab2c7]">
-              {CITY_KEYS.map((key) => (
-                <li key={key}>
+              {cities.map((city) => (
+                <li key={city.id}>
                   <Link
                     href="/#properties"
                     className="inline-flex items-center gap-1.5 transition hover:text-gold-200"
                   >
                     <MapPin className="h-3 w-3 text-gold-500/70" />
-                    {t(key)}
+                    {cityLabel(city.nameAr, t, locale)}
                   </Link>
                 </li>
               ))}

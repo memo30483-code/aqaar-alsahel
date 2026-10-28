@@ -57,10 +57,10 @@ export const marketGuideMessages = {
     en: "Real-estate prices & the meter index",
   },
   "marketGuide.card.meters.description": {
-    ar: "متوسط سعر المتر للشقق والفيلات في مدن الدلتا الست، محسوباً من إعلانات المنصة المعروضة حالياً.",
-    en: "The average price per meter for apartments and villas across the five coastal and Delta cities, calculated from the listings currently shown on the platform.",
+    ar: "متوسط سعر المتر للشقق والفيلات في مدن الدلتا المعتمدة، محسوباً من إعلانات المنصة المعروضة حالياً.",
+    en: "The average price per meter for apartments and villas across the approved coastal and Delta cities, calculated from the listings currently shown on the platform.",
   },
-  "marketGuide.card.meters.badge": { ar: "6 مدن", en: "6 cities" },
+  "marketGuide.card.meters.badge": { ar: "المدن المعتمدة", en: "Approved cities" },
 
   "marketGuide.card.demand.title": {
     ar: "المؤشر العقاري وتحليل الطلب",
@@ -127,8 +127,8 @@ export const marketGuideMessages = {
     en: "Price-per-meter index",
   },
   "marketGuide.meters.subheading": {
-    ar: "متوسط سعر المتر للشقق والفيلات في المدن الست، محسوب من العقارات المعروضة على المنصة.",
-    en: "The average price per meter for apartments and villas in the five cities, calculated from the properties listed on the platform.",
+    ar: "متوسط سعر المتر للشقق والفيلات في المدن المعتمدة، محسوب من العقارات المعروضة على المنصة.",
+    en: "The average price per meter for apartments and villas in the approved cities, calculated from the properties listed on the platform.",
   },
   "marketGuide.meters.apartments": {
     ar: "سعر متر الشقق",
@@ -239,8 +239,8 @@ export const marketGuideMessages = {
     en: "Family demand for permanent housing",
   },
   "marketGuide.city.oldDamietta.summary": {
-    ar: "أسعار المتر الأقل بين المدن الست مع طلب ثابت من السكان المحليين وطلبات الإحلال والتجديد في وسط البلد والكورنيش.",
-    en: "The lowest price per meter among the five cities, with steady demand from local residents and replacement and renovation requests in the city centre and on the corniche.",
+    ar: "أسعار المتر الأقل بين المدن المعتمدة مع طلب ثابت من السكان المحليين وطلبات الإحلال والتجديد في وسط البلد والكورنيش.",
+    en: "The lowest price per meter among the approved cities, with steady demand from local residents and replacement and renovation requests in the city centre and on the corniche.",
   },
   "marketGuide.city.faraskur.note": {
     ar: "طلب عائلي مستقر وأسعار متر مناسبة",
@@ -265,5 +265,13 @@ export const marketGuideMessages = {
   "marketGuide.city.newMansoura.summary": {
     ar: "عمران مخطط حديثاً وواجهات بحرية، الطلب فيها على الوحدات الأولى داخل الكمبوندات والبيت الهادئ للأسرة.",
     en: "Recently planned urbanism with sea frontages; demand is for the first units inside the compounds and a quiet family home.",
+  },
+  "marketGuide.city.generic.note": {
+    ar: "مؤشرات محسوبة من إعلانات المنصة",
+    en: "Indicators calculated from platform listings",
+  },
+  "marketGuide.city.generic.summary": {
+    ar: "مدينة معتمدة على منصة عقار FAMILY؛ تظهر هنا نبذة عنها وأهم المناطق ومؤشرات السعر بعد اعتماد الإدارة.",
+    en: "An approved city on Aqaar FAMILY; its overview, key districts and price indicators appear here after management approval.",
   },
 };

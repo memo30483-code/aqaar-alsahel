@@ -20,7 +20,8 @@ import {
   X,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
-import { CITY_KEYS } from "@/lib/i18n/cities";
+import { cityLabel } from "@/lib/i18n/cities";
+import { useActiveCities } from "@/lib/cities-store";
 import { CURRENCIES, useCurrency, type CurrencyCode } from "@/lib/currency";
 import {
   clearSession,
@@ -113,6 +114,7 @@ function Dropdown({
 
 export default function Header() {
   const { t, locale, setLocale } = useI18n();
+  const cities = useActiveCities();
   const { currency, setCurrency, live, updatedAt } = useCurrency();
   const [open, setOpen] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
@@ -186,10 +188,10 @@ export default function Header() {
                   {t("nav.sectionCities")}
                 </p>
                 <div className="grid grid-cols-1 gap-0.5">
-                  {CITY_KEYS.map((key) => (
-                    <Link key={key} href="/#properties" className={MENU_ITEM} onClick={close}>
+                  {cities.map((city) => (
+                    <Link key={city.id} href="/#properties" className={MENU_ITEM} onClick={close}>
                       <MapPin className="h-4 w-4 shrink-0 text-ocean-400" />
-                      {t(key)}
+                      {cityLabel(city.nameAr, t, locale)}
                     </Link>
                   ))}
                 </div>
@@ -440,15 +442,15 @@ export default function Header() {
             <p className="px-3 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wide text-ocean-400">
               {t("nav.sectionCities")}
             </p>
-            {CITY_KEYS.map((key) => (
+            {cities.map((city) => (
               <Link
-                key={key}
+                key={city.id}
                 href="/#properties"
                 className={NAV_LINK}
                 onClick={closeMobile}
               >
                 <MapPin className="h-4 w-4 text-ocean-400" />
-                {t(key)}
+                {cityLabel(city.nameAr, t, locale)}
               </Link>
             ))}
 

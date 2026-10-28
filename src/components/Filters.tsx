@@ -1,48 +1,59 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Search, SlidersHorizontal } from "lucide-react";
 import {
   defaultPropertyFilters,
   PRICE_FILTER_MAX,
   PRICE_FILTER_MIN,
-  City,
   PropertyFilters,
   Purpose,
   RoomsFilter,
 } from "@/types/property";
 import { useI18n } from "@/lib/i18n";
-import {
-  CITY_NAMES,
-  cityCenter,
-  cityLabel,
-  cityMatches,
-} from "@/lib/i18n/cities";
+import { cityLabel, cityMatches } from "@/lib/i18n/cities";
+import { DEFAULT_CITIES, useActiveCities, type CityRecord } from "@/lib/cities-store";
 import { PROPERTY_TYPES, propertyTypeLabel } from "@/lib/i18n/taxonomy";
 import { useCurrency } from "@/lib/currency";
 
 export interface CityOption {
-  id: City | "all";
+  id: string;
   name: string;
   coords: [number, number];
   zoom: number;
 }
 
 const CITY_ZOOM = 12;
+const ALL_CITIES_OPTION: CityOption = {
+  id: "all",
+  name: "كل المدن",
+  coords: [31.5, 31.7],
+  zoom: 9,
+};
 
-/** خيارات المدن للخريطة: "كل المدن" + المدن الست بالترتيب المعتمد */
-export const cities: CityOption[] = [
-  { id: "all", name: "كل المدن", coords: [31.5, 31.7], zoom: 9 },
-  ...CITY_NAMES.map((name) => {
-    const { lat, lng } = cityCenter(name);
-    return {
-      id: name,
-      name,
-      coords: [lat, lng] as [number, number],
-      zoom: CITY_ZOOM,
-    };
-  }),
+function toCityOption(record: CityRecord): CityOption {
+  return {
+    id: record.nameAr,
+    name: record.nameAr,
+    coords: [record.lat, record.lng],
+    zoom: record.zoom || CITY_ZOOM,
+  };
+}
+
+/** خيارات المدن الافتراضية — تُستخدم قبل تحميل سجل المدن (SSR أو الخريطة) */
+export const defaultCities: CityOption[] = [
+  ALL_CITIES_OPTION,
+  ...DEFAULT_CITIES.filter((city) => city.active).map(toCityOption),
 ];
+
+/** خيارات المدن الحيّة: "كل المدن" + المدن المفعّلة من لوحة التحكم */
+export function useCityOptions(): CityOption[] {
+  const records = useActiveCities();
+  return useMemo(
+    () => [ALL_CITIES_OPTION, ...records.map(toCityOption)],
+    [records]
+  );
+}
 
 /** مطابقة مرنة لمدينة العقار مع خيار المدينة المحدد (مرادفات في cities.ts) */
 export function matchesCity(propertyCity: string, city: CityOption): boolean {
@@ -100,8 +111,9 @@ export default function Filters({
   onSearch,
   resultCount,
 }: Props) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { formatWithSymbol } = useCurrency();
+  const cityOptions = useCityOptions();
   const [draft, setDraft] = useState<PropertyFilters>(applied);
   const [open, setOpen] = useState(false);
 
@@ -272,11 +284,13 @@ export default function Filters({
                     className={SELECT_CLASS}
                   >
                     <option value="">{t("city.all")}</option>
-                    {CITY_NAMES.map((name) => (
-                      <option key={name} value={name}>
-                        {cityLabel(name, t)}
-                      </option>
-                    ))}
+                    {cityOptions
+                      .filter((city) => city.id !== "all")
+                      .map((city) => (
+                        <option key={city.id} value={city.id}>
+                          {cityLabel(city.id, t, locale)}
+                        </option>
+                      ))}
                   </select>
                 </label>
               </div>

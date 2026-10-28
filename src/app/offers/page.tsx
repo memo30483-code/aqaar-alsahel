@@ -278,7 +278,7 @@ export default function OffersPage() {
                       <p className="mt-0.5 flex items-center gap-1 text-[10.5px] font-semibold text-sand-600">
                         <MapPin className="h-3 w-3 text-gold-500" />
                         {linkedProperty.district} ·{" "}
-                        {cityLabel(linkedProperty.city, t)}
+                        {cityLabel(linkedProperty.city, t, locale)}
                       </p>
                     </div>
                   ) : (

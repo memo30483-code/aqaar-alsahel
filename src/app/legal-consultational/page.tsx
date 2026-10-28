@@ -17,9 +17,9 @@ import {
   Sparkles,
   UserCheck,
 } from "lucide-react";
-import { cities } from "@/components/Filters";
+import { useCityOptions } from "@/components/Filters";
 import { PropertyType } from "@/types/property";
-import { useT, type MessageKey } from "@/lib/i18n";
+import { useI18n, type MessageKey } from "@/lib/i18n";
 import { cityLabel } from "@/lib/i18n/cities";
 import { PROPERTY_TYPES, propertyTypeLabel } from "@/lib/i18n/taxonomy";
 import { useCurrency } from "@/lib/currency";
@@ -115,7 +115,7 @@ function Eyebrow({
 }
 
 export default function LegalConsultationalPage() {
-  const t = useT();
+  const { t, locale } = useI18n();
   const { formatWithSymbol } = useCurrency();
   const site = useSiteSettings();
   const [name, setName] = useState("");
@@ -125,7 +125,11 @@ export default function LegalConsultationalPage() {
   const [error, setError] = useState<MessageKey | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  const legalCities = useMemo(() => cities.filter((c) => c.id !== "all"), []);
+  const cityOptions = useCityOptions();
+  const legalCities = useMemo(
+    () => cityOptions.filter((c) => c.id !== "all"),
+    [cityOptions]
+  );
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -289,7 +293,7 @@ export default function LegalConsultationalPage() {
                     {t("legal.form.successBody", {
                       name,
                       propertyType: propertyTypeLabel(propertyType, t),
-                      city: cityLabel(city, t),
+                      city: cityLabel(city, t, locale),
                       phone,
                     })}
                   </p>
@@ -382,7 +386,7 @@ export default function LegalConsultationalPage() {
                       <option value="">{t("legal.form.cityPlaceholder")}</option>
                       {legalCities.map((option) => (
                         <option key={option.id} value={option.name}>
-                          {cityLabel(option.name, t)}
+                          {cityLabel(option.name, t, locale)}
                         </option>
                       ))}
                     </select>

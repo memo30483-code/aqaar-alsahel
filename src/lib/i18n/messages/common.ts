@@ -6,8 +6,8 @@ export const commonMessages = {
   /* ---------- الهوية ---------- */
   "brand.name": { ar: "عقار FAMILY", en: "Aqaar FAMILY" },
   "brand.tagline": {
-    ar: "عقار أحلامك · 6 مدن",
-    en: "Your dream home · 6 cities",
+    ar: "عقار أحلامك · مدن الدلتا",
+    en: "Your dream home · Delta cities",
   },
 
   /* ---------- التنقّل ---------- */
@@ -69,8 +69,8 @@ export const commonMessages = {
     en: "Real-estate developers",
   },
   "companies.developersDesc": {
-    ar: "شركات التطوير ومشاريعها في مدن الدلتا الست",
-    en: "Development companies and their projects across the six Delta cities",
+    ar: "شركات التطوير ومشاريعها في مدن الدلتا",
+    en: "Development companies and their projects across the Delta cities",
   },
   "companies.brokers": {
     ar: "المسوقون والوسطاء العقاريون",
@@ -136,8 +136,8 @@ export const commonMessages = {
 
   /* ---------- الفوتر ---------- */
   "footer.tagline": {
-    ar: "سوق عقاري موثّق في ست مدن",
-    en: "A documented real-estate market across six cities",
+    ar: "سوق عقاري موثّق في مدن الدلتا",
+    en: "A documented real-estate market across the Delta cities",
   },
   "footer.home": { ar: "الرئيسية", en: "Home" },
   "footer.about": {
@@ -148,8 +148,8 @@ export const commonMessages = {
   "footer.cities": { ar: "المدن", en: "Cities" },
   "footer.newsletter.title": { ar: "خليك على اطلاع", en: "Stay in the loop" },
   "footer.newsletter.desc": {
-    ar: "اشترك لتصلك أفضل الفرص العقارية في المدن الست قبل غيرك.",
-    en: "Subscribe to get the best property opportunities across the six cities.",
+    ar: "اشترك لتصلك أفضل الفرص العقارية في المدن المعتمدة قبل غيرك.",
+    en: "Subscribe to get the best property opportunities across the approved cities.",
   },
   "footer.newsletter.placeholder": { ar: "بريدك الإلكتروني", en: "Your email" },
   "footer.newsletter.cta": { ar: "اشترك", en: "Subscribe" },

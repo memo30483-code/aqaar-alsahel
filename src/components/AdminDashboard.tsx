@@ -10,6 +10,7 @@ import {
   Home,
   LayoutList,
   ListChecks,
+  MapPin,
   Megaphone,
   Settings,
   ShieldCheck,
@@ -47,6 +48,7 @@ import AdminUsersTab from "@/components/admin/AdminUsersTab";
 import AdminPermissionsTab from "@/components/admin/AdminPermissionsTab";
 import AdminLogsTab from "@/components/admin/AdminLogsTab";
 import AdminDevelopersTab from "@/components/admin/AdminDevelopersTab";
+import AdminCitiesTab from "@/components/admin/AdminCitiesTab";
 import AdminOverviewTab from "@/components/admin/AdminOverviewTab";
 
 type TabKey =
@@ -54,6 +56,7 @@ type TabKey =
   | "listings"
   | "propertyFields"
   | "offers"
+  | "cities"
   | "site"
   | "marquee"
   | "users"
@@ -76,6 +79,7 @@ const TABS: {
     permission: "site.settings",
   },
   { key: "offers", label: "العروض والتخفيضات", Icon: Gift, permission: "offers.view" },
+  { key: "cities", label: "المدن", Icon: MapPin, permission: "site.settings" },
   { key: "site", label: "إعدادات الموقع", Icon: Settings, permission: "site.settings" },
   { key: "marquee", label: "البنرات والشريط", Icon: Megaphone, permission: "banners.manage" },
   { key: "users", label: "المستخدمون", Icon: Users, permission: "users.view" },
@@ -289,6 +293,14 @@ export default function AdminDashboard() {
             can={can}
             onOffersChange={setOffers}
             onSettingsChange={setOffersSettings}
+            notify={notify}
+            reloadLogs={reloadLogs}
+          />
+        )}
+
+        {tab === "cities" && (
+          <AdminCitiesTab
+            can={can}
             notify={notify}
             reloadLogs={reloadLogs}
           />

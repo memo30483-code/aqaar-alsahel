@@ -19,7 +19,8 @@ import {
 } from "lucide-react";
 import { Property } from "@/types/property";
 import { useI18n } from "@/lib/i18n";
-import { CITY_NAMES, cityLabel, cityMatches } from "@/lib/i18n/cities";
+import { cityLabel, cityMatches } from "@/lib/i18n/cities";
+import { useActiveCities } from "@/lib/cities-store";
 import { propertyTypeLabel, sellerTypeLabel } from "@/lib/i18n/taxonomy";
 import { useCurrency } from "@/lib/currency";
 import { useSiteSettings } from "@/lib/site-settings";
@@ -43,6 +44,7 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 
 export default function PropertyDetail({ property }: Props) {
   const { t, locale } = useI18n();
+  const cities = useActiveCities();
   const { formatWithSymbol } = useCurrency();
   const site = useSiteSettings();
 
@@ -58,9 +60,9 @@ export default function PropertyDetail({ property }: Props) {
       ? t("property.badge.featured")
       : t("property.badge.ready");
   const isRent = (property.purpose ?? "بيع") === "إيجار";
-  const isApprovedCity =
-    (CITY_NAMES as readonly string[]).includes(property.city) ||
-    property.city === "دمياط القديمة";
+  const isApprovedCity = cities.some((city) =>
+    cityMatches(property.city, city.nameAr)
+  );
 
   const verificationId = `AQ-${property.id.toUpperCase()}`;
 
@@ -94,7 +96,7 @@ export default function PropertyDetail({ property }: Props) {
     {
       Icon: Building2,
       label: t("property.city"),
-      value: cityLabel(property.city, t),
+      value: cityLabel(property.city, t, locale),
     },
     {
       Icon: Tag,
@@ -136,7 +138,7 @@ export default function PropertyDetail({ property }: Props) {
             }}
             className="transition hover:text-gold-600"
           >
-            {cityLabel(property.city, t)}
+            {cityLabel(property.city, t, locale)}
           </Link>
           <ChevronLeft className="h-3.5 w-3.5 text-sand-400 rtl:rotate-180" />
           <span className="max-w-[220px] truncate font-bold text-ocean-900 sm:max-w-none">
@@ -155,7 +157,7 @@ export default function PropertyDetail({ property }: Props) {
 
               <p className="mt-2 flex items-center gap-1.5 text-[13px] font-semibold text-sand-700">
                 <MapPin className="h-4 w-4 shrink-0 text-gold-500" />
-                {property.district} · {cityLabel(property.city, t)}
+                {property.district} · {cityLabel(property.city, t, locale)}
               </p>
 
               <div className="mt-3 flex flex-wrap items-center gap-1.5">
@@ -343,7 +345,7 @@ export default function PropertyDetail({ property }: Props) {
                 <div>
                   <Eyebrow>{t("property.cityAndDistrict")}</Eyebrow>
                   <h2 className="mt-2 text-lg font-black text-ocean-900">
-                    {cityLabel(property.city, t)} · {property.district}
+                    {cityLabel(property.city, t, locale)} · {property.district}
                   </h2>
                 </div>
                 {isApprovedCity && (
@@ -358,18 +360,18 @@ export default function PropertyDetail({ property }: Props) {
                 {t("property.approvedCities")}
               </p>
               <div className="mt-2 flex flex-wrap gap-1.5">
-                {CITY_NAMES.map((city) => {
-                  const active = cityMatches(property.city, city);
+                {cities.map((city) => {
+                  const active = cityMatches(property.city, city.nameAr);
                   return (
                     <span
-                      key={city}
+                      key={city.id}
                       className={`rounded-full px-3 py-1 text-[11px] font-bold ${
                         active
                           ? "bg-ocean-950 text-white"
                           : "border border-sand-200 bg-sand-50 text-sand-700"
                       }`}
                     >
-                      {cityLabel(city, t)}
+                      {cityLabel(city.nameAr, t, locale)}
                     </span>
                   );
                 })}
@@ -384,7 +386,7 @@ export default function PropertyDetail({ property }: Props) {
                   موقع العقار على الخريطة
                 </h2>
                 <p className="mt-1 text-[12px] font-medium text-sand-700">
-                  {property.district}، {cityLabel(property.city, t)} — العلامة الذهبية
+                  {property.district}، {cityLabel(property.city, t, locale)} — العلامة الذهبية
                   تشير إلى الموقع التقريبي، والعنوان الدقيق يُنسَّق عبر إدارة الموقع
                   أثناء المعاينة.
                 </p>

@@ -4,60 +4,58 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { mockProperties, USER_PROPERTIES_KEY } from "@/data/properties";
 import { City, Property, PropertyType } from "@/types/property";
-import { useT, type MessageKey } from "@/lib/i18n";
+import { useT, type MessageKey, useI18n } from "@/lib/i18n";
 import { useCurrency } from "@/lib/currency";
 import { cityLabel } from "@/lib/i18n/cities";
+import { useActiveCities } from "@/lib/cities-store";
 import { demandLabel } from "@/lib/i18n/taxonomy";
 import { filterPublishedProperties } from "@/lib/public-listings";
 
 type Demand = "مرتفع" | "موسمي" | "مستقر";
 
-interface CityProfile {
-  city: City;
+interface EditorialProfile {
   demand: Demand;
   noteKey: MessageKey;
   summaryKey: MessageKey;
 }
 
-/** ترتيب وبيانات المدن المعتمدة الست — بيانات تحريرية خاصة بهذه الصفحة */
-const CITY_PROFILES: CityProfile[] = [
-  {
-    city: "رأس البر",
+/**
+ * بيانات تحريرية اختيارية للمدن المعروفة.
+ * أي مدينة يضيفها الأدمن وتغيب عن هذه الخريطة تظهر تلقائياً بوصف عام
+ * أو بالوصف المخصّص المحفوظ في سجل المدن.
+ */
+const CITY_EDITORIAL: Record<string, EditorialProfile> = {
+  "رأس البر": {
     demand: "موسمي",
     noteKey: "marketGuide.city.rasElBar.note",
     summaryKey: "marketGuide.city.rasElBar.summary",
   },
-  {
-    city: "دمياط الجديدة",
+  "دمياط الجديدة": {
     demand: "مرتفع",
     noteKey: "marketGuide.city.newDamietta.note",
     summaryKey: "marketGuide.city.newDamietta.summary",
   },
-  {
-    city: "دمياط القديمة",
+  "دمياط القديمة": {
     demand: "مستقر",
     noteKey: "marketGuide.city.oldDamietta.note",
     summaryKey: "marketGuide.city.oldDamietta.summary",
   },
-  {
-    city: "فارسكور",
+  "فارسكور": {
     demand: "مستقر",
     noteKey: "marketGuide.city.faraskur.note",
     summaryKey: "marketGuide.city.faraskur.summary",
   },
-  {
-    city: "جمصة",
+  "جمصة": {
     demand: "موسمي",
     noteKey: "marketGuide.city.gamasa.note",
     summaryKey: "marketGuide.city.gamasa.summary",
   },
-  {
-    city: "المنصورة الجديدة",
+  "المنصورة الجديدة": {
     demand: "مرتفع",
     noteKey: "marketGuide.city.newMansoura.note",
     summaryKey: "marketGuide.city.newMansoura.summary",
   },
-];
+};
 
 const DEMAND_STYLE: Record<Demand, string> = {
   مرتفع: "bg-rose-50 text-rose-700 ring-rose-100",
@@ -142,6 +140,7 @@ function districtsOf(properties: Property[], city: City): string[] {
 }
 
 export default function MarketGuideContent() {
+  const { locale } = useI18n();
   const t = useT();
   const { formatWithSymbol } = useCurrency();
 
@@ -177,14 +176,28 @@ export default function MarketGuideContent() {
         )
       : 0;
 
-  const stats = CITY_PROFILES.map((profile) => {
-    const listings = cityProperties(allProperties, profile.city);
+  const cityRecords = useActiveCities();
+
+  const stats = cityRecords.map((record) => {
+    const editorial = CITY_EDITORIAL[record.nameAr];
+    const customSummary =
+      locale === "en" ? record.summaryEn : record.summaryAr;
+    const listings = cityProperties(allProperties, record.nameAr);
     return {
-      ...profile,
+      city: record.nameAr,
+      demand: editorial?.demand ?? record.demand ?? "مستقر",
+      note: editorial
+        ? t(editorial.noteKey)
+        : t("marketGuide.city.generic.note"),
+      summary:
+        customSummary ||
+        (editorial
+          ? t(editorial.summaryKey)
+          : t("marketGuide.city.generic.summary")),
       listings: listings.length,
-      apartments: avgPricePerMeter(allProperties, profile.city, "شقة"),
-      villas: avgPricePerMeter(allProperties, profile.city, "فيلا"),
-      districts: districtsOf(allProperties, profile.city),
+      apartments: avgPricePerMeter(allProperties, record.nameAr, "شقة"),
+      villas: avgPricePerMeter(allProperties, record.nameAr, "فيلا"),
+      districts: districtsOf(allProperties, record.nameAr),
     };
   });
 
@@ -198,7 +211,7 @@ export default function MarketGuideContent() {
     {
       label: t("marketGuide.stat.approvedCities"),
       value: t("marketGuide.stat.citiesValue", {
-        count: CITY_PROFILES.length,
+        count: stats.length,
       }),
     },
     {
@@ -353,7 +366,7 @@ export default function MarketGuideContent() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <h3 className="text-[16px] font-black text-ocean-900">
-                    {cityLabel(row.city, t)}
+                    {cityLabel(row.city, t, locale)}
                   </h3>
                   <span
                     className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ring-1 ${DEMAND_STYLE[row.demand]}`}
@@ -388,7 +401,7 @@ export default function MarketGuideContent() {
                 <p className="mt-4 text-[10.5px] font-bold text-sand-600">
                   {t("marketGuide.meters.listingsNote", {
                     count: row.listings,
-                    note: t(row.noteKey),
+                    note: row.note,
                   })}
                 </p>
 
@@ -398,7 +411,7 @@ export default function MarketGuideContent() {
                     className="flex items-center justify-center rounded-xl bg-ocean-950 px-4 py-3 text-[12px] font-black text-white transition hover:bg-ocean-900"
                   >
                     {t("marketGuide.meters.browseCity", {
-                      city: cityLabel(row.city, t),
+                      city: cityLabel(row.city, t, locale),
                     })}
                   </Link>
                 </div>
@@ -421,7 +434,7 @@ export default function MarketGuideContent() {
               <div key={row.city}>
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-[12.5px] font-extrabold text-ocean-900">
-                    {cityLabel(row.city, t)}
+                    {cityLabel(row.city, t, locale)}
                   </span>
                   <span className="text-[10.5px] font-bold text-sand-600">
                     {t("marketGuide.comparison.apartments")}
@@ -439,7 +452,7 @@ export default function MarketGuideContent() {
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-3">
                   <span className="text-[12.5px] font-extrabold text-ocean-900">
-                    {cityLabel(row.city, t)}
+                    {cityLabel(row.city, t, locale)}
                   </span>
                   <span className="text-[10.5px] font-bold text-sand-600">
                     {t("marketGuide.comparison.villas")}
@@ -477,7 +490,7 @@ export default function MarketGuideContent() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <h3 className="text-lg font-black text-ocean-900">
-                    {cityLabel(row.city, t)}
+                    {cityLabel(row.city, t, locale)}
                   </h3>
                   <span
                     className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ring-1 ${DEMAND_STYLE[row.demand]}`}
@@ -489,7 +502,7 @@ export default function MarketGuideContent() {
                 </div>
 
                 <p className="mt-3 flex-1 text-[12.5px] leading-7 text-sand-800">
-                  {t(row.summaryKey)}
+                  {row.summary}
                 </p>
 
                 <div className="mt-5">

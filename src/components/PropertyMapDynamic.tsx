@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { Property } from "@/types/property";
 import { useI18n } from "@/lib/i18n";
-import { CityOption, cities } from "./Filters";
+import { CityOption, defaultCities } from "./Filters";
 
 /** سيرفرات بلاطات OpenStreetMap — تُسخّن مسبقاً لتظهر الخريطة أسرع */
 const TILE_ORIGINS = [
@@ -34,7 +34,7 @@ interface Props {
 
 export default function PropertyMapDynamic({
   properties,
-  selectedCity = cities[0],
+  selectedCity = defaultCities[0],
 }: Props) {
   return (
     <div className="relative h-[420px] overflow-hidden rounded-3xl border border-gray-200 bg-slate-100 shadow-2xl lg:h-[520px]">

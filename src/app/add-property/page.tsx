@@ -25,8 +25,9 @@ import {
   Purpose,
   SellerType,
 } from "@/types/property";
-import { useT, type MessageKey } from "@/lib/i18n";
-import { CITY_NAMES, cityCenter, cityLabel } from "@/lib/i18n/cities";
+import { useI18n, type MessageKey } from "@/lib/i18n";
+import { cityCenter, cityLabel } from "@/lib/i18n/cities";
+import { useActiveCities } from "@/lib/cities-store";
 import {
   PROPERTY_TYPES,
   propertyTypeLabel,
@@ -255,7 +256,8 @@ function SectionHead({
 
 export default function AddPropertyPage() {
   const router = useRouter();
-  const t = useT();
+  const { t, locale } = useI18n();
+  const cities = useActiveCities();
   const { formatWithSymbol } = useCurrency();
   const [form, setForm] = useState<FormState>(initial);
   const [error, setError] = useState("");
@@ -640,7 +642,7 @@ export default function AddPropertyPage() {
                 {submitted.reference}
               </p>
               <p className="mt-1 text-[11.5px] font-semibold text-sand-700">
-                {submitted.title} — {cityLabel(submitted.city, t)}
+                {submitted.title} — {cityLabel(submitted.city, t, locale)}
               </p>
             </div>
 
@@ -795,9 +797,9 @@ export default function AddPropertyPage() {
                       className={FIELD}
                     >
                       <option value="">{t("addProperty.cityPlaceholder")}</option>
-                      {CITY_NAMES.map((c) => (
-                        <option key={c} value={c}>
-                          {cityLabel(c, t)}
+                      {cities.map((c) => (
+                        <option key={c.id} value={c.nameAr}>
+                          {cityLabel(c.nameAr, t, locale)}
                         </option>
                       ))}
                     </select>
