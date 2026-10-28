@@ -6,6 +6,7 @@ import { Check, Clock3, Mail, MapPin, Phone, Send, ShieldCheck } from "lucide-re
 import { useI18n, type MessageKey } from "@/lib/i18n";
 import { cityLabel } from "@/lib/i18n/cities";
 import { useActiveCities } from "@/lib/cities-store";
+import { usePrimaryCompany } from "@/lib/company-store";
 import BrandLogo from "@/components/BrandLogo";
 import { telHref, useSiteSettings } from "@/lib/site-settings";
 
@@ -72,8 +73,30 @@ export default function Footer() {
   const { t, locale } = useI18n();
   const cities = useActiveCities();
   const site = useSiteSettings();
+  const company = usePrimaryCompany();
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+
+  const ar = locale === "ar";
+  const about =
+    (ar ? company?.aboutAr : company?.aboutEn || company?.aboutAr) ||
+    t("footer.about");
+  const legalName = company
+    ? ar
+      ? company.legalNameAr
+      : company.legalNameEn || company.legalNameAr
+    : null;
+
+  /** روابط السوشيال من سجل الشركة، وإلا الروابط العامة الافتراضية */
+  const companySocial = company
+    ? [
+        { label: "Facebook", href: company.facebook, icon: FacebookIcon },
+        { label: "X", href: company.x, icon: XIcon },
+        { label: "Instagram", href: company.instagram, icon: InstagramIcon },
+        { label: "YouTube", href: company.youtube, icon: YouTubeIcon },
+      ].filter((item) => Boolean(item.href))
+    : [];
+  const socialLinks = companySocial.length ? companySocial : SOCIAL_LINKS;
 
   const handleSubscribe = (event: React.FormEvent) => {
     event.preventDefault();
@@ -96,10 +119,15 @@ export default function Footer() {
               <BrandLogo tone="dark" />
             </Link>
             <p className="mt-4 max-w-[330px] text-xs leading-7 text-[#98a1b8]">
-              {t("footer.about")}
+              {about}
             </p>
+            {legalName && (
+              <p className="mt-2 max-w-[330px] text-[10.5px] font-semibold leading-5 text-[#8d97b0]">
+                {legalName}
+              </p>
+            )}
             <div className="mt-4 flex gap-2">
-              {SOCIAL_LINKS.map(({ label, href, icon: Icon }) => (
+              {socialLinks.map(({ label, href, icon: Icon }) => (
                 <a
                   key={label}
                   href={href}
@@ -219,6 +247,9 @@ export default function Footer() {
         <div className="flex flex-col items-center justify-between gap-3 border-t border-white/[0.08] py-5 text-[10.5px] text-[#7d879f] sm:flex-row">
           <span>{t("footer.rights", { year: new Date().getFullYear() })}</span>
           <div className="flex flex-wrap items-center gap-4">
+            <Link href="/company" className="transition hover:text-gold-200">
+              {t("footer.links.company")}
+            </Link>
             <Link href="/privacy" className="transition hover:text-gold-200">
               {t("footer.links.privacy")}
             </Link>

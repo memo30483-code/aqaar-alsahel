@@ -162,6 +162,7 @@ export const commonMessages = {
     en: "All contact goes through site management",
   },
   "footer.contact.title": { ar: "خدمة العملاء", en: "Customer service" },
+  "footer.links.company": { ar: "بيانات الشركة", en: "Company info" },
   "footer.links.privacy": { ar: "سياسة الخصوصية", en: "Privacy policy" },
   "footer.links.terms": { ar: "الشروط والأحكام", en: "Terms & conditions" },
   "footer.links.advertise": { ar: "أعلن معنا", en: "Advertise" },

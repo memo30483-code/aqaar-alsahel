@@ -53,6 +53,7 @@ const GROUPS: Group[] = [
     titleAr: "معلومات قانونية",
     titleEn: "Legal",
     links: [
+      { ar: "بيانات الشركة المالكة", en: "Company information", href: "/company", Icon: Building2 },
       { ar: "سياسة الخصوصية", en: "Privacy policy", href: "/privacy", Icon: ShieldCheck },
       { ar: "الشروط والأحكام", en: "Terms & conditions", href: "/terms", Icon: FileText },
     ],

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   ArrowLeft,
+  Building2,
   CalendarDays,
   FileText,
   Headset,
@@ -12,6 +13,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { telHref, useSiteSettings } from "@/lib/site-settings";
+import { usePrimaryCompany } from "@/lib/company-store";
+import { useI18n } from "@/lib/i18n";
 
 export interface DocSection {
   /** معرّف القسم — يُستخدم لروابط الفهرس */
@@ -53,6 +56,9 @@ export default function LegalDocPage({
   related,
 }: Props) {
   const site = useSiteSettings();
+  const company = usePrimaryCompany();
+  const { locale } = useI18n();
+  const ar = locale === "ar";
 
   return (
     <div className="bg-sand-50">
@@ -218,6 +224,47 @@ export default function LegalDocPage({
                 </div>
               </div>
             </section>
+
+            {/* الكيان المالك للمنصة */}
+            {company && (
+              <section className="rounded-3xl border border-sand-200 bg-white p-4">
+                <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-gold-600">
+                  <span aria-hidden className="h-px w-5 bg-gold-400/70" />
+                  {ar ? "الكيان المالك" : "Owner entity"}
+                </p>
+                <div className="mt-2.5 flex items-start gap-2.5">
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-sand-100 text-gold-600">
+                    <Building2 className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[11.5px] font-black leading-5 text-ocean-900">
+                      {ar
+                        ? company.legalNameAr
+                        : company.legalNameEn || company.legalNameAr}
+                    </p>
+                    {company.commercialRegister && (
+                      <p className="mt-0.5 text-[10.5px] font-semibold text-sand-600">
+                        {ar ? "س.ت" : "CR"}:{" "}
+                        <span dir="ltr">{company.commercialRegister}</span>
+                      </p>
+                    )}
+                    {company.taxCard && (
+                      <p className="text-[10.5px] font-semibold text-sand-600">
+                        {ar ? "البطاقة الضريبية" : "Tax card"}:{" "}
+                        <span dir="ltr">{company.taxCard}</span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <Link
+                  href="/company"
+                  className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-sand-200 bg-sand-50 px-3 py-2 text-[11px] font-bold text-ocean-800 transition hover:border-gold-300 hover:bg-gold-50/60 hover:text-gold-700"
+                >
+                  {ar ? "بيانات الشركة الكاملة" : "Full company details"}
+                  <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
+                </Link>
+              </section>
+            )}
           </aside>
         </div>
       </div>
