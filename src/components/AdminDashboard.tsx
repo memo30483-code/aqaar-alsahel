@@ -10,6 +10,7 @@ import {
   Home,
   Landmark,
   LayoutList,
+  LayoutTemplate,
   ListChecks,
   MapPin,
   Megaphone,
@@ -51,10 +52,12 @@ import AdminLogsTab from "@/components/admin/AdminLogsTab";
 import AdminDevelopersTab from "@/components/admin/AdminDevelopersTab";
 import AdminCitiesTab from "@/components/admin/AdminCitiesTab";
 import AdminCompanyTab from "@/components/admin/AdminCompanyTab";
+import AdminHomeBuilderTab from "@/components/admin/AdminHomeBuilderTab";
 import AdminOverviewTab from "@/components/admin/AdminOverviewTab";
 
 type TabKey =
   | "overview"
+  | "builder"
   | "listings"
   | "propertyFields"
   | "offers"
@@ -74,6 +77,7 @@ const TABS: {
   permission?: string;
 }[] = [
   { key: "overview", label: "نظرة عامة", Icon: BarChart3 },
+  { key: "builder", label: "Builder الرئيسية", Icon: LayoutTemplate, permission: "site.settings" },
   { key: "listings", label: "الإعلانات", Icon: LayoutList, permission: "listings.view" },
   {
     key: "propertyFields",
@@ -268,6 +272,14 @@ export default function AdminDashboard() {
             logs={logs}
             permissionsCount={permissionsCount}
             goTo={(next) => setTab(next)}
+          />
+        )}
+
+        {tab === "builder" && (
+          <AdminHomeBuilderTab
+            can={can}
+            notify={notify}
+            reloadLogs={reloadLogs}
           />
         )}
 

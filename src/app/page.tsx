@@ -43,7 +43,13 @@ import { useI18n, type MessageKey } from "@/lib/i18n";
 import { cityLabel } from "@/lib/i18n/cities";
 import { propertyTypeLabel } from "@/lib/i18n/taxonomy";
 import { useCurrency } from "@/lib/currency";
-import { blockOrder, isBlockEnabled, type BlockKey } from "@/lib/admin-system";
+import {
+  isCustomBlockType,
+  useHomeBlocks,
+  type HomeBlock,
+  type HomeBlockType,
+} from "@/lib/home-builder-store";
+import HomeCustomBlock from "@/components/home/HomeCustomBlock";
 import { filterPublishedProperties } from "@/lib/public-listings";
 
 type SortKey = "newest" | "priceDesc" | "priceAsc";
@@ -85,20 +91,41 @@ export default function HomePage() {
   const [sort, setSort] = useState<SortKey>("newest");
   const [showAll, setShowAll] = useState(false);
   const [userProperties, setUserProperties] = useState<Property[]>([]);
-  /* ===== إعدادات لوحة التحكم: إظهار/إخفاء بلوكات الرئيسية ===== */
-  const [blocks, setBlocks] = useState<Record<string, boolean> | null>(null);
+  /* ===== Builder الرئيسية: ترتيب وإظهار وإخفاء الأقسام من لوحة التحكم ===== */
+  const layout = useHomeBlocks();
 
-  useEffect(() => {
-    const keys: BlockKey[] = ["hero","verify_strip","marquee","featured_listings","projects_slider","ad_slider","inline_ad","ad_band","story_dossier","manage_note"];
-    const next: Record<string, boolean> = {};
-    keys.forEach((key) => {
-      next[key] = isBlockEnabled(key);
-    });
-    setBlocks(next);
-  }, []);
-
-  const showBlock = (key: BlockKey) => blocks === null || blocks[key] !== false;
-  const orderOf = (key: BlockKey) => (blocks === null ? 0 : blockOrder(key));
+  const blockOf = (type: HomeBlockType): HomeBlock | undefined =>
+    layout.find((block) => block.type === type);
+  const showBlock = (type: HomeBlockType) => blockOf(type)?.visible ?? false;
+  const orderOf = (type: HomeBlockType) => blockOf(type)?.order ?? 999;
+  const content = (type: HomeBlockType): HomeBlock | undefined => {
+    const block = blockOf(type);
+    if (!block || !block.visible) return undefined;
+    return block;
+  };
+  /** نص قابل للتعديل من Builder مع الرجوع لترجمة الموقع */
+  const text = (type: HomeBlockType, field: "eyebrow" | "title" | "subtitle" | "body") => {
+    const block = content(type);
+    if (!block) return undefined;
+    const ar = locale === "ar";
+    const value =
+      field === "eyebrow"
+        ? ar
+          ? block.eyebrowAr
+          : block.eyebrowEn || block.eyebrowAr
+        : field === "title"
+          ? ar
+            ? block.titleAr
+            : block.titleEn || block.titleAr
+          : field === "subtitle"
+            ? ar
+              ? block.subtitleAr
+              : block.subtitleEn || block.subtitleAr
+            : ar
+              ? block.bodyAr
+              : block.bodyEn || block.bodyAr;
+    return value?.trim() ? value : undefined;
+  };
 
   useEffect(() => {
     try {
@@ -275,7 +302,7 @@ export default function HomePage() {
         <div className="absolute inset-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={HERO_IMAGE}
+            src={content("hero")?.imageUrl || HERO_IMAGE}
             alt={t("home.hero.imageAlt")}
             className="h-full w-full object-cover object-[center_42%]"
             onError={(event) => {
@@ -292,19 +319,23 @@ export default function HomePage() {
           <div className="max-w-[680px] text-white">
             <p className="flex items-center gap-2.5 text-xs font-bold tracking-wide text-gold-200">
               <span aria-hidden className="h-px w-8 bg-gold-400" />
-              {t("home.hero.eyebrow")}
+              {text("hero", "eyebrow") ?? t("home.hero.eyebrow")}
             </p>
 
             <h1 className="mt-4 text-4xl font-black leading-[1.24] tracking-tight sm:text-5xl lg:text-[56px]">
               <span className="relative whitespace-nowrap text-gold-300">
-                {t("home.hero.titleGold")}
+                {text("hero", "title") ?? t("home.hero.titleGold")}
               </span>
-              <br />
-              {t("home.hero.titleRest")}
+              {!text("hero", "title") && (
+                <>
+                  <br />
+                  {t("home.hero.titleRest")}
+                </>
+              )}
             </h1>
 
             <p className="mt-4 max-w-[600px] text-sm font-medium leading-8 text-[#e8ecf6] sm:text-base">
-              {t("home.hero.description")}
+              {text("hero", "subtitle") ?? t("home.hero.description")}
             </p>
 
             <div className="mt-7 grid grid-cols-2 gap-y-5 sm:flex sm:flex-wrap sm:items-stretch">
@@ -548,10 +579,10 @@ export default function HomePage() {
         <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-6 px-4 sm:px-6 xl:flex-row xl:items-center">
           <div className="flex flex-col gap-0.5 border-sand-200 pb-4 xl:min-w-[172px] xl:border-l xl:pb-0 xl:ps-6">
             <p className="text-[13px] font-black text-ocean-900">
-              {t("home.verify.lead")}
+              {text("verify_strip", "title") ?? t("home.verify.lead")}
             </p>
             <p className="text-[10.5px] font-semibold text-sand-700">
-              {t("home.verify.sub")}
+              {text("verify_strip", "subtitle") ?? t("home.verify.sub")}
             </p>
           </div>
 
@@ -636,13 +667,13 @@ export default function HomePage() {
             <div>
               <p className="flex items-center gap-2.5 text-xs font-bold text-gold-700">
                 <span aria-hidden className="h-px w-8 bg-gold-400" />
-                {t("home.listings.eyebrow")}
+                {text("featured_listings", "eyebrow") ?? t("home.listings.eyebrow")}
               </p>
               <h2 className="mt-2.5 text-2xl font-black tracking-tight text-ocean-900 sm:text-[33px]">
-                {t("home.listings.heading")}
+                {text("featured_listings", "title") ?? t("home.listings.heading")}
               </h2>
               <p className="mt-2 max-w-[560px] text-[13px] font-medium leading-6 text-sand-700">
-                {t("home.listings.sub")}
+                {text("featured_listings", "subtitle") ?? t("home.listings.sub")}
               </p>
             </div>
             <button
@@ -825,15 +856,21 @@ export default function HomePage() {
           <div>
             <p className="flex items-center gap-2.5 text-xs font-bold text-gold-300">
               <span aria-hidden className="h-px w-8 bg-gold-400" />
-              {t("home.story.eyebrow")}
+              {text("story_dossier", "eyebrow") ?? t("home.story.eyebrow")}
             </p>
             <h2 className="mt-3 text-3xl font-black leading-[1.45] tracking-tight sm:text-[38px]">
-              {t("home.story.title1")}
-              <br />
-              <span className="text-gold-300">{t("home.story.title2")}</span>
+              {text("story_dossier", "title") ? (
+                <span className="text-gold-300">{text("story_dossier", "title")}</span>
+              ) : (
+                <>
+                  {t("home.story.title1")}
+                  <br />
+                  <span className="text-gold-300">{t("home.story.title2")}</span>
+                </>
+              )}
             </h2>
             <p className="mt-4 max-w-[560px] text-sm font-medium leading-8 text-[#c2c9dd]">
-              {t("home.story.lead")}
+              {text("story_dossier", "subtitle") ?? t("home.story.lead")}
             </p>
 
             <div className="mt-6 flex flex-col gap-4">
@@ -1011,14 +1048,24 @@ export default function HomePage() {
       <section className="border-t border-sand-200 bg-white">
         <div className="mx-auto flex w-full max-w-[1240px] flex-wrap items-center justify-center gap-2 px-4 py-4 text-[11px] font-bold text-sand-700 sm:px-6">
           <BadgeCheck className="h-4 w-4 text-gold-600" />
-          {t("home.listings.manage")}
+          {text("manage_note", "title") ?? t("home.listings.manage")}
           <span aria-hidden className="text-sand-400">·</span>
           <FileText className="h-3.5 w-3.5 text-sand-500" />
-          {t("home.dossier.hiddenTitle")}
+          {text("manage_note", "body") ?? t("home.dossier.hiddenTitle")}
         </div>
       </section>
       </div>
       )}
+
+      {/* أقسام مضافة من Builder الرئيسية */}
+      {layout
+        .filter((block) => block.visible && isCustomBlockType(block.type))
+        .map((block) => (
+          <div key={block.id} style={{ order: block.order }} className="w-full">
+            <HomeCustomBlock block={block} />
+          </div>
+        ))}
+
       </div>
     </>
   );
