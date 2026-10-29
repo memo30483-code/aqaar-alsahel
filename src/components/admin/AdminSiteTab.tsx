@@ -9,6 +9,7 @@ import {
   type BlockKey,
   type SiteSettings,
 } from "@/lib/admin-system";
+import AdminThemeTab from "@/components/admin/AdminThemeTab";
 import { BTN_PRIMARY, Field, INPUT, Panel } from "@/components/admin/shared";
 
 interface Props {
@@ -37,7 +38,10 @@ export default function AdminSiteTab({ settings, can, onChange, notify, reloadLo
   const editable = can("site.settings") || can("site.blocks");
 
   const persist = () => {
-    saveSiteSettings(settings);
+    if (!saveSiteSettings(settings)) {
+      notify("تعذّر حفظ الإعدادات — مساحة التخزين في المتصفح ممتلئة");
+      return;
+    }
     if (session) {
       addAdminLog({
         action: "site.settings.update",
@@ -212,6 +216,7 @@ export default function AdminSiteTab({ settings, can, onChange, notify, reloadLo
           التغييرات تُحفظ عند الضغط على «حفظ» بالأعلى.
         </p>
       </Panel>
+      <AdminThemeTab notify={notify} can={can} onChange={onChange} />
     </div>
   );
 }

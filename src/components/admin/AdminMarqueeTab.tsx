@@ -34,7 +34,10 @@ export default function AdminMarqueeTab({
   };
 
   const persist = () => {
-    saveMarqueeItems(items);
+    if (!saveMarqueeItems(items)) {
+      notify("تعذّر حفظ الشريط — مساحة التخزين في المتصفح ممتلئة");
+      return;
+    }
     if (session) {
       addAdminLog({
         action: "marquee.update",

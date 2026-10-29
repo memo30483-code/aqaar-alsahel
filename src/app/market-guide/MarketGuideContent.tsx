@@ -9,7 +9,7 @@ import { useCurrency } from "@/lib/currency";
 import { cityLabel } from "@/lib/i18n/cities";
 import { useActiveCities } from "@/lib/cities-store";
 import { demandLabel } from "@/lib/i18n/taxonomy";
-import { filterPublishedProperties } from "@/lib/public-listings";
+import { getApprovedListingIds, getDefaultApprovedIds } from "@/lib/admin-system";
 
 type Demand = "مرتفع" | "موسمي" | "مستقر";
 
@@ -146,6 +146,8 @@ export default function MarketGuideContent() {
 
   /** إعلانات المستخدمين المحفوظة محلياً — تُضاف إلى مؤشر السوق */
   const [userProperties, setUserProperties] = useState<Property[]>([]);
+  /* نفس الحالة الافتراضية التي يرسمها السيرفر — لتفادي اختلاف الترطيب */
+  const [approvedIds, setApprovedIds] = useState<string[]>(() => getDefaultApprovedIds());
 
   useEffect(() => {
     try {
@@ -155,12 +157,15 @@ export default function MarketGuideContent() {
     } catch {
       setUserProperties([]);
     }
+    setApprovedIds(getApprovedListingIds());
   }, []);
 
-  const allProperties = useMemo(
-    () => filterPublishedProperties([...userProperties, ...mockProperties]),
-    [userProperties]
-  );
+  const allProperties = useMemo(() => {
+    const approved = new Set(approvedIds);
+    return [...userProperties, ...mockProperties].filter((property) =>
+      approved.has(property.id)
+    );
+  }, [userProperties, approvedIds]);
 
   const totalListings = allProperties.length;
   const pricedProperties = allProperties.filter(

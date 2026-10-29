@@ -1,0 +1,273 @@
+/* ثيمات موسمية — متغيرات CSS تُطبق فوراً عند اختيار الأدمن */
+.theme-hero {
+  background: var(--hero-gradient-theme, linear-gradient(135deg,#141a33 0%,#2d3875 58%,#1a2332 100%));
+}
+.theme-btn-gold {
+  background: linear-gradient(to left, rgb(var(--gold-500)), rgb(var(--gold-300)));
+  color: rgb(var(--ocean-950));
+}
+.theme-btn-outline {
+  border-color: rgb(var(--gold-500));
+  color: rgb(var(--gold-600));
+}
+.theme-accent-text {
+  color: rgb(var(--gold-500));
+}
+
+/* ============================================================
+   طبقة خلفية الموسم (صورة + نقش) وصلاحية تدرّج الهيرو
+   ============================================================ */
+.theme-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  pointer-events: none;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+.theme-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: var(--theme-pattern-opacity, 0);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23e8c364' stroke-width='1'%3E%3Cpath d='M28 4 L52 28 L28 52 L4 28 Z'/%3E%3Cpath d='M28 12 L44 28 L28 44 L12 28 Z'/%3E%3Cpath d='M14 14 H42 V42 H14 Z'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 56px 56px;
+}
+
+/* غطاء الهيرو الافتراضي — يتبع لون الموسم بدل اللون الثابت */
+.theme-hero-overlay {
+  background:
+    linear-gradient(270deg, rgb(var(--ocean-950) / 0.92) 0%, rgb(var(--ocean-950) / 0.72) 34%, rgb(var(--ocean-950) / 0.28) 62%, rgb(var(--ocean-950) / 0.06) 100%),
+    linear-gradient(0deg, rgb(var(--ocean-950) / 0.82) 0%, rgb(var(--ocean-950) / 0) 45%);
+}
+
+
+.ramadan-home-overlay {
+  background:
+    radial-gradient(circle at 18% 14%, rgba(231, 192, 94, 0.22), transparent 42%),
+    linear-gradient(270deg, rgba(3, 32, 28, 0.95) 0%, rgba(8, 52, 42, 0.8) 36%, rgba(7, 44, 40, 0.34) 67%, rgba(5, 32, 34, 0.1) 100%),
+    linear-gradient(0deg, rgba(3, 26, 28, 0.88) 0%, rgba(3, 26, 28, 0) 52%);
+}
+
+/* ============================================================
+   حركات زينة رمضان
+   ============================================================ */
+@keyframes ramadan-sway {
+  0%,
+  100% {
+    transform: rotate(-3.5deg);
+  }
+  50% {
+    transform: rotate(3.5deg);
+  }
+}
+
+@keyframes ramadan-twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes ramadan-lantern-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+.ramadan-star {
+  transform-box: fill-box;
+  animation: ramadan-twinkle 3.6s ease-in-out infinite;
+}
+
+.ramadan-lantern-sway {
+  transform-box: view-box;
+  animation: ramadan-sway 7s ease-in-out infinite;
+}
+
+.ramadan-lantern-glow {
+  animation: ramadan-lantern-breathe 3.8s ease-in-out infinite;
+}
+
+.ramadan-skyline {
+  opacity: 0.96;
+}
+
+/* خط الفوانيس المعلّق أسفل الهيدر — في كل الصفحات */
+.ramadan-garland {
+  position: absolute;
+  inset-inline: 0;
+  top: 100%;
+  z-index: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-around;
+  height: 104px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ramadan-garland::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 6px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(var(--gold-400) / 0.45) 12%,
+    rgb(var(--gold-300) / 0.6) 50%,
+    rgb(var(--gold-400) / 0.45) 88%,
+    transparent
+  );
+}
+
+.ramadan-garland-lantern {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform-origin: top center;
+  animation: ramadan-sway 6.5s ease-in-out infinite;
+}
+
+.ramadan-garland-lantern::before {
+  content: "";
+  width: 1px;
+  height: var(--drop, 40px);
+  background: linear-gradient(rgb(var(--gold-400) / 0.85), rgb(var(--gold-500) / 0.35));
+}
+
+.ramadan-garland-lantern::after {
+  content: "";
+  width: calc(13px * var(--scale, 1));
+  height: calc(18px * var(--scale, 1));
+  border-radius: 4px 4px 7px 7px;
+  background: linear-gradient(180deg, rgb(var(--gold-200)), rgb(var(--gold-500)) 45%, rgb(var(--gold-700)));
+  box-shadow:
+    0 0 14px rgb(var(--gold-400) / 0.55),
+    inset 0 -4px 8px rgb(var(--ocean-950) / 0.45);
+}
+
+@media (max-width: 640px) {
+  .ramadan-garland {
+    height: 78px;
+  }
+  .ramadan-garland-lantern:nth-child(n + 6) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ramadan-star,
+  .ramadan-lantern-sway,
+  .ramadan-lantern-glow,
+  .ramadan-garland-lantern {
+    animation: none;
+  }
+}
+
+
+.ramadan-hero-art {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ramadan-hero-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ramadan-cairo-facade {
+  opacity: 0.62;
+}
+
+.ramadan-water {
+  opacity: 0.82;
+}
+
+.ramadan-cannon-label {
+  position: absolute;
+  inset-inline-start: 28px;
+  bottom: 22px;
+  border: 1px solid rgba(235, 199, 117, 0.48);
+  border-radius: 999px;
+  background: rgba(6, 23, 29, 0.62);
+  padding: 7px 11px;
+  color: #f5d996;
+  font-size: 10px;
+  font-weight: 800;
+  backdrop-filter: blur(5px);
+}
+
+.theme-season-banner,
+.ramadan-season-banner {
+  display: flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-bottom: 1px solid rgb(var(--gold-400) / 0.28);
+  background: linear-gradient(90deg, rgb(var(--ocean-900)), rgb(var(--ocean-950)) 52%, rgb(var(--ocean-900)));
+  padding: 5px 14px;
+  color: rgb(var(--gold-200));
+  font-size: 10.5px;
+  font-weight: 800;
+}
+
+.theme-season-banner svg,
+.ramadan-season-banner svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  color: rgb(var(--gold-300));
+}
+
+html[data-season-theme="ramadan"][data-ramadan-assistant="true"] #ai-launcher::before {
+  position: absolute;
+  inset: 1px;
+  z-index: 2;
+  border: 2px solid rgba(240, 210, 130, 0.95);
+  border-radius: 40% 40% 48% 48%;
+  box-shadow: inset 0 0 18px rgba(245, 215, 140, 0.35), 0 0 18px rgba(232, 190, 100, 0.45);
+  content: "";
+  pointer-events: none;
+}
+
+html[data-season-theme="ramadan"][data-ramadan-assistant="true"] #ai-launcher::after {
+  position: absolute;
+  top: -5px;
+  left: calc(50% - 6px);
+  width: 12px;
+  height: 8px;
+  border: 2px solid #f0d282;
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  content: "";
+  pointer-events: none;
+}
+
+html[data-season-theme="ramadan"] #ai-panel .ai-panel-header {
+  background: linear-gradient(135deg, #123b35, #0d2630);
+}
+
+@media (max-width: 640px) {
+  .ramadan-cannon-label {
+    inset-inline-start: 16px;
+    bottom: 16px;
+  }
+}

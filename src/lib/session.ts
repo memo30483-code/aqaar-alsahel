@@ -17,6 +17,23 @@ export interface Session {
   verifiedAt: string;
   /** دور المستخدم — غياب القيمة يعني مستخدماً عادياً */
   role?: UserRole;
+  /**
+   * رمز ملكية يُنشأ عند التسجيل ويُربط بالسجل المهني.
+   * يمنع دخول أي شخص للوحة مهني عبر كتابة بريده فقط.
+   */
+  ownerToken?: string;
+}
+
+/** إنشاء رمز ملكية جديد للسجل المهني/الحساب */
+export function newOwnerToken(): string {
+  try {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+  } catch {
+    // متصفح قديم — نرجع للبديل أدناه
+  }
+  return `own-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 /** بيانات الأدمن التجريبي للتطوير */
@@ -37,7 +54,18 @@ export function getSession(): Session | null {
     const parsed: unknown = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") return null;
     const session = parsed as Partial<Session>;
-    return typeof session.phone === "string" ? (session as Session) : null;
+    if (typeof session.phone !== "string") return null;
+    const email = typeof session.email === "string" ? session.email : "";
+    /* حساب العرض التجريبي: يضمن بقاء صلاحية الإدارة حتى لو كانت الجلسة
+       قديمة/أُنشئت من مسار آخر بلا دور — يُزال مع ربط المصادقة الحقيقية */
+    const role = email.trim().toLowerCase() === MOCK_ADMIN.email ? MOCK_ADMIN.role : session.role;
+    /* تطبيع الحقول النصية حتى لا تتعطل الواجهة (Header) على جلسة قديمة أو تالفة */
+    return {
+      ...(session as Session),
+      name: typeof session.name === "string" ? session.name : "",
+      email,
+      role,
+    };
   } catch {
     return null;
   }

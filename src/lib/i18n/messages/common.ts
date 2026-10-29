@@ -12,6 +12,7 @@ export const commonMessages = {
 
   /* ---------- التنقّل ---------- */
   "nav.cities": { ar: "المدن", en: "Cities" },
+  "nav.projects": { ar: "المشاريع", en: "Projects" },
   "nav.companies": { ar: "الشركات العقارية", en: "Real-estate companies" },
   "nav.compass": { ar: "البوصلة العقارية", en: "Market compass" },
   "nav.legal": { ar: "الاستشارات القانونية", en: "Legal consultations" },
@@ -20,6 +21,7 @@ export const commonMessages = {
   "nav.account": { ar: "الحساب", en: "Account" },
   "nav.logout": { ar: "تسجيل الخروج", en: "Sign out" },
   "nav.adminPanel": { ar: "لوحة التحكم", en: "Admin dashboard" },
+  "nav.professionalPanel": { ar: "لوحة المهني", en: "Professional dashboard" },
   "nav.addProperty": { ar: "أضف عقارك", en: "List your property" },
   "nav.menu": { ar: "القائمة", en: "Menu" },
   "nav.sectionCities": { ar: "المدن", en: "Cities" },

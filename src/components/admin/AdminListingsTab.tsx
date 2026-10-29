@@ -149,7 +149,15 @@ export default function AdminListingsTab({
       );
       return;
     }
-    saveListingOverride(listing.id, { ...(status ? { status } : {}), ...patch });
+    if (
+      !saveListingOverride(listing.id, {
+        ...(status ? { status } : {}),
+        ...patch,
+      })
+    ) {
+      notify("تعذّر حفظ الإجراء — مساحة التخزين في المتصفح ممتلئة");
+      return;
+    }
     if (status) {
       onChange(listings.map((row) => (row.id === listing.id ? { ...row, status } : row)));
     }
@@ -176,7 +184,10 @@ export default function AdminListingsTab({
 
   const doToggleFeature = (listing: AdminListing) => {
     const featured = !listing.featuredByAdmin;
-    saveListingOverride(listing.id, { featuredByAdmin: featured });
+    if (!saveListingOverride(listing.id, { featuredByAdmin: featured })) {
+      notify("تعذّر حفظ الإجراء — مساحة التخزين في المتصفح ممتلئة");
+      return;
+    }
     onChange(
       listings.map((row) =>
         row.id === listing.id ? { ...row, featuredByAdmin: featured } : row
@@ -325,6 +336,8 @@ export default function AdminListingsTab({
                       </Link>
 
                       {listing.status !== "approved" &&
+                        listing.status !== "archived" &&
+                        listing.status !== "deleted" &&
                         can("listings.approve") &&
                         (incompleteDocs(listing).length > 0 ? (
                           <span
@@ -559,7 +572,15 @@ export default function AdminListingsTab({
               <button
                 disabled={!replaceTarget}
                 onClick={() => {
-                  saveListingOverride(replaceFor.id, { status: "archived" });
+                  const saved = saveListingOverride(replaceFor.id, {
+                    status: "archived",
+                    replacedBy: replaceTarget,
+                    replacementNote: replaceNote.trim() || undefined,
+                  });
+                  if (!saved) {
+                    notify("تعذّر حفظ الاستبدال — مساحة التخزين في المتصفح ممتلئة");
+                    return;
+                  }
                   onChange(
                     listings.map((row) =>
                       row.id === replaceFor.id

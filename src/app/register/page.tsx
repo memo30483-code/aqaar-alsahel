@@ -10,7 +10,8 @@ import {
   useMemo,
   useState,
 } from "react";
-import { saveSession } from "@/lib/session";
+import { newOwnerToken, saveSession, type Session } from "@/lib/session";
+import { isValidEgyptPhone } from "@/lib/phone";
 import { useT, type MessageKey } from "@/lib/i18n";
 import { readCompressedImage } from "@/lib/image-upload";
 import {
@@ -94,7 +95,7 @@ const vPassword = (v: string): MessageKey | undefined =>
   v.length >= 8 ? undefined : "register.error.password";
 
 const vPhone = (v: string): MessageKey | undefined =>
-  /^01[0125][0-9]{8}$/.test(v) ? undefined : "register.error.phone";
+  isValidEgyptPhone(v) ? undefined : "register.error.phone";
 
 const vNationalId = (v: string): MessageKey | undefined =>
   /^[0-9]{14}$/.test(v) ? undefined : "register.error.nationalId";
@@ -657,10 +658,20 @@ export default function RegisterPage() {
   const router = useRouter();
   const [redirectTo, setRedirectTo] = useState("");
 
+  /** تغيير نوع الحساب يفرّغ مستندات النوع السابق حتى لا تُرسل لحقل غير مناسب */
+  const changeAccountType = (next: AccountType) => {
+    setAccountType(next);
+    setDocuments({ ...EMPTY_DOCUMENTS });
+    setTouched({});
+  };
+
   /** قراءة هدف التوجيه بعد إتمام التسجيل من ?redirect=/add-property */
   useEffect(() => {
     const target = new URLSearchParams(window.location.search).get("redirect");
-    if (target && target.startsWith("/")) setRedirectTo(target);
+    /* رفض //host حتى لا يُستخدم الرابط لإعادة توجيه خارجي */
+    if (target && target.startsWith("/") && !target.startsWith("//")) {
+      setRedirectTo(target);
+    }
   }, []);
 
   /** بعد نجاح التوثيق: توجيه تلقائي لصفحة الهدف (مثل أضف عقارك) */
@@ -725,7 +736,7 @@ export default function RegisterPage() {
     );
   };
 
-  const onFileChange = (
+  const onFileChange = async (
     name: FileFieldName,
     e: ChangeEvent<HTMLInputElement>
   ) => {
@@ -734,9 +745,12 @@ export default function RegisterPage() {
     if (!file) return;
     markTouched(name);
     /* نُصغّر الصورة قبل التخزين حتى لا نتجاوز مساحة التخزين المحلية */
-    void readCompressedImage(file).then((dataUrl) =>
-      setDocuments((prev) => ({ ...prev, [name]: dataUrl }))
-    );
+    try {
+      const dataUrl = await readCompressedImage(file);
+      setDocuments((prev) => ({ ...prev, [name]: dataUrl }));
+    } catch {
+      setOtpError("تعذّرت قراءة الملف — جرّب صورة أخرى (JPG أو PNG).");
+    }
   };
 
   const removeDocument = (name: FileFieldName) =>
@@ -772,18 +786,9 @@ export default function RegisterPage() {
       return;
     }
     setOtpError("");
-    saveSession({
-      name: details.fullName || details.companyName || details.fullTripleName,
-      email: details.email,
-      phone: details.phone,
-      accountType,
-      verifiedAt: new Date().toISOString(),
-      /* المطوّر والمسوق يُمنحان دور «مسوق»، والمحامي مستخدم عادي حتى الاعتماد */
-      role:
-        accountType === "developer" || accountType === "marketer"
-          ? "agent"
-          : "user",
-    });
+
+    /* رمز الملكية يُنشأ مرة واحدة ويُربط بالجلسة والسجل المهني معاً */
+    const ownerToken = newOwnerToken();
 
     /* إنشاء سجل مهني بحالة «قيد المراجعة» — لا يظهر للزوار قبل موافقة الإدارة */
     if (accountType !== "individual") {
@@ -799,7 +804,7 @@ export default function RegisterPage() {
           uploadedAt: new Date().toISOString(),
         }));
 
-      addProfessional({
+      const result = addProfessional({
         kind,
         nameAr:
           accountType === "lawyer"
@@ -811,9 +816,30 @@ export default function RegisterPage() {
         documents: documentList,
         status: "pending",
         verified: false,
+        ownerToken,
       });
+
+      /* لا نُكمل بجلسة ناجحة إذا لم يُحفظ السجل فعلاً (تخزين ممتلئ مثلاً) */
+      if (!result.ok) {
+        setOtpError(result.error);
+        return;
+      }
     }
 
+    const nextSession: Session = {
+      name: details.fullName || details.companyName || details.fullTripleName,
+      email: details.email,
+      phone: details.phone,
+      accountType,
+      verifiedAt: new Date().toISOString(),
+      /* المطوّر والمسوق يُمنحان دور «مسوق»، والمحامي مستخدم عادي حتى الاعتماد */
+      role:
+        accountType === "developer" || accountType === "marketer"
+          ? "agent"
+          : "user",
+      ownerToken,
+    };
+    saveSession(nextSession);
     setVerified(true);
   };
 
@@ -976,7 +1002,7 @@ export default function RegisterPage() {
                           key={type.id}
                           type="button"
                           aria-pressed={active}
-                          onClick={() => setAccountType(type.id)}
+                          onClick={() => changeAccountType(type.id)}
                           className={`rounded-2xl border p-4 text-right transition ${
                             active
                               ? "border-gold-400/70 bg-[linear-gradient(135deg,#141a33,#2d3875)] text-white shadow-lg"

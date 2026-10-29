@@ -4,6 +4,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import {
   Archive,
   BadgeCheck,
+  Briefcase,
   Building2,
   Check,
   ExternalLink,
@@ -18,15 +19,20 @@ import {
   Search,
   Star,
   Trash2,
+  UploadCloud,
   Users,
   X,
 } from "lucide-react";
 import {
   addProfessionalReel,
   moveProfessional,
+  PROJECT_STATUS_META,
   removeProfessional,
+  removeProfessionalProject,
   removeProfessionalReel,
   removeProfessionalRequest,
+  setProfessionalProjectStatus,
+  setProfessionalPublishPolicy,
   setProfessionalRequestStatus,
   setProfessionalStatus,
   setProfessionalVerified,
@@ -37,6 +43,7 @@ import {
   PROFESSIONAL_KIND_META,
   STATUS_META,
   type ProfessionalKind,
+  type ProfessionalProject,
   type ProfessionalRecord,
 } from "@/lib/professionals-store";
 import { addAdminLog } from "@/lib/admin-system";
@@ -114,6 +121,9 @@ export default function AdminProfessionalsTab({ can, notify, reloadLogs }: Props
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [docsFor, setDocsFor] = useState<ProfessionalRecord | null>(null);
   const [reelsFor, setReelsFor] = useState<string | null>(null);
+  const [projectsFor, setProjectsFor] = useState<string | null>(null);
+  const [projectRejectId, setProjectRejectId] = useState<string | null>(null);
+  const [projectRejectNote, setProjectRejectNote] = useState("");
   const [rejectFor, setRejectFor] = useState<ProfessionalRecord | null>(null);
   const [rejectNote, setRejectNote] = useState("");
   const [deleteFor, setDeleteFor] = useState<ProfessionalRecord | null>(null);
@@ -159,8 +169,14 @@ export default function AdminProfessionalsTab({ can, notify, reloadLogs }: Props
   }, [records, view, query, statusFilter]);
 
   const pendingCount = records.filter((record) => record.status === "pending").length;
+  const pendingProjectsCount = records.reduce(
+    (sum, record) =>
+      sum + record.projects.filter((project) => project.status === "pending").length,
+    0
+  );
   const newRequests = requests.filter((request) => request.status === "new").length;
   const reelsTarget = records.find((record) => record.id === reelsFor) ?? null;
+  const projectsTarget = records.find((record) => record.id === projectsFor) ?? null;
 
   const counts = useMemo(() => {
     const base: Record<string, number> = {};
@@ -238,6 +254,25 @@ export default function AdminProfessionalsTab({ can, notify, reloadLogs }: Props
     notify(record.featured ? "تم إلغاء التمييز" : "تم تمييز السجل");
   };
 
+  /** السماح للمهني بالنشر المباشر أو إلزامه بمراجعة الإدارة */
+  const togglePublishPolicy = (record: ProfessionalRecord) => {
+    const next = record.publishPolicy === "auto" ? "review" : "auto";
+    if (!setProfessionalPublishPolicy(record.id, next)) {
+      notify("تعذّر الحفظ — مساحة التخزين في المتصفح ممتلئة");
+      return;
+    }
+    log(
+      "professional.publishPolicy",
+      `${next === "auto" ? "تفعيل النشر المباشر لـ" : "إلزام المراجعة لـ"} ${record.companyAr || record.nameAr}`,
+      { id: record.id, policy: next }
+    );
+    notify(
+      next === "auto"
+        ? "تم تفعيل النشر المباشر — مشاريعه الجديدة تُنشر فوراً"
+        : "تم إلزامه بمراجعة الإدارة قبل نشر أي مشروع"
+    );
+  };
+
   const move = (record: ProfessionalRecord, direction: "up" | "down") => {
     moveProfessional(record.id, direction);
     log("professional.reorder", `تغيير ترتيب ${record.companyAr || record.nameAr}`, {
@@ -304,6 +339,44 @@ export default function AdminProfessionalsTab({ can, notify, reloadLogs }: Props
     notify("تم حذف الفيديو");
   };
 
+  const approveProject = (record: ProfessionalRecord, project: ProfessionalProject) => {
+    setProfessionalProjectStatus(record.id, project.id, "approved");
+    log(
+      "professional.project.approve",
+      `اعتماد مشروع «${project.titleAr}» لـ ${record.companyAr || record.nameAr}`,
+      { id: record.id, projectId: project.id }
+    );
+    notify(`تم اعتماد «${project.titleAr}» ونشره في صفحة المهني`);
+  };
+
+  const rejectProject = (record: ProfessionalRecord, project: ProfessionalProject) => {
+    setProfessionalProjectStatus(
+      record.id,
+      project.id,
+      "rejected",
+      projectRejectNote.trim() || undefined
+    );
+    log(
+      "professional.project.reject",
+      `رفض مشروع «${project.titleAr}» لـ ${record.companyAr || record.nameAr}`,
+      { id: record.id, projectId: project.id, note: projectRejectNote }
+    );
+    notify(`تم رفض «${project.titleAr}»`);
+    setProjectRejectId(null);
+    setProjectRejectNote("");
+  };
+
+  const deleteProject = (record: ProfessionalRecord, project: ProfessionalProject) => {
+    if (!window.confirm(`حذف «${project.titleAr}» نهائياً؟`)) return;
+    removeProfessionalProject(record.id, project.id);
+    log(
+      "professional.project.delete",
+      `حذف مشروع «${project.titleAr}» لـ ${record.companyAr || record.nameAr}`,
+      { id: record.id, projectId: project.id }
+    );
+    notify("تم حذف المشروع نهائياً");
+  };
+
   /* نُحدّث نسخة العرض بعد أي تعديل عبر السجل */
   const freshReelsTarget = records.find((record) => record.id === reelsFor) ?? null;
 
@@ -317,6 +390,11 @@ export default function AdminProfessionalsTab({ can, notify, reloadLogs }: Props
             <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-[11px] font-black text-amber-700">
               {pendingCount} قيد المراجعة
             </span>
+            {pendingProjectsCount > 0 && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-[11px] font-black text-rose-700">
+                {pendingProjectsCount} مشروع بانتظار الاعتماد
+              </span>
+            )}
             <span className="inline-flex items-center gap-1.5 rounded-full border border-ocean-900/10 bg-sand-50 px-3 py-1.5 text-[11px] font-black text-ocean-800">
               {newRequests} طلب تواصل جديد
             </span>
@@ -613,6 +691,20 @@ export default function AdminProfessionalsTab({ can, notify, reloadLogs }: Props
                         <button
                           type="button"
                           disabled={!canManage}
+                          onClick={() => togglePublishPolicy(record)}
+                          title="هل ينشر هذا المهني مشاريعه مباشرة أم بعد مراجعة الإدارة؟"
+                          className={`${ROW_ACTION} ${
+                            record.publishPolicy === "auto"
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                              : ""
+                          }`}
+                        >
+                          <UploadCloud className="h-3 w-3" />
+                          {record.publishPolicy === "auto" ? "نشر مباشر: مفعّل" : "نشر بعد مراجعة"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!canManage}
                           onClick={() => setDocsFor(record)}
                           className={ROW_ACTION}
                         >
@@ -631,6 +723,30 @@ export default function AdminProfessionalsTab({ can, notify, reloadLogs }: Props
                         >
                           <Film className="h-3 w-3" /> الفيديوهات
                         </button>
+                        {record.kind !== "lawyer" && (
+                          <button
+                            type="button"
+                            disabled={!canManage}
+                            onClick={() => {
+                              setProjectsFor(record.id);
+                              setProjectRejectId(null);
+                              setProjectRejectNote("");
+                            }}
+                            className={ROW_ACTION}
+                          >
+                            <Briefcase className="h-3 w-3" /> المشاريع
+                            {record.projects.filter((project) => project.status === "pending")
+                              .length > 0 && (
+                              <span className="rounded-full bg-rose-500 px-1.5 text-[9px] font-black text-white">
+                                {
+                                  record.projects.filter(
+                                    (project) => project.status === "pending"
+                                  ).length
+                                }
+                              </span>
+                            )}
+                          </button>
+                        )}
                         <button
                           type="button"
                           disabled={!canManage}
@@ -913,6 +1029,150 @@ export default function AdminProfessionalsTab({ can, notify, reloadLogs }: Props
                 ))}
               </ul>
             </div>
+          )}
+        </Modal>
+      )}
+
+      {/* ===================== المشاريع والعروض ===================== */}
+      {projectsTarget && (
+        <Modal
+          title={`مشاريع وعروض ${projectsTarget.companyAr || projectsTarget.nameAr}`}
+          onClose={() => {
+            setProjectsFor(null);
+            setProjectRejectId(null);
+            setProjectRejectNote("");
+          }}
+        >
+          <p className="rounded-xl border border-sand-200 bg-sand-50/70 px-3 py-2 text-[10.5px] font-semibold leading-5 text-sand-600">
+            كل مشروع ينشره المهني يبقى «قيد المراجعة» حتى تعتمده هنا. الاعتماد مستقل عن
+            اعتماد الملف نفسه، والتعديل من المهني يعيد المشروع للمراجعة.
+          </p>
+
+          {projectsTarget.projects.length === 0 ? (
+            <p className="mt-3 rounded-xl border border-dashed border-sand-300 bg-sand-50/60 p-4 text-center text-[11.5px] font-bold text-sand-500">
+              لم يضف هذا المهني أي مشاريع أو عروض بعد.
+            </p>
+          ) : (
+            <ul className="mt-3 space-y-2.5">
+              {[...projectsTarget.projects]
+                .sort((a, b) => a.order - b.order)
+                .map((project) => {
+                  const meta = PROJECT_STATUS_META[project.status];
+                  return (
+                    <li
+                      key={project.id}
+                      className="rounded-2xl border border-sand-200 bg-white p-3.5"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <p className="text-[12.5px] font-black text-ocean-900">
+                              {project.titleAr}
+                            </p>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[9px] font-extrabold ${meta.className}`}
+                            >
+                              {meta.labelAr}
+                            </span>
+                          </div>
+                          <p className="mt-0.5 text-[10px] font-semibold text-sand-500">
+                            {project.cityAr || "—"}
+                            {project.typeAr ? ` · ${project.typeAr}` : ""}
+                            {project.priceFrom ? ` · يبدأ من ${project.priceFrom}` : ""}
+                          </p>
+                          {project.descriptionAr && (
+                            <p className="mt-1.5 line-clamp-2 text-[10.5px] leading-5 text-sand-700">
+                              {project.descriptionAr}
+                            </p>
+                          )}
+                          {project.reviewNote && (
+                            <p className="mt-1.5 rounded-lg bg-rose-50 px-2 py-1 text-[10px] font-bold text-rose-700">
+                              ملاحظة الرفض: {project.reviewNote}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <a
+                            href={`/projects/${project.id}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className={ROW_ACTION}
+                            title="معاينة صفحة المشروع"
+                          >
+                            <ExternalLink className="h-3 w-3" /> معاينة
+                          </a>
+                          {project.status !== "approved" && (
+                            <button
+                              type="button"
+                              disabled={!canManage}
+                              onClick={() => approveProject(projectsTarget, project)}
+                              className={`${ROW_ACTION} border-emerald-200 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-50`}
+                            >
+                              <Check className="h-3 w-3" /> اعتماد
+                            </button>
+                          )}
+                          {project.status !== "rejected" && (
+                            <button
+                              type="button"
+                              disabled={!canManage}
+                              onClick={() => {
+                                setProjectRejectId(project.id);
+                                setProjectRejectNote("");
+                              }}
+                              className={`${ROW_ACTION} border-rose-200 text-rose-600 hover:border-rose-300 hover:bg-rose-50`}
+                            >
+                              <X className="h-3 w-3" /> رفض
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            disabled={!canManage}
+                            onClick={() => deleteProject(projectsTarget, project)}
+                            className={`${ROW_ACTION} text-rose-600 hover:border-rose-300 hover:bg-rose-50`}
+                            aria-label="حذف المشروع"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {projectRejectId === project.id && (
+                        <div className="mt-2.5 rounded-xl border border-rose-200 bg-rose-50/60 p-2.5">
+                          <Field label="سبب الرفض (يظهر للمهني)">
+                            <textarea
+                              value={projectRejectNote}
+                              onChange={(event) => setProjectRejectNote(event.target.value)}
+                              rows={2}
+                              className={INPUT}
+                            />
+                          </Field>
+                          <div className="mt-2 flex gap-1.5">
+                            <button
+                              type="button"
+                              disabled={!canManage}
+                              onClick={() => rejectProject(projectsTarget, project)}
+                              className={`${ROW_ACTION} border-rose-300 text-rose-700 hover:bg-rose-100`}
+                            >
+                              تأكيد الرفض
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setProjectRejectId(null);
+                                setProjectRejectNote("");
+                              }}
+                              className={ROW_ACTION}
+                            >
+                              إلغاء
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+            </ul>
           )}
         </Modal>
       )}

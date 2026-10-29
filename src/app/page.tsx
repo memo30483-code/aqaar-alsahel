@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -25,7 +25,8 @@ import PropertyCard from "@/components/PropertyCard";
 import { FeaturedAdSlot } from "@/components/FeaturedAds";
 import MarqueeStrip from "@/components/MarqueeStrip";
 import AdSlider from "@/components/AdSlider";
-import { AdBand, ProjectsSlider } from "@/components/ProjectsSlider";
+import { AdBand } from "@/components/ProjectsSlider";
+import FeaturedProjects from "@/components/projects/FeaturedProjects";
 import { OPEN_AI_EVENT } from "@/components/AssistantWidget";
 import {
   filterProperties,
@@ -50,7 +51,13 @@ import {
   type HomeBlockType,
 } from "@/lib/home-builder-store";
 import HomeCustomBlock from "@/components/home/HomeCustomBlock";
-import { filterPublishedProperties } from "@/lib/public-listings";
+import RamadanDecorations from "@/components/RamadanDecorations";
+import { useSeasonTheme } from "@/components/ThemeProvider";
+import {
+  LISTING_OVERRIDE_KEY,
+  getApprovedListingIds,
+  getDefaultApprovedIds,
+} from "@/lib/admin-system";
 
 type SortKey = "newest" | "priceDesc" | "priceAsc";
 
@@ -83,6 +90,7 @@ const HERO_FALLBACK =
 
 export default function HomePage() {
   const { t, locale } = useI18n();
+  const seasonTheme = useSeasonTheme();
   const { formatWithSymbol } = useCurrency();
   const cityOptions = useCityOptions();
   const [search, setSearch] = useState("");
@@ -127,26 +135,47 @@ export default function HomePage() {
     return value?.trim() ? value : undefined;
   };
 
-  useEffect(() => {
+  /* القائمة الأولية = الحالة الافتراضية، وهي نفس ما يرسمه السيرفر — فلا اختلاف ترطيب */
+  const [approvedIds, setApprovedIds] = useState<string[]>(() => getDefaultApprovedIds());
+
+  const syncListings = useCallback(() => {
     try {
       const stored = localStorage.getItem(USER_PROPERTIES_KEY);
       const parsed = stored ? JSON.parse(stored) : [];
-      if (Array.isArray(parsed)) setUserProperties(parsed);
+      setUserProperties(Array.isArray(parsed) ? parsed : []);
     } catch {
       setUserProperties([]);
     }
+    /* بعد التحميل نستخدم الحالة الحقيقية (بما فيها تعديلات الإدارة) */
+    setApprovedIds(getApprovedListingIds());
   }, []);
 
-  const allProperties = useMemo(
-    () =>
-      /* لا يظهر للزوار إلا ما وافقت عليه إدارة المنصة */
-      filterPublishedProperties([...userProperties, ...mockProperties]).map((property) => ({
+  useEffect(() => {
+    syncListings();
+    const onStorage = (event: StorageEvent) => {
+      if (
+        event.key === null ||
+        event.key === USER_PROPERTIES_KEY ||
+        event.key === LISTING_OVERRIDE_KEY
+      ) {
+        syncListings();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [syncListings]);
+
+  const allProperties = useMemo(() => {
+    /* لا يظهر للزوار إلا ما وافقت عليه إدارة المنصة */
+    const approved = new Set(approvedIds);
+    return [...userProperties, ...mockProperties]
+      .filter((property) => approved.has(property.id))
+      .map((property) => ({
         ...property,
         /* بيانات التواصل للمالك لا تُمرَّر لواجهة العرض — التواصل عبر إدارة الموقع */
         whatsapp: "",
-      })),
-    [userProperties]
-  );
+      }));
+  }, [userProperties, approvedIds]);
 
   const selectedCity: CityOption = useMemo(
     () =>
@@ -302,7 +331,7 @@ export default function HomePage() {
         <div className="absolute inset-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={content("hero")?.imageUrl || HERO_IMAGE}
+            src={content("hero")?.imageUrl || seasonTheme.heroImage || HERO_IMAGE}
             alt={t("home.hero.imageAlt")}
             className="h-full w-full object-cover object-[center_42%]"
             onError={(event) => {
@@ -311,22 +340,43 @@ export default function HomePage() {
           />
           <span
             aria-hidden
-            className="absolute inset-0 bg-[linear-gradient(270deg,rgba(20,26,51,0.92)_0%,rgba(20,26,51,0.72)_34%,rgba(20,26,51,0.28)_62%,rgba(20,26,51,0.06)_100%),linear-gradient(0deg,rgba(20,26,51,0.82)_0%,rgba(20,26,51,0)_45%)]"
+            className={`absolute inset-0 ${
+              seasonTheme.active
+                ? seasonTheme.preset === "ramadan"
+                  ? "ramadan-home-overlay"
+                  : "theme-hero-overlay"
+                : "bg-[linear-gradient(270deg,rgba(20,26,51,0.92)_0%,rgba(20,26,51,0.72)_34%,rgba(20,26,51,0.28)_62%,rgba(20,26,51,0.06)_100%),linear-gradient(0deg,rgba(20,26,51,0.82)_0%,rgba(20,26,51,0)_45%)]"
+            }`}
           />
         </div>
+        {seasonTheme.active && seasonTheme.preset === "ramadan" && (
+          <RamadanDecorations theme={seasonTheme} />
+        )}
 
         <div className="relative z-10 mx-auto w-full max-w-[1240px] px-4 pb-28 pt-12 sm:px-6 lg:pb-32 lg:pt-16">
           <div className="max-w-[680px] text-white">
-            <p className="flex items-center gap-2.5 text-xs font-bold tracking-wide text-gold-200">
-              <span aria-hidden className="h-px w-8 bg-gold-400" />
-              {text("hero", "eyebrow") ?? t("home.hero.eyebrow")}
-            </p>
+            {/* في رمضان يصبح نص الحملة عنوان الهيرو نفسه — فلا نكرّره في سطر صغير فوقه */}
+            {!(seasonTheme.active && seasonTheme.preset === "ramadan") && (
+              <p className="flex items-center gap-2.5 text-xs font-bold tracking-wide text-gold-200">
+                <span aria-hidden className="h-px w-8 bg-gold-400" />
+                {text("hero", "eyebrow") ?? t("home.hero.eyebrow")}
+              </p>
+            )}
 
             <h1 className="mt-4 text-4xl font-black leading-[1.24] tracking-tight sm:text-5xl lg:text-[56px]">
-              <span className="relative whitespace-nowrap text-gold-300">
-                {text("hero", "title") ?? t("home.hero.titleGold")}
+              <span
+                className={`relative text-gold-300 ${
+                  /* عنوان رمضان أطول من عنوان العلامة — يُسمح بالتفاف السطر على الموبايل */
+                  seasonTheme.active && seasonTheme.preset === "ramadan"
+                    ? ""
+                    : "whitespace-nowrap"
+                }`}
+              >
+                {seasonTheme.active && seasonTheme.preset === "ramadan"
+                  ? seasonTheme.campaignText || "رمضان احلى مع عقار FAMILY"
+                  : text("hero", "title") ?? t("home.hero.titleGold")}
               </span>
-              {!text("hero", "title") && (
+              {!text("hero", "title") && !(seasonTheme.active && seasonTheme.preset === "ramadan") && (
                 <>
                   <br />
                   {t("home.hero.titleRest")}
@@ -335,7 +385,9 @@ export default function HomePage() {
             </h1>
 
             <p className="mt-4 max-w-[600px] text-sm font-medium leading-8 text-[#e8ecf6] sm:text-base">
-              {text("hero", "subtitle") ?? t("home.hero.description")}
+              {seasonTheme.active && seasonTheme.preset === "ramadan"
+                ? "ابحث عن بيتك القادم في رأس البر ودمياط، وسط ليالي رمضان المصرية"
+                : text("hero", "subtitle") ?? t("home.hero.description")}
             </p>
 
             <div className="mt-7 grid grid-cols-2 gap-y-5 sm:flex sm:flex-wrap sm:items-stretch">
@@ -832,7 +884,7 @@ export default function HomePage() {
       {showBlock("projects_slider") && (
       <div key="projects_slider" style={{ order: orderOf("projects_slider") }} className="w-full">
       {/* ====================== PROJECTS ====================== */}
-      <ProjectsSlider />
+      <FeaturedProjects />
       </div>
       )}
 

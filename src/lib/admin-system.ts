@@ -1,10 +1,11 @@
-﻿/**
+/**
  * نظام إدارة شامل للموقع - عقار FAMILY
  * يدعم الصلاحيات المخصصة، إعدادات الموقع، العروض، البانرات، وسجل النشاطات
  */
 
 import type { Property, PropertyDocument } from "@/types/property";
 import type { UserRole } from "@/lib/session";
+import { DEFAULT_THEME } from "@/lib/theme-season";
 import { mockProperties, USER_PROPERTIES_KEY } from "@/data/properties";
 
 export type ListingStatus = "pending" | "approved" | "rejected" | "archived" | "deleted";
@@ -39,7 +40,10 @@ export interface Permission {
 
 export interface AdminPermissionSet {
   adminId: string;
+  /** صلاحيات ممنوحة صراحةً فوق صلاحيات الدور */
   permissions: string[];
+  /** صلاحيات مسحوبة صراحةً من صلاحيات الدور */
+  revoked?: string[];
   updatedAt: string;
   updatedBy: string;
 }
@@ -123,6 +127,7 @@ export interface SiteSettings {
   whatsapp?: string;
   footerTextAr?: string;
   footerTextEn?: string;
+  seasonTheme?: import("@/lib/theme-season").SeasonThemeCfg;
 }
 
 export interface Offer {
@@ -250,7 +255,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     "site.blocks", "site.settings", "site.contact",
     "banners.manage",
     "professionals.view", "professionals.manage",
-    "logs.view"
+    "logs.view",
+    /* الأدمن يملك التحكم الكامل في الإعدادات افتراضياً (كان يُمنح عبر تجاوز الدور) */
+    "settings.full",
   ],
   moderator: [
     "listings.view", "listings.approve", "listings.reject", "listings.edit", 
@@ -276,6 +283,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   ],
   managementPhone: "+20 100 123 4567",
   managementEmail: "info@aqarfamily.com",
+  seasonTheme: { preset: "custom", active: false, gold: DEFAULT_THEME.gold, sand: DEFAULT_THEME.sand, ocean: DEFAULT_THEME.ocean, heroGradient: DEFAULT_THEME.heroGradient, accent: DEFAULT_THEME.accent },
 };
 
 export const DEFAULT_OFFERS_SETTINGS: OffersSettings = {
@@ -316,29 +324,46 @@ function readJson<T>(key: string, fallback: T): T {
   }
 }
 
-function writeJson(key: string, value: unknown): void {
-  if (typeof window === "undefined") return;
+function writeJson(key: string, value: unknown): boolean {
+  if (typeof window === "undefined") return false;
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
-  } catch {}
+    return true;
+  } catch {
+    /* مساحة ممتلئة أو وضع خاص — نُرجع الفشل ليعرضه المُنادي */
+    return false;
+  }
 }
 
 function generateId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
-export function getAdminPermissions(adminId: string): string[] {
+function getPermissionEntry(adminId: string): AdminPermissionSet | null {
   const all = readJson<AdminPermissionSet[]>(PERMISSIONS_KEY, []);
-  const found = all.find(p => p.adminId === adminId);
-  return found ? found.permissions : [];
+  return all.find((entry) => entry.adminId === adminId) ?? null;
 }
 
-export function saveAdminPermissions(adminId: string, permissions: string[], updatedBy: string): void {
+export function getAdminPermissions(adminId: string): string[] {
+  return getPermissionEntry(adminId)?.permissions ?? [];
+}
+
+export function getRevokedPermissions(adminId: string): string[] {
+  return getPermissionEntry(adminId)?.revoked ?? [];
+}
+
+export function saveAdminPermissions(
+  adminId: string,
+  permissions: string[],
+  updatedBy: string,
+  revoked: string[] = []
+): boolean {
   const all = readJson<AdminPermissionSet[]>(PERMISSIONS_KEY, []);
-  const existing = all.findIndex(p => p.adminId === adminId);
+  const existing = all.findIndex((entry) => entry.adminId === adminId);
   const entry: AdminPermissionSet = {
     adminId,
     permissions,
+    revoked,
     updatedAt: new Date().toISOString(),
     updatedBy,
   };
@@ -347,7 +372,7 @@ export function saveAdminPermissions(adminId: string, permissions: string[], upd
   } else {
     all.push(entry);
   }
-  writeJson(PERMISSIONS_KEY, all);
+  return writeJson(PERMISSIONS_KEY, all);
 }
 
 export function hasPermission(
@@ -356,19 +381,33 @@ export function hasPermission(
   permissionKey: string
 ): boolean {
   if (!userRole) return false;
-  if (userRole === "super_admin" || userRole === "admin") return true;
-  const custom = userId ? getAdminPermissions(userId) : [];
-  if (custom.includes(permissionKey) || custom.includes("settings.full")) return true;
+  /* المدير العام فقط يملك كل شيء دائماً — بقية الأدوار تخضع للتخصيص */
+  if (userRole === "super_admin") return true;
+
+  const entry = userId ? getPermissionEntry(userId) : null;
+  /* السحب الصريح يتقدّم على صلاحيات الدور */
+  if (entry?.revoked?.includes(permissionKey)) return false;
+  if (
+    entry?.permissions?.includes(permissionKey) ||
+    entry?.permissions?.includes("settings.full")
+  ) {
+    return true;
+  }
+
   const defaults = DEFAULT_ROLE_PERMISSIONS[userRole] || [];
   return defaults.includes(permissionKey);
 }
 
 export function getEffectivePermissions(userRole: UserRole | undefined, userId: string | undefined): string[] {
   if (!userRole) return [];
-  if (userRole === "super_admin" || userRole === "admin") return ALL_PERMISSIONS.map(p => p.key);
-  const custom = userId ? getAdminPermissions(userId) : [];
+  if (userRole === "super_admin") return ALL_PERMISSIONS.map(p => p.key);
+  const entry = userId ? getPermissionEntry(userId) : null;
   const defaults = DEFAULT_ROLE_PERMISSIONS[userRole] || [];
-  return Array.from(new Set([...defaults, ...custom]));
+  const granted = entry?.permissions ?? [];
+  const revoked = new Set(entry?.revoked ?? []);
+  return Array.from(new Set([...defaults, ...granted])).filter(
+    (key) => !revoked.has(key)
+  );
 }
 
 export function addAdminLog(log: Omit<AdminLog, "id" | "timestamp">): void {
@@ -401,8 +440,8 @@ export function getSiteSettings(): SiteSettings {
   return { ...DEFAULT_SITE_SETTINGS, ...stored, blocks };
 }
 
-export function saveSiteSettings(settings: SiteSettings): void {
-  writeJson(SITE_SETTINGS_KEY, settings);
+export function saveSiteSettings(settings: SiteSettings): boolean {
+  return writeJson(SITE_SETTINGS_KEY, settings);
 }
 
 /** هل بلوك الصفحة الرئيسية مفعّل؟ (افتراضياً مفعّل لو مفيش إعدادات) */
@@ -429,16 +468,16 @@ export function getOffersSettings(): OffersSettings {
   return { ...DEFAULT_OFFERS_SETTINGS, ...stored };
 }
 
-export function saveOffersSettings(settings: OffersSettings): void {
-  writeJson(OFFERS_SETTINGS_KEY, settings);
+export function saveOffersSettings(settings: OffersSettings): boolean {
+  return writeJson(OFFERS_SETTINGS_KEY, settings);
 }
 
 export function getOffers(): Offer[] {
   return readJson<Offer[]>(OFFERS_KEY, []);
 }
 
-export function saveOffers(offers: Offer[]): void {
-  writeJson(OFFERS_KEY, offers);
+export function saveOffers(offers: Offer[]): boolean {
+  return writeJson(OFFERS_KEY, offers);
 }
 
 export function addOffer(offer: Omit<Offer, "id" | "createdAt" | "updatedAt">): Offer {
@@ -522,12 +561,22 @@ export function getActiveOffers(): Offer[] {
 }
 
 export function getMarqueeItems(): MarqueeItem[] {
-  const stored = readJson<MarqueeItem[]>(MARQUEE_KEY, DEFAULT_MARQUEE);
-  return stored.length > 0 ? stored : DEFAULT_MARQUEE;
+  /* غياب المفتاح = لم يُضبط بعد فنستخدم الافتراضي.
+     وجود مصفوفة فارغة = الأدمن حذف كل العناصر، ويجب احترام ذلك. */
+  if (typeof window === "undefined") return DEFAULT_MARQUEE;
+  const raw = window.localStorage.getItem(MARQUEE_KEY);
+  if (raw === null) return DEFAULT_MARQUEE;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed as MarqueeItem[];
+  } catch {
+    /* بيانات تالفة — نعود للافتراضي */
+  }
+  return DEFAULT_MARQUEE;
 }
 
-export function saveMarqueeItems(items: MarqueeItem[]): void {
-  writeJson(MARQUEE_KEY, items);
+export function saveMarqueeItems(items: MarqueeItem[]): boolean {
+  return writeJson(MARQUEE_KEY, items);
 }
 
 export function addListingAction(action: Omit<ListingAction, "id" | "timestamp">): void {
@@ -555,6 +604,10 @@ interface ListingOverride {
   featuredByAdmin?: boolean;
   assignedTo?: string;
   assignedToName?: string;
+  /** الإعلان الذي حلّ محلّ هذا الإعلان بعد الاستبدال */
+  replacedBy?: string;
+  /** سبب الاستبدال كما كتبه الأدمن */
+  replacementNote?: string;
 }
 
 const DEMO_PENDING = ["do-2", "mn-1", "gm-1"];
@@ -600,6 +653,8 @@ export function getListings(): AdminListing[] {
       approvedBy: latestApproval?.performedByName,
       approvedAt: latestApproval?.timestamp,
       featuredByAdmin: override?.featuredByAdmin || false,
+      replacedBy: override?.replacedBy,
+      replacementNote: override?.replacementNote,
       reference: property.reference,
       submittedAt: property.submittedAt,
       documents: property.documents,
@@ -619,9 +674,19 @@ export function getApprovedListingIds(): string[] {
     .map((listing) => listing.id);
 }
 
-export function saveListingOverride(id: string, patch: ListingOverride): void {
+/**
+ * نفس القائمة لكن بالاعتماد على الحالة الافتراضية وحدها (بلا تعديلات محفوظة).
+ * تُستخدم في الرسم الأول على السيرفر حتى يتطابق HTML مع العميل قبل الترطيب.
+ */
+export function getDefaultApprovedIds(): string[] {
+  return mockProperties
+    .filter((property) => defaultStatus(property.id) === "approved")
+    .map((property) => property.id);
+}
+
+export function saveListingOverride(id: string, patch: ListingOverride): boolean {
   const overrides = getOverrides();
-  writeJson(LISTING_OVERRIDE_KEY, {
+  return writeJson(LISTING_OVERRIDE_KEY, {
     ...overrides,
     [id]: { ...overrides[id], ...patch },
   });
@@ -638,8 +703,8 @@ export function getUsers(): AdminUser[] {
   return stored.length > 0 ? stored : SEED_USERS;
 }
 
-export function saveUsers(users: AdminUser[]): void {
-  writeJson(ADMIN_USERS_KEY, users);
+export function saveUsers(users: AdminUser[]): boolean {
+  return writeJson(ADMIN_USERS_KEY, users);
 }
 
 const SEED_DEVELOPERS: AdminDeveloper[] = [
@@ -652,6 +717,6 @@ export function getDevelopers(): AdminDeveloper[] {
   return stored.length > 0 ? stored : SEED_DEVELOPERS;
 }
 
-export function saveDevelopers(developers: AdminDeveloper[]): void {
-  writeJson(ADMIN_DEVELOPERS_KEY, developers);
+export function saveDevelopers(developers: AdminDeveloper[]): boolean {
+  return writeJson(ADMIN_DEVELOPERS_KEY, developers);
 }

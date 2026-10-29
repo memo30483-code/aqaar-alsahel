@@ -49,8 +49,11 @@ export default function AdminUsersTab({
   const [draft, setDraft] = useState<Partial<AdminUser> | null>(null);
 
   const apply = (next: AdminUser[], details: string) => {
+    if (!saveUsers(next)) {
+      notify("تعذّر الحفظ — مساحة التخزين في المتصفح ممتلئة");
+      return;
+    }
     onChange(next);
-    saveUsers(next);
     if (session) {
       addAdminLog({
         action: "users.update",
@@ -70,18 +73,44 @@ export default function AdminUsersTab({
       notify("الاسم والبريد مطلوبان");
       return;
     }
+    const email = draft.email.trim();
+    if (
+      users.some(
+        (user) =>
+          user.email.trim().toLowerCase() === email.toLowerCase() &&
+          user.id !== draft.id
+      )
+    ) {
+      notify("هذا البريد مستخدم بالفعل لحساب آخر");
+      return;
+    }
+    /* تعديل الدور نفسه يحتاج صلاحية «تحديد الأدوار يدوياً» */
+    const current = draft.id ? users.find((user) => user.id === draft.id) : null;
+    const wantsRoleChange = current
+      ? Boolean(draft.role) && draft.role !== current.role
+      : Boolean(draft.role);
+    const role = editableRoles
+      ? ((draft.role as UserRole) ?? current?.role ?? "moderator")
+      : (current?.role ?? "moderator");
+
     if (draft.id) {
       apply(
-        users.map((user) => (user.id === draft.id ? { ...user, ...draft } as AdminUser : user)),
+        users.map((user) =>
+          user.id === draft.id ? ({ ...user, ...draft, email, role } as AdminUser) : user
+        ),
         `تعديل بيانات المستخدم: ${draft.name}`
       );
     } else {
+      if (wantsRoleChange && !editableRoles) {
+        notify("إسناد الأدوار يحتاج صلاحية «تحديد الأدوار يدويًا»");
+        return;
+      }
       const newUser: AdminUser = {
         id: `u-${Date.now()}`,
         name: draft.name,
-        email: draft.email,
+        email,
         phone: draft.phone ?? "",
-        role: (draft.role as UserRole) ?? "moderator",
+        role,
         active: true,
         joinedAt: new Date().toISOString().slice(0, 10),
       };
@@ -236,6 +265,7 @@ export default function AdminUsersTab({
                   value={draft.role ?? "moderator"}
                   onChange={(event) => setDraft({ ...draft, role: event.target.value as UserRole })}
                   className={INPUT}
+                  disabled={!editableRoles}
                 >
                   {Object.entries(ROLE_LABEL).map(([value, label]) => (
                     <option key={value} value={value}>

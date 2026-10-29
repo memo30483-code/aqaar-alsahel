@@ -8,6 +8,7 @@ import {
   DEFAULT_ROLE_PERMISSIONS,
   addAdminLog,
   getAdminPermissions,
+  getRevokedPermissions,
   saveAdminPermissions,
   type AdminUser,
 } from "@/lib/admin-system";
@@ -20,6 +21,13 @@ interface Props {
   onSelect: (userId: string) => void;
   notify: (message: string) => void;
   reloadLogs: () => void;
+  /** إشعار الأب بتغيّر الصلاحيات حتى يُحدّث التبويبات والعدّادات */
+  onPermissionsChange?: () => void;
+}
+
+interface PermissionDraft {
+  granted: string[];
+  revoked: string[];
 }
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -40,6 +48,7 @@ export default function AdminPermissionsTab({
   onSelect,
   notify,
   reloadLogs,
+  onPermissionsChange,
 }: Props) {
   const session = typeof window !== "undefined" ? getSession() : null;
   const editable = can("users.roles");
@@ -47,22 +56,44 @@ export default function AdminPermissionsTab({
   const activeId = selectedUserId ?? manageable[0]?.id ?? null;
   const activeUser = users.find((user) => user.id === activeId) ?? null;
 
-  const [draft, setDraft] = useState<Record<string, string[]>>({});
+  const [draft, setDraft] = useState<Record<string, PermissionDraft>>({});
 
-  const permissions = useMemo(() => {
-    if (!activeId) return [];
+  /** المخصصات المحفوظة: ممنوح صراحةً ومسحوب صراحةً (وليس القائمة النهائية) */
+  const current: PermissionDraft = useMemo(() => {
+    if (!activeId) return { granted: [], revoked: [] };
     if (draft[activeId]) return draft[activeId];
-    const custom = getAdminPermissions(activeId);
-    const roleDefaults = activeUser ? DEFAULT_ROLE_PERMISSIONS[activeUser.role] ?? [] : [];
-    return Array.from(new Set([...roleDefaults, ...custom]));
-  }, [activeId, draft, activeUser]);
+    return {
+      granted: getAdminPermissions(activeId),
+      revoked: getRevokedPermissions(activeId),
+    };
+  }, [activeId, draft]);
+
+  /** القائمة الفعلية = صلاحيات الدور + الممنوح − المسحوب */
+  const effective = useMemo(() => {
+    if (!activeId || !activeUser) return [];
+    const defaults = DEFAULT_ROLE_PERMISSIONS[activeUser.role] ?? [];
+    const revoked = new Set(current.revoked);
+    return Array.from(new Set([...defaults, ...current.granted])).filter(
+      (key) => !revoked.has(key)
+    );
+  }, [activeId, activeUser, current]);
 
   const toggle = (key: string) => {
     if (!activeId) return;
-    const next = permissions.includes(key)
-      ? permissions.filter((item) => item !== key)
-      : [...permissions, key];
-    setDraft((current) => ({ ...current, [activeId]: next }));
+    const granted = new Set(current.granted);
+    const revoked = new Set(current.revoked);
+    if (effective.includes(key)) {
+      /* السحب يُسجّل صراحةً حتى لا تعيده صلاحيات الدور */
+      revoked.add(key);
+      granted.delete(key);
+    } else {
+      granted.add(key);
+      revoked.delete(key);
+    }
+    setDraft((state) => ({
+      ...state,
+      [activeId]: { granted: Array.from(granted), revoked: Array.from(revoked) },
+    }));
   };
 
   const grouped = useMemo(() => {
@@ -77,32 +108,33 @@ export default function AdminPermissionsTab({
 
   const save = () => {
     if (!activeId || !session) return;
-    saveAdminPermissions(activeId, permissions, session.email);
+    if (!saveAdminPermissions(activeId, current.granted, session.email, current.revoked)) {
+      notify("تعذّر حفظ الصلاحيات — مساحة التخزين في المتصفح ممتلئة");
+      return;
+    }
     addAdminLog({
       action: "permissions.update",
       category: "users",
       performedBy: session.email,
       performedByName: session.name,
       performedByRole: session.role ?? "admin",
-      details: `تحديث صلاحيات ${activeUser?.name ?? activeId} (${permissions.length} صلاحية)`,
+      details: `تحديث صلاحيات ${activeUser?.name ?? activeId} (${effective.length} صلاحية فعّالة)`,
     });
     reloadLogs();
+    onPermissionsChange?.();
     notify("تم حفظ الصلاحيات المخصصة");
   };
 
   const resetToRole = () => {
     if (!activeId || !activeUser) return;
-    setDraft((current) => ({
-      ...current,
-      [activeId]: DEFAULT_ROLE_PERMISSIONS[activeUser.role] ?? [],
-    }));
+    setDraft((state) => ({ ...state, [activeId]: { granted: [], revoked: [] } }));
     notify("تمت استعادة صلاحيات الدور الافتراضية (لم تُحفظ بعد)");
   };
 
   return (
     <Panel
       title="الصلاحيات المخصصة"
-      desc="حدد يدوياً ما يستطيع كل أدمن فعله — الصلاحيات الممنوحة هنا تُضاف فوق صلاحيات دوره."
+      desc="حدد يدوياً ما يستطيع كل أدمن فعله — يمكنك منح صلاحية إضافية أو سحب صلاحية من صلاحيات دوره."
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <button onClick={resetToRole} className="inline-flex items-center gap-1 rounded-full border border-sand-200 px-3 py-2 text-xs font-bold text-sand-700">
@@ -142,7 +174,8 @@ export default function AdminPermissionsTab({
           <div className="flex items-center gap-2 rounded-2xl bg-[rgba(201,146,42,0.08)] p-3 text-xs text-[#8a6d2f]">
             <ShieldCheck className="h-4 w-4" />
             <span>
-              صلاحيات {activeUser.name} — {permissions.length} من {ALL_PERMISSIONS.length} صلاحية
+              صلاحيات {activeUser.name} — {effective.length} من {ALL_PERMISSIONS.length} صلاحية فعّالة
+              {current.revoked.length > 0 && ` (${current.revoked.length} مسحوبة يدوياً)`}
             </span>
           </div>
           {grouped.map(([category, items]) => (
@@ -152,7 +185,7 @@ export default function AdminPermissionsTab({
               </h4>
               <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                 {items.map((permission) => {
-                  const checked = permissions.includes(permission.key);
+                  const checked = effective.includes(permission.key);
                   return (
                     <button
                       key={permission.id}

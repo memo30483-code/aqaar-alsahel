@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -63,6 +63,7 @@ export function ProjectsSlider() {
   const { t } = useI18n();
   const { formatWithSymbol } = useCurrency();
   const trackRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const scrollCards = (direction: 1 | -1) => {
     const node = trackRef.current;
@@ -72,6 +73,30 @@ export function ProjectsSlider() {
       left: direction * node.clientWidth * 0.9 * (rtl ? -1 : 1),
       behavior: "smooth",
     });
+  };
+
+  /** الخطوة بين بطاقة وأخرى — تُشتق من مدى التمرير الفعلي */
+  const stepOf = (node: HTMLDivElement) =>
+    PROJECTS.length > 1 ? (node.scrollWidth - node.clientWidth) / (PROJECTS.length - 1) : 0;
+
+  const handleScroll = () => {
+    const node = trackRef.current;
+    if (!node) return;
+    const step = stepOf(node);
+    if (step <= 0) {
+      setActiveIndex(0);
+      return;
+    }
+    const position = Math.abs(node.scrollLeft);
+    setActiveIndex(Math.max(0, Math.min(PROJECTS.length - 1, Math.round(position / step))));
+  };
+
+  const goToCard = (index: number) => {
+    const node = trackRef.current;
+    if (!node) return;
+    const step = stepOf(node);
+    const rtl = getComputedStyle(node).direction === "rtl";
+    node.scrollTo({ left: (rtl ? -1 : 1) * step * index, behavior: "smooth" });
   };
 
   return (
@@ -116,6 +141,7 @@ export function ProjectsSlider() {
 
         <div
           ref={trackRef}
+          onScroll={handleScroll}
           className="mt-6 flex snap-x snap-mandatory gap-5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {PROJECTS.map((project) => (
@@ -183,11 +209,15 @@ export function ProjectsSlider() {
         </div>
 
         <div className="mt-4 flex items-center justify-center gap-1.5">
-          {[0, 1, 2, 3].map((dot) => (
-            <span
-              key={dot}
-              className={`block h-1 rounded-full ${
-                dot === 0 ? "w-8 bg-ocean-800" : "w-5 bg-sand-300"
+          {PROJECTS.map((project, index) => (
+            <button
+              key={project.name}
+              type="button"
+              onClick={() => goToCard(index)}
+              aria-label={`${t("home.projects.title")} — ${project.name}`}
+              aria-current={index === activeIndex}
+              className={`block h-1 rounded-full transition-all ${
+                index === activeIndex ? "w-8 bg-ocean-800" : "w-5 bg-sand-300 hover:bg-sand-400"
               }`}
             />
           ))}

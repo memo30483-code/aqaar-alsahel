@@ -449,7 +449,13 @@ export function filterProperties(
 
   return properties.filter((p) => {
     if (filters.city && p.city !== filters.city) return false;
-    if (p.price < filters.priceMin || p.price > filters.priceMax) return false;
+    /* الإعلانات التي يحدد سعرها فريق المنصة (سعرها 0) لا تخضع لفلتر السعر */
+    if (
+      !p.priceByAdmin &&
+      (p.price < filters.priceMin || p.price > filters.priceMax)
+    ) {
+      return false;
+    }
 
     if (filters.rooms === "4+") {
       if (p.rooms < 4) return false;

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
@@ -8,7 +8,6 @@ import {
   Briefcase,
   Building2,
   Check,
-  ExternalLink,
   FileCheck2,
   Film,
   Lock,
@@ -20,14 +19,14 @@ import {
   X,
 } from "lucide-react";
 import { useI18n, type MessageKey } from "@/lib/i18n";
-import { toEmbedUrl } from "@/lib/embed";
 import { cityLabel } from "@/lib/i18n/cities";
+import { isValidEgyptPhone } from "@/lib/phone";
 import {
   addProfessionalRequest,
+  PROFESSIONAL_KIND_META,
   usePublicProfessionals,
   type ProfessionalKind,
   type ProfessionalRecord,
-  type ProfessionalReel,
 } from "@/lib/professionals-store";
 
 interface Props {
@@ -86,7 +85,6 @@ export default function ProfessionalDirectory({ kind }: Props) {
   const [query, setQuery] = useState("");
   const [city, setCity] = useState("all");
   const [specialty, setSpecialty] = useState("all");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [contactId, setContactId] = useState<string | null>(null);
 
   const [requestName, setRequestName] = useState("");
@@ -97,7 +95,6 @@ export default function ProfessionalDirectory({ kind }: Props) {
   const [requestSent, setRequestSent] = useState(false);
 
   const keys = KIND_KEYS[kind];
-  const selected = records.find((record) => record.id === selectedId) ?? null;
   const contactTarget = records.find((record) => record.id === contactId) ?? null;
 
   const availableCities = useMemo(() => {
@@ -148,7 +145,6 @@ export default function ProfessionalDirectory({ kind }: Props) {
   const reelsCount = records.reduce((sum, record) => sum + record.reels.length, 0);
 
   const closeAll = () => {
-    setSelectedId(null);
     setContactId(null);
     setRequestSent(false);
     setRequestError("");
@@ -156,7 +152,6 @@ export default function ProfessionalDirectory({ kind }: Props) {
 
   const openContact = (record: ProfessionalRecord) => {
     setContactId(record.id);
-    setSelectedId(null);
     setRequestSent(false);
     setRequestError("");
     setRequestName("");
@@ -176,7 +171,7 @@ export default function ProfessionalDirectory({ kind }: Props) {
       setRequestError(t("join.error.required"));
       return;
     }
-    if (!/^(20)?0?1[0125]\d{8}$/.test(requestPhone.replace(/\D/g, ""))) {
+    if (!isValidEgyptPhone(requestPhone)) {
       setRequestError(t("join.error.phone"));
       return;
     }
@@ -200,7 +195,7 @@ export default function ProfessionalDirectory({ kind }: Props) {
   return (
     <div className="bg-sand-50">
       {/* ====================== HERO ====================== */}
-      <section className="relative overflow-hidden bg-[linear-gradient(135deg,#141a33_0%,#242e5c_58%,#141a33_100%)]">
+      <section className="relative overflow-hidden theme-hero">
         <span
           aria-hidden
           className="pointer-events-none absolute -end-24 -top-28 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(217,185,92,0.24),transparent_65%)]"
@@ -364,9 +359,18 @@ export default function ProfessionalDirectory({ kind }: Props) {
                 className="flex flex-col rounded-3xl border border-sand-200 bg-white p-5 shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)] transition hover:-translate-y-1 hover:border-gold-300/70"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[linear-gradient(135deg,#141a33,#2d3875)] text-[15px] font-black text-gold-300 ring-2 ring-gold-200/40">
-                    {initials(record.companyAr || record.nameAr)}
-                  </span>
+                  {record.logoUrl || record.photoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={record.logoUrl || record.photoUrl}
+                      alt={record.companyAr || record.nameAr}
+                      className="h-11 w-11 shrink-0 rounded-2xl border border-sand-200 bg-white object-cover ring-2 ring-gold-200/40"
+                    />
+                  ) : (
+                    <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-ocean-800 to-ocean-950 text-[15px] font-black text-gold-300 ring-2 ring-gold-300/40">
+                      {initials(record.companyAr || record.nameAr)}
+                    </span>
+                  )}
                   <div className="flex flex-wrap items-center justify-end gap-1.5">
                     {record.featured && (
                       <span className="inline-flex items-center gap-1 rounded-full border border-gold-300/70 bg-gold-50 px-2.5 py-1 text-[9.5px] font-extrabold text-gold-700">
@@ -388,7 +392,7 @@ export default function ProfessionalDirectory({ kind }: Props) {
                 </h2>
                 <p className="mt-0.5 text-[11px] font-semibold text-sand-500">
                   {record.nameAr}
-                  {record.titleAr ? ` آ· ${record.titleAr}` : ""}
+                  {record.titleAr ? ` · ${record.titleAr}` : ""}
                 </p>
 
                 <p className="mt-2.5 line-clamp-3 text-[11.5px] leading-6 text-sand-700">
@@ -423,14 +427,13 @@ export default function ProfessionalDirectory({ kind }: Props) {
                 </dl>
 
                 <div className="mt-auto flex flex-col gap-2 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedId(record.id)}
+                  <Link
+                    href={`${PROFESSIONAL_KIND_META[kind].path}/${record.id}`}
                     className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-sand-200 bg-white px-4 py-2.5 text-[11.5px] font-extrabold text-ocean-800 transition hover:border-gold-300 hover:bg-gold-50/60"
                   >
                     {t("prof.card.view")}
                     <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
-                  </button>
+                  </Link>
                   <button
                     type="button"
                     onClick={() => openContact(record)}
@@ -477,146 +480,6 @@ export default function ProfessionalDirectory({ kind }: Props) {
           </Link>
         </div>
       </section>
-
-      {/* ====================== PROFILE MODAL ====================== */}
-      {selected && (
-        <div
-          className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-ocean-950/70 p-3 backdrop-blur-sm sm:p-6"
-          role="dialog"
-          aria-modal="true"
-          aria-label={selected.companyAr || selected.nameAr}
-          onClick={(event) => {
-            if (event.target === event.currentTarget) closeAll();
-          }}
-        >
-          <div className="my-4 w-full max-w-2xl overflow-hidden rounded-3xl border border-white/10 bg-white shadow-2xl">
-            <header className="relative overflow-hidden bg-[linear-gradient(135deg,#141a33_0%,#242e5c_100%)] px-5 py-5 text-white">
-              <span
-                aria-hidden
-                className="pointer-events-none absolute -end-12 -top-16 h-40 w-40 rounded-full bg-[radial-gradient(circle,rgba(217,185,92,0.26),transparent_65%)]"
-              />
-              <div className="relative flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/10 text-[16px] font-black text-gold-300 ring-2 ring-gold-200/30">
-                    {initials(selected.companyAr || selected.nameAr)}
-                  </span>
-                  <div>
-                    <h2 className="text-[15px] font-black">
-                      {selected.companyAr || selected.nameAr}
-                    </h2>
-                    <p className="mt-0.5 text-[11px] font-semibold text-white/60">
-                      {selected.nameAr}
-                      {selected.titleAr ? ` آ· ${selected.titleAr}` : ""}
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {selected.verified && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300/40 bg-emerald-400/15 px-2 py-0.5 text-[9.5px] font-extrabold text-emerald-200">
-                          <BadgeCheck className="h-3 w-3" />
-                          {t("prof.card.verified")}
-                        </span>
-                      )}
-                      {selected.cityAr && (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-[9.5px] font-bold text-white/70">
-                          <MapPin className="h-2.5 w-2.5" />
-                          {selected.cityAr}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={closeAll}
-                  className="shrink-0 rounded-lg border border-white/20 bg-white/5 p-1.5 text-white/70 transition hover:bg-white/10 hover:text-white"
-                  aria-label={t("prof.modal.close")}
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            </header>
-
-            <div className="max-h-[70vh] space-y-4 overflow-y-auto p-5">
-              {selected.bioAr && (
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gold-600">
-                    {t("prof.modal.about")}
-                  </p>
-                  <p className="mt-1.5 text-[12px] leading-7 text-sand-800">
-                    {selected.bioAr}
-                  </p>
-                </div>
-              )}
-
-              {specialtyList(selected).length > 0 && (
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gold-600">
-                    {t("prof.modal.specialties")}
-                  </p>
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {specialtyList(selected).map((item) => (
-                      <span
-                        key={item}
-                        className="rounded-full border border-sand-200 bg-sand-50 px-2.5 py-1 text-[10px] font-bold text-ocean-800"
-                      >
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {(selected.coverageAr ?? []).length > 0 && (
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gold-600">
-                    {t("prof.card.coverage")}
-                  </p>
-                  <p className="mt-1.5 text-[11.5px] font-semibold text-sand-700">
-                    {(selected.coverageAr ?? []).join(" آ· ")}
-                  </p>
-                </div>
-              )}
-
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gold-600">
-                  {t("prof.modal.reels")}
-                </p>
-                {selected.reels.length === 0 ? (
-                  <p className="mt-1.5 rounded-xl border border-dashed border-sand-200 bg-sand-50/60 px-3 py-3 text-[11px] font-semibold text-sand-500">
-                    {t("prof.modal.reelsEmpty")}
-                  </p>
-                ) : (
-                  <ReelGallery reels={selected.reels} />
-                )}
-              </div>
-
-              <div className="rounded-2xl border border-sand-200 bg-sand-50/70 p-3">
-                <p className="flex items-start gap-2 text-[10.5px] font-bold leading-5 text-sand-700">
-                  <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold-600" />
-                  {t("prof.modal.trustNote")}
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => openContact(selected)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-l from-gold-500 to-gold-400 px-5 py-2.5 text-[11.5px] font-black text-ocean-950 transition hover:-translate-y-0.5"
-                >
-                  <Phone className="h-3.5 w-3.5" />
-                  {t("prof.card.contact")}
-                </button>
-                <button
-                  type="button"
-                  onClick={closeAll}
-                  className="rounded-full border border-sand-200 bg-white px-5 py-2.5 text-[11.5px] font-bold text-ocean-800 transition hover:border-gold-300 hover:bg-gold-50/60"
-                >
-                  {t("prof.modal.close")}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ====================== CONTACT MODAL ====================== */}
       {contactTarget && (
@@ -732,59 +595,6 @@ export default function ProfessionalDirectory({ kind }: Props) {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function ReelGallery({ reels }: { reels: ProfessionalReel[] }) {
-  const { t } = useI18n();
-  const [activeId, setActiveId] = useState(reels[0]?.id ?? "");
-  const active = reels.find((reel) => reel.id === activeId) ?? reels[0];
-  const embed = active ? toEmbedUrl(active.url) : null;
-  const vertical = active?.platform === "instagram";
-
-  return (
-    <div className="mt-2">
-      {embed && (
-        <div
-          className={`overflow-hidden rounded-2xl border border-sand-200 bg-ocean-950 ${
-            vertical ? "mx-auto max-w-[320px]" : ""
-          }`}
-        >
-          <iframe
-            key={active?.id}
-            src={embed}
-            title={active?.titleAr ?? "video"}
-            className={`w-full ${vertical ? "h-[480px]" : "aspect-video"}`}
-            loading="lazy"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-            referrerPolicy="strict-origin-when-cross-origin"
-          />
-        </div>
-      )}
-      {reels.length > 1 && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {reels.map((reel) => (
-            <button
-              key={reel.id}
-              type="button"
-              onClick={() => setActiveId(reel.id)}
-              className={`rounded-full border px-3 py-1.5 text-[10px] font-bold transition ${
-                reel.id === active?.id
-                  ? "border-gold-300 bg-gold-50 text-gold-700"
-                  : "border-sand-200 bg-white text-ocean-800 hover:border-gold-300"
-              }`}
-            >
-              {reel.titleAr}
-            </button>
-          ))}
-        </div>
-      )}
-      <p className="mt-1.5 flex items-center gap-1 text-[9.5px] font-semibold text-sand-500">
-        <ExternalLink className="h-2.5 w-2.5" />
-        {t("prof.modal.reels")} â€” {active?.platform === "instagram" ? "Instagram" : "YouTube"}
-      </p>
     </div>
   );
 }

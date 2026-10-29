@@ -11,6 +11,7 @@ import {
   Compass,
   Coins,
   Languages,
+  LayoutGrid,
   LogOut,
   MapPin,
   Menu,
@@ -23,15 +24,19 @@ import {
 import { useI18n } from "@/lib/i18n";
 import { cityLabel } from "@/lib/i18n/cities";
 import { useActiveCities } from "@/lib/cities-store";
+import { useProfessionals, professionalOwnedBySession } from "@/lib/professionals-store";
 import { CURRENCIES, useCurrency, type CurrencyCode } from "@/lib/currency";
 import {
+  SESSION_KEY,
   clearSession,
   getSession,
   hasAdminAccess,
   type Session,
 } from "@/lib/session";
 import BrandLogo from "@/components/BrandLogo";
+import { RamadanGarland } from "@/components/RamadanDecorations";
 import OffersHeaderLink from "@/components/OffersHeaderLink";
+import { useSeasonTheme } from "@/components/ThemeProvider";
 
 /** نمط موحّد لروابط التنقّل الرئيسية */
 const NAV_LINK =
@@ -115,17 +120,34 @@ function Dropdown({
 
 export default function Header() {
   const { t, locale, setLocale } = useI18n();
+  const seasonTheme = useSeasonTheme();
   const cities = useActiveCities();
   const { currency, setCurrency, live, updatedAt } = useCurrency();
   const [open, setOpen] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
+  const professionals = useProfessionals();
   const router = useRouter();
   const pathname = usePathname();
+
+  /** ملف المهني المرتبط بالجلسة (رمز الملكية أولاً ثم البريد) — يظهر له رابط لوحة المهني */
+  const myProfessional =
+    session && session.email
+      ? professionals.find((record) => professionalOwnedBySession(record, session)) ?? null
+      : null;
 
   /** تحديث حالة الجلسة بعد الدخول/الخروج أو تغيير الصفحة */
   useEffect(() => {
     setSession(getSession());
   }, [pathname]);
+
+  /* مزامنة الجلسة بين التبويبات (خروج/دخول من تبويب آخر) */
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === SESSION_KEY || event.key === null) setSession(getSession());
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   const handleLogout = () => {
     clearSession();
@@ -160,6 +182,22 @@ export default function Header() {
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-l from-gold-600 via-gold-300 to-gold-200"
       />
+      {seasonTheme.active && seasonTheme.campaignText && (
+        <div className="theme-season-banner" dir="rtl">
+          {seasonTheme.motifs.crescent && (
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M16.8 2.5a9.5 9.5 0 1 0 4.7 17.8A10 10 0 0 1 16.8 2.5Z" />
+            </svg>
+          )}
+          <span className="text-[12.5px] leading-none tracking-[0.01em]">{seasonTheme.campaignText}</span>
+          {seasonTheme.motifs.lanterns && (
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 2v3m-5 2h10l1.5 2.5-1.5 9L12 21l-5-2.5-1.5-9L7 7Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+              <path d="M8 10h8m-7 5h6" stroke="currentColor" strokeWidth="1.2" />
+            </svg>
+          )}
+        </div>
+      )}
       {/* خلفية النقوش الإسلامية الهندسية (شفافة خفيفة جداً) */}
       <div className="relative mx-auto flex w-full max-w-[1440px] items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:py-3.5">
         {/* الشعار */}
@@ -259,6 +297,10 @@ export default function Header() {
             )}
           </Dropdown>
 
+          <Link href="/projects" className={NAV_LINK}>
+            <LayoutGrid className="h-4 w-4 text-ocean-500" />
+            {t("nav.projects")}
+          </Link>
           <Link href="/market-guide" className={NAV_LINK}>
             <Compass className="h-4 w-4 text-ocean-500" />
             {t("nav.compass")}
@@ -407,6 +449,16 @@ export default function Header() {
                       {t("nav.adminPanel")}
                     </Link>
                   )}
+                  {(myProfessional || hasAdminAccess(session)) && (
+                    <Link
+                      href="/professional"
+                      className={MENU_ITEM}
+                      onClick={close}
+                    >
+                      <Building2 className="h-4 w-4 shrink-0 text-gold-600" />
+                      {t("nav.professionalPanel")}
+                    </Link>
+                  )}
                   <button
                     type="button"
                     onClick={() => {
@@ -474,6 +526,10 @@ export default function Header() {
             <Link href="/developers" className={NAV_LINK} onClick={closeMobile}>
               <Building2 className="h-4 w-4 text-ocean-500" />
               {t("companies.developers")}
+            </Link>
+            <Link href="/projects" className={NAV_LINK} onClick={closeMobile}>
+              <LayoutGrid className="h-4 w-4 text-ocean-500" />
+              {t("nav.projects")}
             </Link>
             <Link href="/brokers" className={NAV_LINK} onClick={closeMobile}>
               <Scale className="h-4 w-4 text-ocean-500" />
@@ -563,6 +619,16 @@ export default function Header() {
                     {t("nav.adminPanel")}
                   </Link>
                 )}
+                {(myProfessional || hasAdminAccess(session)) && (
+                  <Link
+                    href="/professional"
+                    className={NAV_LINK}
+                    onClick={closeMobile}
+                  >
+                    <Building2 className="h-4 w-4 text-gold-600" />
+                    {t("nav.professionalPanel")}
+                  </Link>
+                )}
                 <button
                   type="button"
                   onClick={handleLogout}
@@ -596,6 +662,12 @@ export default function Header() {
           </div>
         </div>
       )}
+
+      {/* زينة الفوانيس المعلّقة — رمضان فقط، وخارج لوحة التحكم */}
+      {seasonTheme.active &&
+        seasonTheme.preset === "ramadan" &&
+        seasonTheme.motifs.lanterns &&
+        !pathname.startsWith("/admin") && <RamadanGarland />}
     </header>
   );
 }

@@ -7,6 +7,8 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { CITY_CENTERS, USER_PROPERTIES_KEY } from "@/data/properties";
+import { dataSource } from "@/lib/data";
+import type { CitiesPort } from "@/lib/data/ports";
 
 export type CityDemand = "مرتفع" | "موسمي" | "مستقر";
 
@@ -168,7 +170,8 @@ function readStored(): CityRecord[] | null {
     ) {
       return (parsed as { items: CityRecord[] }).items;
     }
-    return [];
+    /* شكل غير معروف (تخزين تالف) — نعود للافتراضي بدل فقدان كل المدن */
+    return null;
   } catch {
     return null;
   }
@@ -207,17 +210,18 @@ export function getCityByName(name: string): CityRecord | undefined {
   );
 }
 
-export function saveCities(cities: CityRecord[]): void {
-  if (!isBrowser()) return;
+export function saveCities(cities: CityRecord[]): boolean {
+  if (!isBrowser()) return false;
   try {
     window.localStorage.setItem(
       CITIES_KEY,
       JSON.stringify({ items: cities, updatedAt: new Date().toISOString() })
     );
   } catch {
-    return;
+    return false;
   }
   window.dispatchEvent(new Event(CITIES_EVENT));
+  return true;
 }
 
 function makeId(nameEn: string, existing: CityRecord[]): string {
@@ -282,6 +286,9 @@ export function addCity(input: CityInput): CityMutationResult {
   if (Math.abs(input.lat) > 90 || Math.abs(input.lng) > 180) {
     return { ok: false, error: "الإحداثيات خارج النطاق المسموح" };
   }
+  if (Math.abs(input.lat) < 0.0001 && Math.abs(input.lng) < 0.0001) {
+    return { ok: false, error: "حدّد إحداثيات المدينة على الخريطة" };
+  }
 
   const now = new Date().toISOString();
   const city: CityRecord = {
@@ -302,7 +309,9 @@ export function addCity(input: CityInput): CityMutationResult {
     updatedAt: now,
   };
 
-  saveCities([...cities, city]);
+  if (!saveCities([...cities, city])) {
+    return { ok: false, error: "تعذّر حفظ المدينة — مساحة التخزين في المتصفح ممتلئة" };
+  }
   return { ok: true, city };
 }
 
@@ -327,6 +336,9 @@ export function updateCity(id: string, patch: Partial<CityInput>): CityMutationR
   if (Math.abs(lat) > 90 || Math.abs(lng) > 180) {
     return { ok: false, error: "الإحداثيات خارج النطاق المسموح" };
   }
+  if (Math.abs(lat) < 0.0001 && Math.abs(lng) < 0.0001) {
+    return { ok: false, error: "حدّد إحداثيات المدينة على الخريطة" };
+  }
 
   const updated: CityRecord = {
     ...current,
@@ -349,7 +361,9 @@ export function updateCity(id: string, patch: Partial<CityInput>): CityMutationR
     updatedAt: new Date().toISOString(),
   };
 
-  saveCities(cities.map((city) => (city.id === id ? updated : city)));
+  if (!saveCities(cities.map((city) => (city.id === id ? updated : city)))) {
+    return { ok: false, error: "تعذّر حفظ التعديلات — مساحة التخزين ممتلئة" };
+  }
 
   if (current.nameAr !== nameAr) {
     renameCityInProperties(current.nameAr, nameAr);
@@ -359,9 +373,9 @@ export function updateCity(id: string, patch: Partial<CityInput>): CityMutationR
 }
 
 /** أرشفة/إخفاء مدينة أو إعادة تفعيلها */
-export function setCityActive(id: string, active: boolean): void {
+export function setCityActive(id: string, active: boolean): boolean {
   const cities = getCities();
-  saveCities(
+  return saveCities(
     cities.map((city) =>
       city.id === id
         ? { ...city, active, updatedAt: new Date().toISOString() }
@@ -371,20 +385,20 @@ export function setCityActive(id: string, active: boolean): void {
 }
 
 /** حذف نهائي */
-export function removeCity(id: string): void {
-  saveCities(getCities().filter((city) => city.id !== id));
+export function removeCity(id: string): boolean {
+  return saveCities(getCities().filter((city) => city.id !== id));
 }
 
 /** نقل مدينة لأعلى/أسفل في الترتيب */
-export function moveCity(id: string, direction: "up" | "down"): void {
+export function moveCity(id: string, direction: "up" | "down"): boolean {
   const cities = sortCities(getCities());
   const index = cities.findIndex((city) => city.id === id);
-  if (index < 0) return;
+  if (index < 0) return false;
   const target = direction === "up" ? index - 1 : index + 1;
-  if (target < 0 || target >= cities.length) return;
+  if (target < 0 || target >= cities.length) return false;
   const next = [...cities];
   [next[index], next[target]] = [next[target], next[index]];
-  saveCities(next.map((city, position) => ({ ...city, order: position + 1 })));
+  return saveCities(next.map((city, position) => ({ ...city, order: position + 1 })));
 }
 
 /** تحديث أسماء المدن داخل إعلانات المستخدمين بعد تغيير اسم المدينة */
@@ -415,16 +429,41 @@ function renameCityInProperties(oldName: string, newName: string): void {
   }
 }
 
+/**
+ * التنفيذ المحلي لمنفذ المدن.
+ * هو ما تستخدمه الواجهة اليوم، ويُستبدَل بتنفيذ بعيد (API) دون تغيير أي مكوّن.
+ */
+export const localCitiesPort: CitiesPort = {
+  list: async () => getCities(),
+  add: async (input) => addCity(input),
+  update: async (id, patch) => updateCity(id, patch),
+  setActive: async (id, active) => setCityActive(id, active),
+  remove: async (id) => removeCity(id),
+  move: async (id, direction) => moveCity(id, direction),
+};
+
 /** كل المدن مع الاستماع لتغييرات لوحة التحكم */
 export function useAllCities(): CityRecord[] {
   const [cities, setCities] = useState<CityRecord[]>(cloneDefaults);
 
   useEffect(() => {
-    const sync = () => setCities(getCities());
+    let alive = true;
+    /* القراءة عبر منفذ البيانات: نفس الشكل الآن، وقاعدة بيانات لاحقاً بلا تغيير هنا */
+    const sync = () => {
+      void dataSource()
+        .cities.list()
+        .then((next) => {
+          if (alive) setCities(next);
+        })
+        .catch(() => {
+          /* فشل القراءة: نُبقي الحالة الحالية بدل تفريغ الشاشة */
+        });
+    };
     sync();
     window.addEventListener(CITIES_EVENT, sync);
     window.addEventListener("storage", sync);
     return () => {
+      alive = false;
       window.removeEventListener(CITIES_EVENT, sync);
       window.removeEventListener("storage", sync);
     };

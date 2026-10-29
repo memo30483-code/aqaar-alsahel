@@ -10,6 +10,7 @@ import {
   Check,
   FileCheck2,
   Film,
+  ImagePlus,
   Lock,
   Scale,
   ShieldCheck,
@@ -21,6 +22,8 @@ import { cityLabel } from "@/lib/i18n/cities";
 import { useActiveCities } from "@/lib/cities-store";
 import { isValidReelUrl, toEmbedUrl } from "@/lib/embed";
 import { readCompressedImage } from "@/lib/image-upload";
+import { newOwnerToken, saveSession } from "@/lib/session";
+import { isValidEgyptPhone } from "@/lib/phone";
 import {
   addProfessional,
   type ProfessionalDocument,
@@ -143,6 +146,8 @@ function JoinForm() {
   const [license, setLicense] = useState("");
   const [experience, setExperience] = useState("");
   const [projects, setProjects] = useState("");
+  const [logo, setLogo] = useState("");
+  const [photo, setPhoto] = useState("");
 
   const [docs, setDocs] = useState<Record<string, UploadedDoc | undefined>>({});
   const [reels, setReels] = useState<{ id: string; title: string; url: string }[]>([]);
@@ -173,11 +178,30 @@ function JoinForm() {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
-    const dataUrl = await readCompressedImage(file);
-    setDocs((prev) => ({
-      ...prev,
-      [def.key]: { dataUrl, fileName: file.name },
-    }));
+    try {
+      const dataUrl = await readCompressedImage(file);
+      setDocs((prev) => ({
+        ...prev,
+        [def.key]: { dataUrl, fileName: file.name },
+      }));
+    } catch {
+      setError(t("join.error.required"));
+    }
+  };
+
+  const onImage = async (
+    setter: (value: string) => void,
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    try {
+      const dataUrl = await readCompressedImage(file);
+      setter(dataUrl);
+    } catch {
+      setError(t("join.error.required"));
+    }
   };
 
   const addReel = () => {
@@ -205,7 +229,7 @@ function JoinForm() {
       setError(t("join.error.required"));
       return;
     }
-    if (!/^(20)?0?1[0125]\d{8}$/.test(phone.replace(/\D/g, ""))) {
+    if (!isValidEgyptPhone(phone)) {
       setError(t("join.error.phone"));
       return;
     }
@@ -235,6 +259,7 @@ function JoinForm() {
       order: index + 1,
     }));
 
+    const ownerToken = newOwnerToken();
     const result = addProfessional({
       kind,
       nameAr: name,
@@ -249,10 +274,13 @@ function JoinForm() {
       licenseNumber: license,
       yearsExperience: experience ? Number(experience) : undefined,
       projectsCount: projects ? Number(projects) : undefined,
+      logoUrl: logo || undefined,
+      photoUrl: photo || undefined,
       documents,
       reels: reelRecords,
       status: "pending",
       verified: false,
+      ownerToken,
     });
 
     setSubmitting(false);
@@ -260,6 +288,16 @@ function JoinForm() {
       setError(result.error);
       return;
     }
+    /* الجلسة تحمل رمز الملكية حتى يستطيع صاحب الطلب متابعة ملفه من لوحة المهني */
+    saveSession({
+      name: result.record.nameAr,
+      email: email.trim(),
+      phone,
+      accountType: kind,
+      verifiedAt: new Date().toISOString(),
+      role: kind === "lawyer" ? "user" : "agent",
+      ownerToken,
+    });
     setDone(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -303,6 +341,10 @@ function JoinForm() {
                   setLicense("");
                   setExperience("");
                   setProjects("");
+                  setLogo("");
+                  setPhoto("");
+                  setReelTitle("");
+                  setReelUrl("");
                 }}
                 className="rounded-xl border border-sand-200 bg-white px-5 py-2.5 text-[12px] font-bold text-ocean-800 transition hover:border-gold-300 hover:bg-gold-50/60"
               >
@@ -509,6 +551,99 @@ function JoinForm() {
                   className={FIELD}
                 />
               </label>
+            </div>
+
+            {/* صور الملف: لوجو الشركة/المكتب + صورة شخصية للمحامي */}
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div>
+                <span className={LABEL}>{t("join.field.logo")}</span>
+                <div className="flex items-center gap-3 rounded-2xl border-2 border-dashed border-sand-300 bg-sand-50/60 p-3">
+                  {logo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={logo}
+                      alt={t("join.field.logo")}
+                      className="h-14 w-14 shrink-0 rounded-2xl border border-sand-200 bg-white object-cover"
+                    />
+                  ) : (
+                    <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white text-gold-600 shadow-sm">
+                      <ImagePlus className="h-5 w-5" />
+                    </span>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-semibold text-sand-500">
+                      {t("join.field.imageHint")}
+                    </p>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                      <label className="cursor-pointer rounded-lg bg-ocean-950 px-3 py-1.5 text-[10.5px] font-bold text-white transition hover:bg-ocean-900">
+                        {logo ? t("prof.dash.replace") : t("prof.dash.upload")}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(event) => onImage(setLogo, event)}
+                        />
+                      </label>
+                      {logo && (
+                        <button
+                          type="button"
+                          onClick={() => setLogo("")}
+                          className="rounded-lg border border-rose-200 bg-white p-1.5 text-rose-600 transition hover:bg-rose-50"
+                          aria-label={t("prof.dash.remove")}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {kind === "lawyer" && (
+                <div>
+                  <span className={LABEL}>{t("join.field.photo")}</span>
+                  <div className="flex items-center gap-3 rounded-2xl border-2 border-dashed border-sand-300 bg-sand-50/60 p-3">
+                    {photo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={photo}
+                        alt={t("join.field.photo")}
+                        className="h-14 w-14 shrink-0 rounded-full border border-sand-200 bg-white object-cover"
+                      />
+                    ) : (
+                      <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-white text-gold-600 shadow-sm">
+                        <ImagePlus className="h-5 w-5" />
+                      </span>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-semibold text-sand-500">
+                        {t("join.field.imageHint")}
+                      </p>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <label className="cursor-pointer rounded-lg bg-ocean-950 px-3 py-1.5 text-[10.5px] font-bold text-white transition hover:bg-ocean-900">
+                          {photo ? t("prof.dash.replace") : t("prof.dash.upload")}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(event) => onImage(setPhoto, event)}
+                          />
+                        </label>
+                        {photo && (
+                          <button
+                            type="button"
+                            onClick={() => setPhoto("")}
+                            className="rounded-lg border border-rose-200 bg-white p-1.5 text-rose-600 transition hover:bg-rose-50"
+                            aria-label={t("prof.dash.remove")}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

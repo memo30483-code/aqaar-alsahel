@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Send, Sparkles, X } from "lucide-react";
 import { useI18n, type MessageKey } from "@/lib/i18n";
+import { useSeasonTheme } from "@/components/ThemeProvider";
 
 type ChatMessage = { id: number; role: "bot" | "user"; text: string };
 
@@ -104,6 +105,7 @@ function randomSpot(current: { x: number; y: number }): { x: number; y: number }
  */
 export default function AssistantWidget() {
   const { t } = useI18n();
+  const seasonTheme = useSeasonTheme();
   const [open, setOpen] = useState(false);
   const [ready, setReady] = useState(false);
   const [pos, setPos] = useState({ x: -999, y: -999 });
@@ -394,6 +396,21 @@ export default function AssistantWidget() {
                   </linearGradient>
                 </defs>
 
+                {seasonTheme.active && seasonTheme.preset === "ramadan" && seasonTheme.motifs.assistantLantern && (
+                  <g
+                    aria-hidden="true"
+                    fill="none"
+                    stroke="#e8c36f"
+                    strokeOpacity="0.82"
+                    strokeWidth="1.6"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M36 3v5M22 11h28l5 8-4 34-15 11-15-11-4-34Z" />
+                    <path d="M17 22h38M20 52h32" strokeOpacity="0.56" />
+                    <path d="M29 8h14" strokeWidth="2.2" />
+                  </g>
+                )}
+
                 {/* الظل الأرضي */}
                 <ellipse cx="36" cy="66" rx="16" ry="3.2" fill="#141a33" opacity="0.16" />
                 <circle cx="58" cy="13" r="1.8" fill="#d9b95c" opacity="0.45" />
@@ -486,7 +503,7 @@ export default function AssistantWidget() {
         style={panelStyle}
       >
         {/* رأس اللوحة */}
-        <div className="relative shrink-0 overflow-hidden bg-[linear-gradient(135deg,#141a33,#27315e)] px-4 py-3 text-white">
+        <div className="ai-panel-header relative shrink-0 overflow-hidden bg-[linear-gradient(135deg,#141a33,#27315e)] px-4 py-3 text-white">
           <span
             aria-hidden
             className="pointer-events-none absolute -end-8 -top-10 h-24 w-24 rounded-full bg-[radial-gradient(circle,rgba(217,185,92,0.35),transparent_65%)]"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Headset, Phone, ShieldCheck } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useCurrency } from "@/lib/currency";
@@ -28,6 +28,11 @@ export default function InstallmentCard({
   const defaultDown = Math.round(price * 0.2);
   const [downPayment, setDownPayment] = useState(String(defaultDown));
   const [years, setYears] = useState("5");
+
+  /* التنقل بين عقارين يعيد استخدام المكوّن — نعيد ضبط المقدم مع السعر الجديد */
+  useEffect(() => {
+    setDownPayment(String(Math.round(price * 0.2)));
+  }, [price]);
 
   const installment = useMemo(() => {
     const down = Number(downPayment) || 0;

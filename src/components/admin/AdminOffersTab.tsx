@@ -434,7 +434,11 @@ export default function AdminOffersTab({
                   type="number"
                   value={draft.discountPercent ?? ""}
                   onChange={(event) =>
-                    setDraft({ ...draft, discountPercent: Number(event.target.value) })
+                    setDraft({
+                      ...draft,
+                      discountPercent:
+                        event.target.value === "" ? undefined : Number(event.target.value),
+                    })
                   }
                   className={INPUT}
                 />
@@ -451,7 +455,13 @@ export default function AdminOffersTab({
                 <input
                   type="number"
                   value={draft.oldPrice ?? ""}
-                  onChange={(event) => setDraft({ ...draft, oldPrice: Number(event.target.value) })}
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      oldPrice:
+                        event.target.value === "" ? undefined : Number(event.target.value),
+                    })
+                  }
                   className={INPUT}
                 />
               </Field>
@@ -459,7 +469,13 @@ export default function AdminOffersTab({
                 <input
                   type="number"
                   value={draft.newPrice ?? ""}
-                  onChange={(event) => setDraft({ ...draft, newPrice: Number(event.target.value) })}
+                  onChange={(event) =>
+                    setDraft({
+                      ...draft,
+                      newPrice:
+                        event.target.value === "" ? undefined : Number(event.target.value),
+                    })
+                  }
                   className={INPUT}
                 />
               </Field>
@@ -491,7 +507,13 @@ export default function AdminOffersTab({
                 <input
                   type="number"
                   value={draft.order ?? 1}
-                  onChange={(event) => setDraft({ ...draft, order: Number(event.target.value) })}
+                  onChange={(event) => {
+                    const value = Number(event.target.value);
+                    setDraft({
+                      ...draft,
+                      order: Number.isFinite(value) && value > 0 ? value : 1,
+                    });
+                  }}
                   className={INPUT}
                 />
               </Field>

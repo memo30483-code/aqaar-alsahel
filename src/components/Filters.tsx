@@ -130,17 +130,20 @@ export default function Filters({
 
   const setPriceMin = (raw: number) => {
     const next = Math.min(raw, draft.priceMax - STEP);
+    const priceMin = Math.max(PRICE_FILTER_MIN, next);
     update({
-      priceMin: Math.max(PRICE_FILTER_MIN, next),
-      priceActive: true,
+      priceMin,
+      /* نطاق كامل = لا فلتر سعري فعّال */
+      priceActive: !(priceMin <= PRICE_FILTER_MIN && draft.priceMax >= PRICE_FILTER_MAX),
     });
   };
 
   const setPriceMax = (raw: number) => {
     const next = Math.max(raw, draft.priceMin + STEP);
+    const priceMax = Math.min(PRICE_FILTER_MAX, next);
     update({
-      priceMax: Math.min(PRICE_FILTER_MAX, next),
-      priceActive: true,
+      priceMax,
+      priceActive: !(draft.priceMin <= PRICE_FILTER_MIN && priceMax >= PRICE_FILTER_MAX),
     });
   };
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BarChart3,
+  Briefcase,
   Building2,
   ClipboardList,
   Gift,
@@ -50,7 +51,7 @@ import AdminLogsTab from "@/components/admin/AdminLogsTab";
 import AdminProfessionalsTab from "@/components/admin/AdminProfessionalsTab";
 import AdminCitiesTab from "@/components/admin/AdminCitiesTab";
 import AdminCompanyTab from "@/components/admin/AdminCompanyTab";
-import AdminHomeBuilderTab from "@/components/admin/AdminHomeBuilderTab";
+import AdminProjectsTab from "@/components/admin/AdminProjectsTab";import AdminHomeBuilderTab from "@/components/admin/AdminHomeBuilderTab";
 import AdminOverviewTab from "@/components/admin/AdminOverviewTab";
 
 type TabKey =
@@ -66,6 +67,7 @@ type TabKey =
   | "users"
   | "permissions"
   | "professionals"
+  | "projects"
   | "logs";
 
 const TABS: {
@@ -91,6 +93,7 @@ const TABS: {
   { key: "users", label: "المستخدمون", Icon: Users, permission: "users.view" },
   { key: "permissions", label: "الصلاحيات", Icon: ShieldCheck, permission: "users.roles" },
   { key: "professionals", label: "المهنيون", Icon: Building2, permission: "professionals.view" },
+  { key: "projects", label: "المشاريع", Icon: Briefcase, permission: "professionals.view" },
   { key: "logs", label: "سجل النشاطات", Icon: ListChecks, permission: "logs.view" },
 ];
 
@@ -114,6 +117,8 @@ export default function AdminDashboard() {
   const [marquee, setMarquee] = useState<MarqueeItem[]>([]);
   const [logs, setLogs] = useState<AdminLog[]>([]);
   const [permissionsCount, setPermissionsCount] = useState(0);
+  /** يزيد بعد أي تعديل على الصلاحيات لإعادة حساب التبويبات والعدّادات */
+  const [permissionsVersion, setPermissionsVersion] = useState(0);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [flash, setFlash] = useState("");
 
@@ -155,11 +160,33 @@ export default function AdminDashboard() {
 
   const can = useCallback(
     (key: string) => hasPermission(session?.role, currentUser?.id, key),
-    [session, currentUser]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [session, currentUser, permissionsVersion]
   );
+
+  /* إعادة قراءة العدّاد بعد أي تعديل على الصلاحيات */
+  useEffect(() => {
+    if (!permissionsVersion || users.length === 0) return;
+    setPermissionsCount(
+      users.reduce((total, user) => total + getAdminPermissions(user.id).length, 0)
+    );
+  }, [permissionsVersion, users]);
 
   const visibleTabs = useMemo(
     () => TABS.filter((item) => !item.permission || can(item.permission)),
+    [can]
+  );
+
+  /** الانتقال لتبويب من أي مكان مع احترام الصلاحيات */
+  const goTo = useCallback(
+    (next: TabKey) => {
+      const target = TABS.find((item) => item.key === next);
+      if (target?.permission && !can(target.permission)) {
+        setFlash("لا تملك صلاحية الوصول إلى هذا القسم");
+        return;
+      }
+      setTab(next);
+    },
     [can]
   );
 
@@ -267,7 +294,7 @@ export default function AdminDashboard() {
             offers={offers}
             logs={logs}
             permissionsCount={permissionsCount}
-            goTo={(next) => setTab(next)}
+            goTo={goTo}
           />
         )}
 
@@ -368,6 +395,7 @@ export default function AdminDashboard() {
             onSelect={setSelectedUserId}
             notify={notify}
             reloadLogs={reloadLogs}
+            onPermissionsChange={() => setPermissionsVersion((value) => value + 1)}
           />
         )}
 
@@ -377,6 +405,10 @@ export default function AdminDashboard() {
             notify={notify}
             reloadLogs={reloadLogs}
           />
+        )}
+
+        {tab === "projects" && (
+          <AdminProjectsTab can={can} notify={notify} reloadLogs={reloadLogs} />
         )}
 
         {tab === "logs" && <AdminLogsTab logs={logs} />}

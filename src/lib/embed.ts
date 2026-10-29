@@ -8,7 +8,7 @@ export type ReelPlatform = "youtube" | "instagram" | "unknown";
 const YOUTUBE_ID =
   /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/;
 
-const INSTAGRAM_CODE = /instagram\.com\/(?:reel|reels|p|tv)\/([A-Za-z0-9_-]+)/;
+const INSTAGRAM_CODE = /instagram\.com\/(reel|reels|p|tv)\/([A-Za-z0-9_-]+)/;
 
 export function detectReelPlatform(url: string): ReelPlatform {
   const value = url.trim();
@@ -30,7 +30,9 @@ export function toEmbedUrl(url: string): string | null {
 
   const instagram = value.match(INSTAGRAM_CODE);
   if (instagram) {
-    return `https://www.instagram.com/reel/${instagram[1]}/embed`;
+    /* نحافظ على نوع الرابط (منشور/IGTV/ريل) — بناء /reel/ دائماً يعطي إطاراً فارغاً */
+    const type = instagram[1] === "reels" ? "reel" : instagram[1];
+    return `https://www.instagram.com/${type}/${instagram[2]}/embed`;
   }
 
   return null;

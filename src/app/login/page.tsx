@@ -14,6 +14,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { saveSession, MOCK_ADMIN } from "@/lib/session";
+import { getProfessionalByEmail } from "@/lib/professionals-store";
 import { useT } from "@/lib/i18n";
 
 export default function LoginPage() {
@@ -70,18 +71,23 @@ export default function LoginPage() {
           verifiedAt: new Date().toISOString(),
           role: MOCK_ADMIN.role,
         });
-        /* المدير يذهب للوحة التحكم افتراضيًا، إلا إذا جاء من رابط يطلب وجهة محددة */
-        router.push(requested ? safeTarget : "/admin");
+        /* المدير يذهب للوحة التحكم دائماً — أي وجهة سابقة (مثل «أضف عقارك»)
+           كانت تُحفظ من ضغطة سابقة فلا يجوز أن تقرّر مكان الأدمن بعد الدخول */
+        router.push("/admin");
         return;
       }
 
       /** أي حساب آخر يُتعامل كمستخدم عادي موثق */
+      const ownedProfessional = getProfessionalByEmail(trimmedEmail);
       saveSession({
-        name: trimmedEmail,
+        name: ownedProfessional?.nameAr || trimmedEmail,
         email: trimmedEmail,
-        phone: "",
+        phone: ownedProfessional?.phone ?? "",
         accountType: "individual",
         verifiedAt: new Date().toISOString(),
+        /* جسر مؤقت حتى ربط المصادقة الحقيقية: السجل المحفوظ على هذا الجهاز
+           يحمل رمز الملكية فيُفتح لصاحبه. لا يغني عن مصادقة على السيرفر. */
+        ownerToken: ownedProfessional?.ownerToken,
       });
       /* لا نوجّه المستخدم العادي إلى لوحة الإدارة */
       router.push(safeTarget === "/admin" ? "/add-property" : safeTarget);

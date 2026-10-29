@@ -13,15 +13,11 @@ import {
   X,
 } from "lucide-react";
 import {
-  addCity,
-  moveCity,
-  removeCity,
-  setCityActive,
-  updateCity,
   useAllCities,
   type CityDemand,
   type CityRecord,
 } from "@/lib/cities-store";
+import { dataSource } from "@/lib/data";
 import { addAdminLog, getListings } from "@/lib/admin-system";
 import { getSession } from "@/lib/session";
 import {
@@ -136,12 +132,14 @@ export default function AdminCitiesTab({ can, notify, reloadLogs }: Props) {
     setError("");
   };
 
-  const submit = () => {
+  const submit = async () => {
+    /* الفراغ ليس صفراً — نرسل NaN ليرفضه التحقق بدل إنشاء مدينة عند 0,0 */
+    const parseCoord = (value: string) => (value.trim() === "" ? NaN : Number(value));
     const payload = {
       nameAr: form.nameAr,
       nameEn: form.nameEn,
-      lat: Number(form.lat),
-      lng: Number(form.lng),
+      lat: parseCoord(form.lat),
+      lng: parseCoord(form.lng),
       zoom: Number(form.zoom) || 12,
       active: form.active,
       demand: form.demand,
@@ -149,9 +147,16 @@ export default function AdminCitiesTab({ can, notify, reloadLogs }: Props) {
       summaryEn: form.summaryEn,
     };
 
+    if (!Number.isFinite(payload.lat) || !Number.isFinite(payload.lng)) {
+      setError("أدخل خط العرض وخط الطول للمدينة");
+      return;
+    }
+
+    /* الكتابة عبر منفذ البيانات — نفس السلوك الآن، وقاعدة بيانات لاحقاً */
+    const port = dataSource().cities;
     const result = editingId
-      ? updateCity(editingId, payload)
-      : addCity(payload);
+      ? await port.update(editingId, payload)
+      : await port.add(payload);
 
     if (!result.ok) {
       setError(result.error);
@@ -166,8 +171,11 @@ export default function AdminCitiesTab({ can, notify, reloadLogs }: Props) {
     closeForm();
   };
 
-  const toggleActive = (city: CityRecord) => {
-    setCityActive(city.id, !city.active);
+  const toggleActive = async (city: CityRecord) => {
+    if (!(await dataSource().cities.setActive(city.id, !city.active))) {
+      notify("تعذّر الحفظ — مساحة التخزين في المتصفح ممتلئة");
+      return;
+    }
     log(
       city.active ? "city.archived" : "city.activated",
       `${city.active ? "أرشفة/إخفاء" : "إعادة تفعيل"} مدينة: ${city.nameAr}`
@@ -175,22 +183,28 @@ export default function AdminCitiesTab({ can, notify, reloadLogs }: Props) {
     notify(city.active ? "تم إخفاء المدينة عن الزوار" : "تم تفعيل المدينة");
   };
 
-  const move = (city: CityRecord, direction: "up" | "down") => {
-    moveCity(city.id, direction);
+  const move = async (city: CityRecord, direction: "up" | "down") => {
+    if (!(await dataSource().cities.move(city.id, direction))) return;
     log("city.reordered", `تغيير ترتيب مدينة: ${city.nameAr}`);
   };
 
-  const archiveInstead = () => {
+  const archiveInstead = async () => {
     if (!confirmCity) return;
-    setCityActive(confirmCity.id, false);
+    if (!(await dataSource().cities.setActive(confirmCity.id, false))) {
+      notify("تعذّر الحفظ — مساحة التخزين في المتصفح ممتلئة");
+      return;
+    }
     log("city.archived", `أرشفة مدينة بدل الحذف: ${confirmCity.nameAr}`);
     notify("تمت أرشفة المدينة — إعلاناتها محفوظة ويمكن إعادة تفعيلها");
     setConfirmId(null);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!confirmCity) return;
-    removeCity(confirmCity.id);
+    if (!(await dataSource().cities.remove(confirmCity.id))) {
+      notify("تعذّر الحذف — مساحة التخزين في المتصفح ممتلئة");
+      return;
+    }
     log("city.deleted", `حذف نهائي لمدينة: ${confirmCity.nameAr}`);
     notify("تم حذف المدينة نهائياً");
     setConfirmId(null);
