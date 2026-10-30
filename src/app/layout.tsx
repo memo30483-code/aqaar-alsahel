@@ -27,12 +27,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="ar" dir="rtl" suppressHydrationWarning>
       <head>
         {/*
           حقن الثيم قبل أول رسم من التخزين المحلي حتى لا يرى الزائر ومضة
           ألوان العلامة ثم يتبدّل الموسم بعد التحميل. السكربت ثابت ومولّد
           من نفس وحدة الثيم (بلا أي بيانات مستخدم).
+          suppressHydrationWarning: السكربت يضيف data-season-theme/style على <html>
+          قبل الـhydration — وهو السلوك المقصود لمنع الومضة.
         */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>

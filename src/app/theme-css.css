@@ -275,3 +275,140 @@ html[data-season-theme="ramadan"] #ai-panel .ai-panel-header {
     bottom: 16px;
   }
 }
+
+/* ============================================================
+   زخارف المواسم (غير رمضان) — ثلج / أزهار / شمس / أوراق / احتفال
+   ============================================================ */
+.season-hero-art {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.season-hero-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes season-fall {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: var(--p-opacity, 0.9);
+  }
+  85% {
+    opacity: var(--p-opacity, 0.9);
+  }
+  100% {
+    transform: translate3d(var(--drift, 18px), 600px, 0) rotate(var(--spin, 220deg));
+    opacity: 0;
+  }
+}
+
+@keyframes season-rise {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  15% {
+    opacity: var(--p-opacity, 0.7);
+  }
+  80% {
+    opacity: var(--p-opacity, 0.7);
+  }
+  100% {
+    transform: translate3d(var(--drift, 14px), -260px, 0);
+    opacity: 0;
+  }
+}
+
+.season-particle {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-name: season-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.season-particle--rise {
+  animation-name: season-rise;
+}
+
+@keyframes season-twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.season-twinkle {
+  transform-box: fill-box;
+  animation: season-twinkle 3.4s ease-in-out infinite;
+}
+
+@keyframes season-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.season-sun-rays {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: season-spin 46s linear infinite;
+}
+
+@keyframes season-heat {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: translateX(0);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateX(-10px);
+  }
+}
+
+.season-heat {
+  animation: season-heat 5.5s ease-in-out infinite;
+}
+
+@keyframes season-eid-glow {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.season-eid-crescent {
+  animation: season-eid-glow 4.6s ease-in-out infinite;
+}
+
+/* على الشاشات الصغيرة نخفّف المشهد حتى لا يزاحم النص */
+@media (max-width: 640px) {
+  .season-art-detail {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .season-particle,
+  .season-twinkle,
+  .season-sun-rays,
+  .season-heat,
+  .season-eid-crescent {
+    animation: none;
+  }
+}

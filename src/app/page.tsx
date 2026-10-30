@@ -52,6 +52,7 @@ import {
 } from "@/lib/home-builder-store";
 import HomeCustomBlock from "@/components/home/HomeCustomBlock";
 import RamadanDecorations from "@/components/RamadanDecorations";
+import SeasonDecorations from "@/components/SeasonDecorations";
 import { useSeasonTheme } from "@/components/ThemeProvider";
 import {
   LISTING_OVERRIDE_KEY,
@@ -354,6 +355,8 @@ export default function HomePage() {
         {seasonTheme.active && seasonTheme.preset === "ramadan" && (
           <RamadanDecorations theme={seasonTheme} />
         )}
+        {/* زخارف بقية المواسم: ثلج / أزهار / شمس / أوراق / احتفال */}
+        <SeasonDecorations theme={seasonTheme} />
 
         <div
           className={`relative z-10 mx-auto w-full max-w-[1240px] px-4 pb-28 sm:px-6 lg:pb-32 ${

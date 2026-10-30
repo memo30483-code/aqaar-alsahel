@@ -48,6 +48,40 @@ export interface SeasonThemeCfg {
 
 export const RAMADAN_CAMPAIGN_TEXT = "رمضان احلى مع عقار FAMILY";
 
+/**
+ * مشهد الزخارف المرسوم فوق صورة الهيرو.
+ * - رمضان له طبقة زخارف مستقلة أكثر تفصيلاً (`RamadanDecorations`).
+ * - «تخصيص يدوي» بلا زخارف: الأدمن يختار الألوان فقط.
+ */
+export type SeasonScene =
+  | "winter"
+  | "spring"
+  | "summer"
+  | "fall"
+  | "october"
+  | "eid-fitr"
+  | "eid-adha";
+
+export function seasonScene(
+  preset: SeasonPreset,
+  active: boolean
+): SeasonScene | null {
+  if (!active) return null;
+  switch (preset) {
+    case "winter":
+    case "spring":
+    case "summer":
+    case "fall":
+    case "october":
+    case "eid-fitr":
+    case "eid-adha":
+      return preset;
+    /* رمضان: زخارفه الخاصة — و«custom»: ألوان فقط */
+    default:
+      return null;
+  }
+}
+
 export const RAMADAN_DEFAULT_MOTIFS: RamadanMotifs = {
   crescent: true,
   lanterns: true,

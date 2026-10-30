@@ -14,8 +14,14 @@ const js = ts.transpileModule(source, {
 }).outputText;
 const loaded = { exports: {} };
 new Function("exports", "require", "module", js)(loaded.exports, require, loaded);
-const { DEFAULT_THEME, RAMADAN_CAMPAIGN_TEXT, PRESET_MAP, resolveSeasonTheme, accentInk } =
-  loaded.exports;
+const {
+  DEFAULT_THEME,
+  RAMADAN_CAMPAIGN_TEXT,
+  PRESET_MAP,
+  resolveSeasonTheme,
+  accentInk,
+  seasonScene,
+} = loaded.exports;
 
 const MOTIFS = [
   "crescent",
@@ -109,4 +115,16 @@ test("every preset resolves a readable accent ink for its call-to-action", () =>
     assert.ok(["#141a33", "#ffffff"].includes(theme.accentInk), preset);
     assert.equal(theme.accent, cfg.accent ?? DEFAULT_THEME.accent, preset);
   }
+});
+
+test("seasonal decorations are scoped to the right presets", () => {
+  /* كل موسم له مشهد زخارف خاص */
+  for (const scene of ["winter", "spring", "summer", "fall", "october", "eid-fitr", "eid-adha"]) {
+    assert.equal(seasonScene(scene, true), scene);
+  }
+  /* رمضان له طبقة زخارفه الخاصة، و«تخصيص يدوي» ألوان فقط */
+  assert.equal(seasonScene("ramadan", true), null);
+  assert.equal(seasonScene("custom", true), null);
+  /* الثيم المطفي لا يرسم أي زخرفة */
+  assert.equal(seasonScene("winter", false), null);
 });
