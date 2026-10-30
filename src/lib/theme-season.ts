@@ -82,6 +82,20 @@ export function seasonScene(
   }
 }
 
+/** هل يظهر شريط الزخارف الموسمي في هذه الصفحة؟ */
+const RIBBON_HIDDEN_PREFIXES = ["/admin", "/login", "/register"];
+
+export function shouldShowSeasonRibbon(
+  preset: SeasonPreset,
+  active: boolean,
+  pathname: string
+): boolean {
+  if (!seasonScene(preset, active)) return false;
+  /* الرئيسية فيها المشهد الكامل داخل الهيرو */
+  if (pathname === "/" || pathname === "") return false;
+  return !RIBBON_HIDDEN_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
 export const RAMADAN_DEFAULT_MOTIFS: RamadanMotifs = {
   crescent: true,
   lanterns: true,

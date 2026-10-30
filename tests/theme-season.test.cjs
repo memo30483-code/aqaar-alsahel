@@ -21,6 +21,7 @@ const {
   resolveSeasonTheme,
   accentInk,
   seasonScene,
+  shouldShowSeasonRibbon,
 } = loaded.exports;
 
 const MOTIFS = [
@@ -127,4 +128,21 @@ test("seasonal decorations are scoped to the right presets", () => {
   assert.equal(seasonScene("custom", true), null);
   /* الثيم المطفي لا يرسم أي زخرفة */
   assert.equal(seasonScene("winter", false), null);
+});
+
+test("the seasonal ribbon shows on inner pages only", () => {
+  /* صفحات داخلية: يظهر */
+  assert.equal(shouldShowSeasonRibbon("winter", true, "/offers"), true);
+  assert.equal(shouldShowSeasonRibbon("fall", true, "/projects"), true);
+  /* الرئيسية: الهيرو فيه المشهد الكامل */
+  assert.equal(shouldShowSeasonRibbon("winter", true, "/"), false);
+  /* لوحة التحكم وصفحات الدخول */
+  assert.equal(shouldShowSeasonRibbon("winter", true, "/admin"), false);
+  assert.equal(shouldShowSeasonRibbon("winter", true, "/admin/theme"), false);
+  assert.equal(shouldShowSeasonRibbon("winter", true, "/login"), false);
+  assert.equal(shouldShowSeasonRibbon("winter", true, "/register"), false);
+  /* بلا ثيم مفعّل أو في رمضان/التخصيص: لا شريط */
+  assert.equal(shouldShowSeasonRibbon("winter", false, "/offers"), false);
+  assert.equal(shouldShowSeasonRibbon("ramadan", true, "/offers"), false);
+  assert.equal(shouldShowSeasonRibbon("custom", true, "/offers"), false);
 });

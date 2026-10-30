@@ -5,6 +5,7 @@ import AppProviders from "@/components/AppProviders";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SiteWidgets from "@/components/SiteWidgets";
+import SeasonRibbon from "@/components/SeasonRibbon";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme-season";
 import "./theme-css.css";
 import "./globals.css";
@@ -42,6 +43,8 @@ export default function RootLayout({
         <AppProviders>
           <ThemeProvider>
           <Header />
+          {/* شريط الزخارف الموسمي — يظهر في الصفحات الداخلية فقط */}
+          <SeasonRibbon />
           <main className="flex-1 min-h-0 flex flex-col">{children}</main>
           <Footer />
           <SiteWidgets />

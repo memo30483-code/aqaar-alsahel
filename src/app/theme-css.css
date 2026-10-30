@@ -412,3 +412,76 @@ html[data-season-theme="ramadan"] #ai-panel .ai-panel-header {
     animation: none;
   }
 }
+
+/* ============================================================
+   شريط الزخارف الموسمي — يظهر أسفل الهيدر في الصفحات الداخلية
+   ============================================================ */
+.season-ribbon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 26px;
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--season-accent, #c9922a);
+  background: linear-gradient(
+    to bottom,
+    rgb(var(--sand-100) / 0.8),
+    rgb(var(--sand-50) / 0)
+  );
+}
+
+.season-ribbon-line {
+  position: absolute;
+  inset-inline: 6%;
+  top: 50%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, currentColor, transparent);
+  opacity: 0.25;
+}
+
+.season-ribbon-motif {
+  position: relative;
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  opacity: 0.6;
+  transform-origin: top center;
+  animation: season-ribbon-sway 7s ease-in-out infinite;
+}
+
+.season-ribbon-motif svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes season-ribbon-sway {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .season-ribbon {
+    height: 20px;
+  }
+  .season-ribbon-motif {
+    width: 14px;
+    height: 14px;
+  }
+  .season-ribbon-motif:nth-child(n + 10) {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .season-ribbon-motif {
+    animation: none;
+  }
+}
