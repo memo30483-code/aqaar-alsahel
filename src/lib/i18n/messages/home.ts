@@ -183,6 +183,8 @@ export const homeMessages = {
   "home.projects.ad": { ar: "إعلان", en: "Ad" },
   "home.projects.devBadge": { ar: "مطور معتمد", en: "Verified developer" },
   "home.projects.details": { ar: "تفاصيل المشروع", en: "Project details" },
+  "home.projects.prev": { ar: "المشروع السابق", en: "Previous project" },
+  "home.projects.next": { ar: "المشروع التالي", en: "Next project" },
   "home.projects.plan1": { ar: "تقسيط حتى 8 سنوات", en: "Up to 8-year installments" },
   "home.projects.plan2": { ar: "استلام فوري", en: "Ready to move" },
   "home.projects.plan3": { ar: "تقسيط 6 سنوات", en: "6-year installments" },

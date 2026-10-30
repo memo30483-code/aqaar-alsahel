@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useI18n, type MessageKey } from "@/lib/i18n";
 import { useCurrency } from "@/lib/currency";
+import type { HomeBlock } from "@/lib/home-builder-store";
 
 interface Project {
   name: string;
@@ -58,12 +59,29 @@ const PROJECTS: Project[] = [
   },
 ];
 
-/** سلايدر المشاريع المميزة بأسلوب Nawy — أسهم حقيقية وتمرير أفقي */
-export function ProjectsSlider() {
-  const { t } = useI18n();
+/** سلايدر المشاريع المميزة بأسلوب Nawy — أسهم جانبية حقيقية وتمرير أفقي */
+export function ProjectsSlider({
+  block,
+  cardWidth,
+}: {
+  block?: HomeBlock;
+  cardWidth?: number;
+}) {
+  const { t, locale } = useI18n();
   const { formatWithSymbol } = useCurrency();
   const trackRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const cardStyle = cardWidth ? { width: `${cardWidth}px` } : undefined;
+  const eyebrow =
+    (locale === "ar" ? block?.eyebrowAr : block?.eyebrowEn || block?.eyebrowAr) ||
+    t("home.projects.eyebrow");
+  const title =
+    (locale === "ar" ? block?.titleAr : block?.titleEn || block?.titleAr) ||
+    t("home.projects.title");
+  const subtitle =
+    (locale === "ar"
+      ? block?.subtitleAr
+      : block?.subtitleEn || block?.subtitleAr) || t("home.projects.sub");
 
   const scrollCards = (direction: 1 | -1) => {
     const node = trackRef.current;
@@ -106,56 +124,57 @@ export function ProjectsSlider() {
           <div>
             <p className="flex items-center gap-2.5 text-xs font-bold text-gold-700">
               <span aria-hidden className="h-px w-8 bg-gold-400" />
-              {t("home.projects.eyebrow")}
+              {eyebrow}
             </p>
-            <h2 className="mt-2.5 text-2xl font-black tracking-tight text-ocean-900 sm:text-3xl">
-              {t("home.projects.title")}
+            <h2 className="hb-title mt-2.5 text-2xl font-black tracking-tight text-ocean-900 sm:text-3xl">
+              {title}
             </h2>
-            <p className="mt-2 flex items-center gap-2 text-[13px] font-medium text-sand-700">
-              {t("home.projects.sub")}
+            <p className="hb-body mt-2 flex items-center gap-2 text-[13px] font-medium text-sand-700">
+              {subtitle}
               <span className="rounded-md border border-gold-200 bg-gold-50 px-2 py-0.5 text-[9.5px] font-extrabold text-gold-800">
                 {t("home.projects.ad")}
               </span>
             </p>
           </div>
-
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => scrollCards(-1)}
-              aria-label={t("home.projects.title")}
-              className="grid h-10 w-10 place-items-center rounded-full border border-sand-300 bg-white text-ocean-800 transition hover:border-gold-300 hover:bg-gold-50"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollCards(1)}
-              aria-label={t("home.projects.title")}
-              className="grid h-10 w-10 place-items-center rounded-full border border-ocean-900 bg-ocean-900 text-white transition hover:bg-ocean-950"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-          </div>
         </div>
 
-        <div
-          ref={trackRef}
-          onScroll={handleScroll}
-          className="mt-6 flex snap-x snap-mandatory gap-5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {PROJECTS.map((project) => (
-            <article
-              key={project.name}
-              className="group w-[300px] shrink-0 snap-start overflow-hidden rounded-2xl border border-sand-200 bg-white shadow-soft transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-24px_rgba(20,26,51,0.35)] sm:w-[360px]"
-            >
+        {/* الشريط مع أزرار تحكم جانبية يمين ويسار منتصف الشريط */}
+        <div className="relative mt-6">
+          <button
+            type="button"
+            onClick={() => scrollCards(-1)}
+            aria-label={t("home.projects.prev")}
+            className="absolute -start-2 top-1/2 z-20 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-sand-300 bg-white/95 text-ocean-800 shadow-[0_10px_24px_-12px_rgba(20,26,51,0.45)] backdrop-blur transition hover:border-gold-300 hover:bg-gold-50 sm:-start-4"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollCards(1)}
+            aria-label={t("home.projects.next")}
+            className="absolute -end-2 top-1/2 z-20 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-ocean-900 bg-ocean-900 text-white shadow-[0_10px_24px_-12px_rgba(20,26,51,0.6)] transition hover:bg-ocean-950 sm:-end-4"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+
+          <div
+            ref={trackRef}
+            onScroll={handleScroll}
+            className="flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {PROJECTS.map((project) => (
+              <article
+                key={project.name}
+                style={cardStyle}
+                className="group w-[300px] shrink-0 snap-start overflow-hidden rounded-2xl border border-sand-200 bg-white shadow-soft transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-24px_rgba(20,26,51,0.35)] sm:w-[360px]"
+              >
               <div className="relative h-52 overflow-hidden bg-sand-200">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={project.image}
                   alt={project.name}
                   loading="lazy"
-                  className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                  className="hb-media h-full w-full object-cover transition duration-700 group-hover:scale-105"
                 />
                 <span
                   aria-hidden
@@ -206,6 +225,7 @@ export function ProjectsSlider() {
               </div>
             </article>
           ))}
+          </div>
         </div>
 
         <div className="mt-4 flex items-center justify-center gap-1.5">
@@ -228,8 +248,22 @@ export function ProjectsSlider() {
 }
 
 /** شريط إعلاني أفقي — مساحة إعلانية موسومة بوضوح */
-export function AdBand() {
-  const { t } = useI18n();
+export function AdBand({ block }: { block?: HomeBlock }) {
+  const { t, locale } = useI18n();
+  const title =
+    (locale === "ar" ? block?.titleAr : block?.titleEn || block?.titleAr) ||
+    t("home.adband.title");
+  const subtitle =
+    (locale === "ar"
+      ? block?.subtitleAr
+      : block?.subtitleEn || block?.subtitleAr) || t("home.adband.desc");
+  const hint =
+    (locale === "ar" ? block?.bodyAr : block?.bodyEn || block?.bodyAr) ||
+    t("home.adband.hint");
+  const cta =
+    (locale === "ar"
+      ? block?.linkLabelAr
+      : block?.linkLabelEn || block?.linkLabelAr) || t("home.adband.cta");
 
   return (
     <section className="bg-sand-50 pb-2 pt-8">
@@ -246,22 +280,22 @@ export function AdBand() {
             م
           </span>
           <div className="relative w-full min-w-0 basis-full sm:w-auto sm:flex-1">
-            <p className="text-sm font-black text-ocean-900">
-              {t("home.adband.title")}
+            <p className="hb-title text-sm font-black text-ocean-900">
+              {title}
             </p>
-            <p className="mt-1 text-[10.5px] font-semibold text-sand-700">
-              {t("home.adband.desc")}
+            <p className="hb-body mt-1 text-[10.5px] font-semibold text-sand-700">
+              {subtitle}
             </p>
           </div>
           <span className="relative hidden text-[9.5px] text-sand-600 lg:block">
-            {t("home.adband.hint")}
+            {hint}
           </span>
           <Link
-            href="/#properties"
+            href={block?.linkUrl || "/#properties"}
             className="relative inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-ocean-900 px-4 py-2.5 text-[11.5px] font-extrabold text-white transition hover:bg-ocean-950 sm:w-auto"
           >
             <Megaphone className="h-3.5 w-3.5" />
-            {t("home.adband.cta")}
+            {cta}
             <ArrowRight className="h-3 w-3 rtl:-scale-x-100" />
           </Link>
         </div>

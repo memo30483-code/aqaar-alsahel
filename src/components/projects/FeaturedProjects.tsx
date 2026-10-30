@@ -10,13 +10,20 @@ import {
   type PublicProjectEntry,
 } from "@/lib/professionals-store";
 import { ProjectsSlider } from "@/components/ProjectsSlider";
+import type { HomeBlock } from "@/lib/home-builder-store";
 
 /**
  * قسم «مشاريع مميزة» في الرئيسية.
  * يعرض ما ميّزته الإدارة فعلياً من مشاريع المطورين المنشورة.
  * ولو مفيش ولا مشروع مميز، نرجع للسلايدر التجريبي حتى تظل الرئيسية كاملة.
  */
-export default function FeaturedProjects() {
+export default function FeaturedProjects({
+  block,
+  cardWidth,
+}: {
+  block?: HomeBlock;
+  cardWidth?: number;
+} = {}) {
   const { t, locale } = useI18n();
   const { records, ready } = useProfessionalsState();
 
@@ -35,8 +42,20 @@ export default function FeaturedProjects() {
   if (!ready) return null;
   if (featured.length === 0) {
     /* نفس بيانات السلايدر القديم، مع تحقق من الدالة لتفادي فرق التحميل */
-    return <ProjectsSlider />;
+    return <ProjectsSlider block={block} cardWidth={cardWidth} />;
   }
+
+  const eyebrow =
+    (locale === "ar" ? block?.eyebrowAr : block?.eyebrowEn || block?.eyebrowAr) ||
+    t("home.featuredProjects.eyebrow");
+  const title =
+    (locale === "ar" ? block?.titleAr : block?.titleEn || block?.titleAr) ||
+    t("home.featuredProjects.title");
+  const subtitle =
+    (locale === "ar"
+      ? block?.subtitleAr
+      : block?.subtitleEn || block?.subtitleAr) ||
+    t("home.featuredProjects.desc");
 
   return (
     <section id="projects" className="scroll-mt-24 border-t border-sand-200 bg-white py-14">
@@ -45,13 +64,13 @@ export default function FeaturedProjects() {
           <div>
             <p className="flex items-center gap-2.5 text-xs font-bold text-gold-700">
               <span aria-hidden className="h-px w-8 bg-gold-400" />
-              {t("home.featuredProjects.eyebrow")}
+              {eyebrow}
             </p>
-            <h2 className="mt-2.5 text-2xl font-black tracking-tight text-ocean-900 sm:text-3xl">
-              {t("home.featuredProjects.title")}
+            <h2 className="hb-title mt-2.5 text-2xl font-black tracking-tight text-ocean-900 sm:text-3xl">
+              {title}
             </h2>
-            <p className="mt-2 text-[13px] font-medium text-sand-700">
-              {t("home.featuredProjects.desc")}
+            <p className="hb-body mt-2 text-[13px] font-medium text-sand-700">
+              {subtitle}
             </p>
           </div>
           <Link
@@ -79,7 +98,7 @@ export default function FeaturedProjects() {
                       src={project.coverUrl}
                       alt={project.titleAr}
                       loading="lazy"
-                      className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                      className="hb-media h-full w-full object-cover transition duration-700 group-hover:scale-105"
                     />
                   ) : (
                     <span className="grid h-full w-full place-items-center bg-gradient-to-br from-ocean-800 to-ocean-950 text-gold-300">

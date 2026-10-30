@@ -51,6 +51,7 @@ import {
   type HomeBlockType,
 } from "@/lib/home-builder-store";
 import HomeCustomBlock from "@/components/home/HomeCustomBlock";
+import { blockCssVars, blockScopeClasses, resolveMedia, type HomeBlockStyle } from "@/lib/home-block-style";
 import RamadanDecorations from "@/components/RamadanDecorations";
 import SeasonDecorations from "@/components/SeasonDecorations";
 import { useSeasonTheme } from "@/components/ThemeProvider";
@@ -103,19 +104,32 @@ export default function HomePage() {
   /* ===== Builder الرئيسية: ترتيب وإظهار وإخفاء الأقسام من لوحة التحكم ===== */
   const layout = useHomeBlocks();
 
-  const blockOf = (type: HomeBlockType): HomeBlock | undefined =>
-    layout.find((block) => block.type === type);
-  const showBlock = (type: HomeBlockType) => blockOf(type)?.visible ?? false;
-  const orderOf = (type: HomeBlockType) => blockOf(type)?.order ?? 999;
-  const content = (type: HomeBlockType): HomeBlock | undefined => {
-    const block = blockOf(type);
-    if (!block || !block.visible) return undefined;
-    return block;
-  };
+  const blocksOf = (type: HomeBlockType): HomeBlock[] =>
+    layout.filter((block) => block.type === type && block.visible);
+  /**
+   * غلاف القسم: يحقن ترتيب القسم + متغيّرات التنسيق (خط، أحجام، ألوان،
+   * مقاسات الوسائط) ويضيف كلاسات التفعيل فقط عند ضبط القيمة.
+   */
+  const shellFor = (
+    order: number,
+    style?: HomeBlockStyle,
+    backgroundMedia = false
+  ) => ({
+    style: { order, ...blockCssVars(style) } as React.CSSProperties,
+    className: ["w-full", ...blockScopeClasses(style, { backgroundMedia })].join(" "),
+  });
+  const inlineShellFor = (block: HomeBlock) => ({
+    style: blockCssVars(block.style) as React.CSSProperties,
+    className: [
+      "sm:col-span-2 lg:col-span-3",
+      ...blockScopeClasses(block.style),
+    ].join(" "),
+  });
   /** نص قابل للتعديل من Builder مع الرجوع لترجمة الموقع */
-  const text = (type: HomeBlockType, field: "eyebrow" | "title" | "subtitle" | "body") => {
-    const block = content(type);
-    if (!block) return undefined;
+  const textOf = (
+    block: HomeBlock,
+    field: "eyebrow" | "title" | "subtitle" | "body"
+  ) => {
     const ar = locale === "ar";
     const value =
       field === "eyebrow"
@@ -323,24 +337,46 @@ export default function HomePage() {
     : "VER-2026-0000";
   /** رمضان: خط الفوانيس المعلّق من الهيدر (104px) يحتاج مسافة أعلى الهيرو */
   const isRamadan = seasonTheme.active && seasonTheme.preset === "ramadan";
-
   return (
     <>
       <div className="flex w-full flex-col">
-      {showBlock("hero") && (
-      <div key="hero" style={{ order: orderOf("hero") }} className="w-full">
+      {blocksOf("hero").map((block) => {
+      const heroMedia = resolveMedia(block.videoUrl);
+      return (
+      <div key={block.id} {...shellFor(block.order, block.style, true)}>
       {/* ====================== HERO ====================== */}
       <section className="relative overflow-hidden bg-ocean-950">
         <div className="absolute inset-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={content("hero")?.imageUrl || seasonTheme.heroImage || HERO_IMAGE}
-            alt={t("home.hero.imageAlt")}
-            className="h-full w-full object-cover object-[center_42%]"
-            onError={(event) => {
-              event.currentTarget.src = HERO_FALLBACK;
-            }}
-          />
+          {heroMedia ? (
+            heroMedia.kind === "embed" ? (
+              <iframe
+                src={heroMedia.src}
+                title={t("home.hero.imageAlt")}
+                className="hb-media h-full w-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <video
+                src={heroMedia.src}
+                className="hb-media h-full w-full object-cover"
+                autoPlay
+                muted
+                loop
+                playsInline
+              />
+            )
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={block.imageUrl || seasonTheme.heroImage || HERO_IMAGE}
+              alt={t("home.hero.imageAlt")}
+              className="hb-media h-full w-full object-cover object-[center_42%]"
+              onError={(event) => {
+                event.currentTarget.src = HERO_FALLBACK;
+              }}
+            />
+          )}
           <span
             aria-hidden
             className={`absolute inset-0 ${
@@ -368,11 +404,11 @@ export default function HomePage() {
             {!(seasonTheme.active && seasonTheme.preset === "ramadan") && (
               <p className="flex items-center gap-2.5 text-xs font-bold tracking-wide text-gold-200">
                 <span aria-hidden className="h-px w-8 theme-accent-line" />
-                {text("hero", "eyebrow") ?? t("home.hero.eyebrow")}
+                {textOf(block, "eyebrow") ?? t("home.hero.eyebrow")}
               </p>
             )}
 
-            <h1 className="mt-4 text-4xl font-black leading-[1.24] tracking-tight sm:text-5xl lg:text-[56px]">
+            <h1 className="hb-title mt-4 text-4xl font-black leading-[1.24] tracking-tight sm:text-5xl lg:text-[56px]">
               <span
                 className={`relative text-gold-300 ${
                   /* عنوان رمضان أطول من عنوان العلامة — يُسمح بالتفاف السطر على الموبايل */
@@ -383,9 +419,9 @@ export default function HomePage() {
               >
                 {seasonTheme.active && seasonTheme.preset === "ramadan"
                   ? seasonTheme.campaignText || "رمضان احلى مع عقار FAMILY"
-                  : text("hero", "title") ?? t("home.hero.titleGold")}
+                  : textOf(block, "title") ?? t("home.hero.titleGold")}
               </span>
-              {!text("hero", "title") && !(seasonTheme.active && seasonTheme.preset === "ramadan") && (
+              {!textOf(block, "title") && !(seasonTheme.active && seasonTheme.preset === "ramadan") && (
                 <>
                   <br />
                   {t("home.hero.titleRest")}
@@ -393,10 +429,10 @@ export default function HomePage() {
               )}
             </h1>
 
-            <p className="mt-4 max-w-[600px] text-sm font-medium leading-8 text-[#e8ecf6] sm:text-base">
+            <p className="hb-body mt-4 max-w-[600px] text-sm font-medium leading-8 text-[#e8ecf6] sm:text-base">
               {seasonTheme.active && seasonTheme.preset === "ramadan"
                 ? "ابحث عن بيتك القادم في رأس البر ودمياط، وسط ليالي رمضان المصرية"
-                : text("hero", "subtitle") ?? t("home.hero.description")}
+                : textOf(block, "subtitle") ?? t("home.hero.description")}
             </p>
 
             <div className="mt-7 grid grid-cols-2 gap-y-5 sm:flex sm:flex-wrap sm:items-stretch">
@@ -635,19 +671,20 @@ export default function HomePage() {
         </div>
       </div>
       </div>
-      )}
+      );
+      })}
 
-      {showBlock("verify_strip") && (
-      <div key="verify_strip" style={{ order: orderOf("verify_strip") }} className="w-full">
+      {blocksOf("verify_strip").map((block) => (
+      <div key={block.id} {...shellFor(block.order, block.style)}>
       {/* ====================== VERIFY STRIP ====================== */}
       <section className="border-b border-sand-200 bg-white pb-6 pt-10">
         <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-6 px-4 sm:px-6 xl:flex-row xl:items-center">
           <div className="flex flex-col gap-0.5 border-sand-200 pb-4 xl:min-w-[172px] xl:border-l xl:pb-0 xl:ps-6">
-            <p className="text-[13px] font-black text-ocean-900">
-              {text("verify_strip", "title") ?? t("home.verify.lead")}
+            <p className="hb-title text-[13px] font-black text-ocean-900">
+              {textOf(block, "title") ?? t("home.verify.lead")}
             </p>
-            <p className="text-[10.5px] font-semibold text-sand-700">
-              {text("verify_strip", "subtitle") ?? t("home.verify.sub")}
+            <p className="hb-body text-[10.5px] font-semibold text-sand-700">
+              {textOf(block, "subtitle") ?? t("home.verify.sub")}
             </p>
           </div>
 
@@ -714,17 +751,17 @@ export default function HomePage() {
         </div>
       </section>
       </div>
-      )}
+      ))}
 
-      {showBlock("marquee") && (
-      <div key="marquee" style={{ order: orderOf("marquee") }} className="w-full">
+      {blocksOf("marquee").map((block) => (
+      <div key={block.id} {...shellFor(block.order, block.style)}>
       {/* ====================== MARQUEE ====================== */}
-      <MarqueeStrip />
+      <MarqueeStrip block={block} />
       </div>
-      )}
+      ))}
 
-      {showBlock("featured_listings") && (
-      <div key="featured_listings" style={{ order: orderOf("featured_listings") }} className="w-full">
+      {blocksOf("featured_listings").map((block) => (
+      <div key={block.id} {...shellFor(block.order, block.style)}>
       {/* ====================== LISTINGS ====================== */}
       <section id="properties" className="scroll-mt-24 bg-sand-50 py-12 sm:py-16">
         <div className="mx-auto w-full max-w-[1240px] px-4 sm:px-6">
@@ -732,13 +769,13 @@ export default function HomePage() {
             <div>
               <p className="flex items-center gap-2.5 text-xs font-bold text-gold-700">
                 <span aria-hidden className="h-px w-8 theme-accent-line" />
-                {text("featured_listings", "eyebrow") ?? t("home.listings.eyebrow")}
+                {textOf(block, "eyebrow") ?? t("home.listings.eyebrow")}
               </p>
-              <h2 className="mt-2.5 text-2xl font-black tracking-tight text-ocean-900 sm:text-[33px]">
-                {text("featured_listings", "title") ?? t("home.listings.heading")}
+              <h2 className="hb-title mt-2.5 text-2xl font-black tracking-tight text-ocean-900 sm:text-[33px]">
+                {textOf(block, "title") ?? t("home.listings.heading")}
               </h2>
-              <p className="mt-2 max-w-[560px] text-[13px] font-medium leading-6 text-sand-700">
-                {text("featured_listings", "subtitle") ?? t("home.listings.sub")}
+              <p className="hb-body mt-2 max-w-[560px] text-[13px] font-medium leading-6 text-sand-700">
+                {textOf(block, "subtitle") ?? t("home.listings.sub")}
               </p>
             </div>
             <button
@@ -862,9 +899,12 @@ export default function HomePage() {
               {shown.map((property, index) => (
                 <Fragment key={property.id}>
                   <PropertyCard property={property} />
-                  {index === 5 && showBlock("inline_ad") && (
-                    <FeaturedAdSlot className="sm:col-span-2 lg:col-span-3" />
-                  )}
+                  {index === 5 &&
+                    blocksOf("inline_ad").map((adBlock) => (
+                      <div key={adBlock.id} {...inlineShellFor(adBlock)}>
+                        <FeaturedAdSlot block={adBlock} className="h-full" />
+                      </div>
+                    ))}
                 </Fragment>
               ))}
             </div>
@@ -885,31 +925,31 @@ export default function HomePage() {
         </div>
       </section>
       </div>
-      )}
+      ))}
 
-      {showBlock("ad_band") && (
-      <div key="ad_band" style={{ order: orderOf("ad_band") }} className="w-full">
+      {blocksOf("ad_band").map((block) => (
+      <div key={block.id} {...shellFor(block.order, block.style)}>
       {/* ====================== AD BAND ====================== */}
-      <AdBand />
+      <AdBand block={block} />
       </div>
-      )}
+      ))}
 
-      {showBlock("projects_slider") && (
-      <div key="projects_slider" style={{ order: orderOf("projects_slider") }} className="w-full">
+      {blocksOf("projects_slider").map((block) => (
+      <div key={block.id} {...shellFor(block.order, block.style)}>
       {/* ====================== PROJECTS ====================== */}
-      <FeaturedProjects />
+      <FeaturedProjects block={block} cardWidth={block.style?.cardWidth} />
       </div>
-      )}
+      ))}
 
-      {showBlock("ad_slider") && (
-      <div key="ad_slider" style={{ order: orderOf("ad_slider") }} className="w-full">
+      {blocksOf("ad_slider").map((block) => (
+      <div key={block.id} {...shellFor(block.order, block.style)}>
       {/* ====================== AD SLIDER ====================== */}
-      <AdSlider />
+      <AdSlider block={block} />
       </div>
-      )}
+      ))}
 
-      {showBlock("story_dossier") && (
-      <div key="story_dossier" style={{ order: orderOf("story_dossier") }} className="w-full">
+      {blocksOf("story_dossier").map((block) => (
+      <div key={block.id} {...shellFor(block.order, block.style)}>
       {/* ====================== STORY + DOSSIER ====================== */}
       <section className="relative overflow-hidden theme-hero py-12 text-white sm:py-14">
         <span
@@ -921,11 +961,11 @@ export default function HomePage() {
           <div>
             <p className="flex items-center gap-2.5 text-xs font-bold text-gold-300">
               <span aria-hidden className="h-px w-8 theme-accent-line" />
-              {text("story_dossier", "eyebrow") ?? t("home.story.eyebrow")}
+              {textOf(block, "eyebrow") ?? t("home.story.eyebrow")}
             </p>
-            <h2 className="mt-3 text-3xl font-black leading-[1.45] tracking-tight sm:text-[38px]">
-              {text("story_dossier", "title") ? (
-                <span className="text-gold-300">{text("story_dossier", "title")}</span>
+            <h2 className="hb-title mt-3 text-3xl font-black leading-[1.45] tracking-tight sm:text-[38px]">
+              {textOf(block, "title") ? (
+                <span className="text-gold-300">{textOf(block, "title")}</span>
               ) : (
                 <>
                   {t("home.story.title1")}
@@ -934,8 +974,8 @@ export default function HomePage() {
                 </>
               )}
             </h2>
-            <p className="mt-4 max-w-[560px] text-sm font-medium leading-8 text-[#c2c9dd]">
-              {text("story_dossier", "subtitle") ?? t("home.story.lead")}
+            <p className="hb-body mt-4 max-w-[560px] text-sm font-medium leading-8 text-[#c2c9dd]">
+              {textOf(block, "subtitle") ?? t("home.story.lead")}
             </p>
 
             <div className="mt-6 flex flex-col gap-4">
@@ -1105,28 +1145,28 @@ export default function HomePage() {
         </div>
       </section>
       </div>
-      )}
+      ))}
 
-      {showBlock("manage_note") && (
-      <div key="manage_note" style={{ order: orderOf("manage_note") }} className="w-full">
+      {blocksOf("manage_note").map((block) => (
+      <div key={block.id} {...shellFor(block.order, block.style)}>
       {/* شريط صغير يذكّر بسياسة التواصل قبل الفوتر */}
       <section className="border-t border-sand-200 bg-white">
-        <div className="mx-auto flex w-full max-w-[1240px] flex-wrap items-center justify-center gap-2 px-4 py-4 text-[11px] font-bold text-sand-700 sm:px-6">
+        <div className="hb-body mx-auto flex w-full max-w-[1240px] flex-wrap items-center justify-center gap-2 px-4 py-4 text-[11px] font-bold text-sand-700 sm:px-6">
           <BadgeCheck className="h-4 w-4 text-gold-600" />
-          {text("manage_note", "title") ?? t("home.listings.manage")}
+          {textOf(block, "title") ?? t("home.listings.manage")}
           <span aria-hidden className="text-sand-400">·</span>
           <FileText className="h-3.5 w-3.5 text-sand-500" />
-          {text("manage_note", "body") ?? t("home.dossier.hiddenTitle")}
+          {textOf(block, "body") ?? t("home.dossier.hiddenTitle")}
         </div>
       </section>
       </div>
-      )}
+      ))}
 
       {/* أقسام مضافة من Builder الرئيسية */}
       {layout
         .filter((block) => block.visible && isCustomBlockType(block.type))
         .map((block) => (
-          <div key={block.id} style={{ order: block.order }} className="w-full">
+          <div key={block.id} {...shellFor(block.order, block.style, block.type === "banner")}>
             <HomeCustomBlock block={block} />
           </div>
         ))}

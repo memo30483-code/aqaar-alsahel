@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cairo } from "next/font/google";
+import { Amiri, Cairo, Readex_Pro, Tajawal } from "next/font/google";
 import ThemeProvider from "@/components/ThemeProvider";
 import AppProviders from "@/components/AppProviders";
 import Header from "@/components/Header";
@@ -13,6 +13,27 @@ import "./globals.css";
 const cairo = Cairo({
   subsets: ["arabic", "latin"],
   variable: "--font-cairo",
+  display: "swap",
+});
+
+/* خطوط إضافية يختار منها الأدمن داخل Builder الرئيسية */
+const tajawal = Tajawal({
+  subsets: ["arabic", "latin"],
+  weight: ["400", "500", "700", "800", "900"],
+  variable: "--font-tajawal",
+  display: "swap",
+});
+
+const amiri = Amiri({
+  subsets: ["arabic", "latin"],
+  weight: ["400", "700"],
+  variable: "--font-amiri",
+  display: "swap",
+});
+
+const readex = Readex_Pro({
+  subsets: ["arabic", "latin"],
+  variable: "--font-readex",
   display: "swap",
 });
 
@@ -39,7 +60,9 @@ export default function RootLayout({
         */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
       </head>
-      <body className={`${cairo.variable} font-sans antialiased min-h-screen flex flex-col`}>
+      <body
+        className={`${cairo.variable} ${tajawal.variable} ${amiri.variable} ${readex.variable} font-sans antialiased min-h-screen flex flex-col`}
+      >
         <AppProviders>
           <ThemeProvider>
           <Header />

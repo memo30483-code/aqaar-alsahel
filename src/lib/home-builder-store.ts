@@ -7,6 +7,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { blockOrder, isBlockEnabled, type BlockKey } from "@/lib/admin-system";
+import { sanitizeBlockStyle, type HomeBlockStyle } from "@/lib/home-block-style";
 
 export type HomeBlockType =
   | "hero"
@@ -35,6 +36,10 @@ export interface HomeBlockItem {
   /** للـ stats: الوصف، وللـ faq: الإجابة */
   textAr?: string;
   textEn?: string;
+  /** صورة عنصر السلايدر أو البطاقة */
+  imageUrl?: string;
+  /** الرابط الذي يفتحه العنصر */
+  linkUrl?: string;
 }
 
 export interface HomeBlock {
@@ -51,18 +56,22 @@ export interface HomeBlock {
   bodyAr?: string;
   bodyEn?: string;
   imageUrl?: string;
+  /** فيديو القسم: ملف mp4/webm أو رابط يوتيوب/فيميو */
+  videoUrl?: string;
   linkUrl?: string;
   linkLabelAr?: string;
   linkLabelEn?: string;
   /** نمط الخلفية للأقسام القابلة للإضافة */
   tone?: "navy" | "sand" | "white";
   items?: HomeBlockItem[];
+  /** تنسيق القسم الكامل — خط، أحجام، ألوان، محاذاة، مقاسات الوسائط */
+  style?: HomeBlockStyle;
 }
 
 export const HOME_BLOCKS_KEY = "aqaar-home-builder";
 export const HOME_BLOCKS_EVENT = "aqaar:home-builder";
 
-/** الأقسام الأساسية الموجودة في كود الصفحة — لا تُكرَّر */
+/** قوالب الأقسام المدمجة في الصفحة (ويمكن إنشاء أكثر من نسخة منها). */
 export const CORE_BLOCK_TYPES: HomeBlockType[] = [
   "hero",
   "verify_strip",
@@ -83,6 +92,12 @@ export const CUSTOM_BLOCK_TYPES: HomeBlockType[] = [
   "stats",
   "faq",
   "cta",
+];
+
+/** كل القوالب التي يستطيع الأدمن إضافتها من نافذة «إضافة قسم». */
+export const ADDABLE_BLOCK_TYPES: HomeBlockType[] = [
+  ...CORE_BLOCK_TYPES,
+  ...CUSTOM_BLOCK_TYPES,
 ];
 
 export function isCoreBlockType(type: HomeBlockType): boolean {
@@ -246,6 +261,8 @@ function normalizeItem(raw: unknown, index: number): HomeBlockItem | null {
     titleEn: toStringOrUndefined(item.titleEn),
     textAr: toStringOrUndefined(item.textAr),
     textEn: toStringOrUndefined(item.textEn),
+    imageUrl: toStringOrUndefined(item.imageUrl),
+    linkUrl: toStringOrUndefined(item.linkUrl),
   };
 }
 
@@ -266,6 +283,7 @@ function normalizeBlock(raw: Partial<HomeBlock>, index: number): HomeBlock | nul
     bodyAr: toStringOrUndefined(raw.bodyAr),
     bodyEn: toStringOrUndefined(raw.bodyEn),
     imageUrl: toStringOrUndefined(raw.imageUrl),
+    videoUrl: toStringOrUndefined(raw.videoUrl),
     linkUrl: toStringOrUndefined(raw.linkUrl),
     linkLabelAr: toStringOrUndefined(raw.linkLabelAr),
     linkLabelEn: toStringOrUndefined(raw.linkLabelEn),
@@ -278,6 +296,7 @@ function normalizeBlock(raw: Partial<HomeBlock>, index: number): HomeBlock | nul
           .map((item, position) => normalizeItem(item, position))
           .filter((item): item is HomeBlockItem => item !== null)
       : undefined,
+    style: sanitizeBlockStyle(raw.style),
   };
 }
 
@@ -325,16 +344,7 @@ export function getHomeBlocks(): HomeBlock[] {
     .map((block, index) => normalizeBlock(block, index))
     .filter((block): block is HomeBlock => block !== null);
 
-  /* منع تكرار الأقسام الأساسية */
-  const seenCore = new Set<HomeBlockType>();
-  const unique = normalized.filter((block) => {
-    if (!isCoreBlockType(block.type)) return true;
-    if (seenCore.has(block.type)) return false;
-    seenCore.add(block.type);
-    return true;
-  });
-
-  return sortBlocks(unique);
+  return sortBlocks(normalized);
 }
 
 export function saveHomeBlocks(blocks: HomeBlock[]): void {
@@ -358,6 +368,75 @@ export function saveHomeBlocks(blocks: HomeBlock[]): void {
 /** خصائص المحتوى الافتراضية لكل نوع جديد */
 function defaultContent(type: HomeBlockType): Partial<HomeBlock> {
   switch (type) {
+    case "hero":
+      return {
+        eyebrowAr: "عقار أحلامك يبدأ من هنا",
+        titleAr: "عنوان هيرو جديد",
+        subtitleAr: "اكتب وصف هذا الهيرو من لوحة التحكم.",
+      };
+    case "verify_strip":
+      return {
+        titleAr: "شريط تحقق جديد",
+        subtitleAr: "اكتب وصف خطوات التحقق.",
+      };
+    case "marquee":
+      return {
+        titleAr: "شريط متحرك جديد",
+        subtitleAr: "إعلانات وأخبار المنصة",
+        items: [
+          { id: "marquee-1", titleAr: "اكتب محتوى الشريط المتحرك هنا" },
+        ],
+      };
+    case "featured_listings":
+      return {
+        eyebrowAr: "اختيارات عقار FAMILY",
+        titleAr: "شبكة عقارات جديدة",
+        subtitleAr: "اضبط عنوان ووصف هذه النسخة من الشبكة.",
+      };
+    case "projects_slider":
+      return {
+        eyebrowAr: "مشاريع مختارة",
+        titleAr: "سلايدر مشاريع جديد",
+        subtitleAr: "مشاريع المطورين المعتمدين.",
+      };
+    case "ad_slider":
+      return {
+        titleAr: "شريط إعلانات جديد",
+        subtitleAr: "أضف بطاقات الإعلان وعدّل صورها وروابطها.",
+        items: [
+          {
+            id: "ad-1",
+            titleAr: "عنوان الإعلان",
+            textAr: "موقع أو وصف الإعلان",
+            linkUrl: "/#projects",
+          },
+        ],
+      };
+    case "inline_ad":
+      return {
+        titleAr: "إعلان مميز داخل العقارات",
+        subtitleAr: "مساحة إعلانية واضحة وموسومة بكلمة إعلان.",
+        linkLabelAr: "استكشف المشروع",
+        linkUrl: "/#projects",
+      };
+    case "ad_band":
+      return {
+        titleAr: "مساحة إعلانية للمطورين",
+        subtitleAr: "اكتب وصف الشريط الإعلاني هنا.",
+        linkLabelAr: "أعلن معنا",
+        linkUrl: "/register",
+      };
+    case "story_dossier":
+      return {
+        eyebrowAr: "لماذا عقار FAMILY؟",
+        titleAr: "قصة جديدة للمنصة",
+        subtitleAr: "اكتب وصف هذا القسم وهدفه.",
+      };
+    case "manage_note":
+      return {
+        titleAr: "كل التواصل عبر إدارة المنصة",
+        bodyAr: "بيانات المالك ومستنداته لا تظهر للزوار.",
+      };
     case "text":
       return {
         titleAr: "عنوان القسم",
@@ -413,9 +492,6 @@ function defaultContent(type: HomeBlockType): Partial<HomeBlock> {
 
 export function addHomeBlock(type: HomeBlockType): HomeBlock | null {
   const blocks = getHomeBlocks();
-  if (isCoreBlockType(type) && blocks.some((block) => block.type === type)) {
-    return null;
-  }
   const block: HomeBlock = {
     id: makeId(type, blocks),
     type,

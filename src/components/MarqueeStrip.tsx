@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Megaphone, Newspaper, ShieldCheck } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { getMarqueeItems, type MarqueeItem } from "@/lib/admin-system";
+import type { HomeBlock } from "@/lib/home-builder-store";
 
 function Diamond() {
   return (
@@ -15,15 +16,31 @@ function Diamond() {
 }
 
 /** شريط متحرك لشركاء النجاح والأخبار — يُعرَض كمساحة إعلانية موسومة */
-export default function MarqueeStrip() {
+export default function MarqueeStrip({ block }: { block?: HomeBlock }) {
   const { t, locale } = useI18n();
-  const [items, setItems] = useState<MarqueeItem[]>([]);
+  const [storedItems, setStoredItems] = useState<MarqueeItem[]>([]);
 
   useEffect(() => {
-    setItems(getMarqueeItems().filter((item) => item.enabled));
+    setStoredItems(getMarqueeItems().filter((item) => item.enabled));
   }, []);
 
+  const customItems: MarqueeItem[] = (block?.items ?? []).map((item, index) => ({
+    id: item.id,
+    textAr: item.titleAr,
+    textEn: item.titleEn || item.titleAr,
+    type: "ad",
+    enabled: true,
+    order: index + 1,
+  }));
+  const items = customItems.length > 0 ? customItems : storedItems;
   const label = (item: MarqueeItem) => (locale === "ar" ? item.textAr : item.textEn);
+  const heading =
+    (locale === "ar" ? block?.titleAr : block?.titleEn || block?.titleAr) ||
+    t("home.marquee.title");
+  const subtitle =
+    (locale === "ar"
+      ? block?.subtitleAr
+      : block?.subtitleEn || block?.subtitleAr) || t("home.marquee.sub");
 
   const renderItems = (prefix: string) => (
     <>
@@ -76,14 +93,14 @@ export default function MarqueeStrip() {
         <div className="relative z-[4] flex w-[168px] shrink-0 flex-col justify-center gap-1 border-l border-sand-200 bg-gradient-to-l from-white to-sand-50 px-4 py-4 sm:w-[196px] sm:ps-6">
           <span className="flex items-center gap-1.5 text-[11.5px] font-black text-ocean-900">
             <Megaphone className="h-3.5 w-3.5 text-gold-600" />
-            {t("home.marquee.title")}
+            <span className="hb-title">{heading}</span>
             <span className="rounded bg-ocean-900 px-1.5 py-0.5 text-[8px] font-extrabold tracking-wide text-white">
               {t("ads.label")}
             </span>
           </span>
           <span className="flex items-center gap-1 text-[9px] font-bold text-sand-600">
             <ShieldCheck className="h-3 w-3 text-gold-500" />
-            {t("home.marquee.sub")}
+            <span className="hb-body">{subtitle}</span>
           </span>
         </div>
 

@@ -11,6 +11,7 @@ import { useI18n } from "@/lib/i18n";
 import { cityLabel } from "@/lib/i18n/cities";
 import { useActiveCities } from "@/lib/cities-store";
 import type { HomeBlock } from "@/lib/home-builder-store";
+import { resolveMedia, type ResolvedMedia } from "@/lib/home-block-style";
 
 interface Props {
   block: HomeBlock;
@@ -47,6 +48,44 @@ function toneClasses(tone: HomeBlock["tone"]): {
   };
 }
 
+/** وسائط القسم: صورة أو فيديو مباشر أو إطار تضمين (يوتيوب/فيميو) */
+function MediaLayer({
+  media,
+  className = "",
+}: {
+  media: ResolvedMedia;
+  className?: string;
+}) {
+  if (media.kind === "embed") {
+    return (
+      <iframe
+        src={media.src}
+        title="media"
+        className={`hb-media ${className}`}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        loading="lazy"
+      />
+    );
+  }
+  if (media.kind === "video") {
+    return (
+      <video
+        src={media.src}
+        className={`hb-media ${className}`}
+        autoPlay
+        muted
+        loop
+        playsInline
+      />
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={media.src} alt="" className={`hb-media ${className}`} />
+  );
+}
+
 /** قسم قابل للإضافة والتحرير بالكامل من Builder الرئيسية */
 export default function HomeCustomBlock({ block }: Props) {
   const { t, locale } = useI18n();
@@ -62,6 +101,8 @@ export default function HomeCustomBlock({ block }: Props) {
   const linkLabel =
     (ar ? block.linkLabelAr : block.linkLabelEn || block.linkLabelAr) ?? "";
   const items = block.items ?? [];
+  /* الفيديو له الأولوية على الصورة — الأدمن يختار أحدهما */
+  const media = resolveMedia(block.videoUrl) ?? resolveMedia(block.imageUrl);
 
   const heading = (extra?: string) => (
     <div className="max-w-2xl">
@@ -75,13 +116,15 @@ export default function HomeCustomBlock({ block }: Props) {
       )}
       {title && (
         <h2
-          className={`mt-2 text-[22px] font-black leading-9 sm:text-[28px] sm:leading-10 ${tone.heading} ${extra ?? ""}`}
+          className={`hb-title mt-2 text-[22px] font-black leading-9 sm:text-[28px] sm:leading-10 ${tone.heading} ${extra ?? ""}`}
         >
           {title}
         </h2>
       )}
       {subtitle && (
-        <p className={`mt-2 text-[12.5px] leading-7 ${tone.text}`}>{subtitle}</p>
+        <p className={`hb-body mt-2 text-[12.5px] leading-7 ${tone.text}`}>
+          {subtitle}
+        </p>
       )}
     </div>
   );
@@ -96,17 +139,12 @@ export default function HomeCustomBlock({ block }: Props) {
     </Link>
   ) : null;
 
-  /* ---------- بانر بصورة ---------- */
+  /* ---------- بانر بصورة أو فيديو ---------- */
   if (block.type === "banner") {
     return (
       <section className="relative overflow-hidden">
-        {block.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={block.imageUrl}
-            alt={title || "banner"}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
+        {media ? (
+          <MediaLayer media={media} className="absolute inset-0 object-cover" />
         ) : (
           <span
             aria-hidden
@@ -126,12 +164,12 @@ export default function HomeCustomBlock({ block }: Props) {
               </p>
             )}
             {title && (
-              <h2 className="mt-2 text-[24px] font-black leading-10 sm:text-[32px]">
+              <h2 className="hb-title mt-2 text-[24px] font-black leading-10 sm:text-[32px]">
                 {title}
               </h2>
             )}
             {subtitle && (
-              <p className="mt-2.5 text-[12.5px] leading-7 text-white/75">
+              <p className="hb-body mt-2.5 text-[12.5px] leading-7 text-white/75">
                 {subtitle}
               </p>
             )}
@@ -189,10 +227,10 @@ export default function HomeCustomBlock({ block }: Props) {
                 key={item.id}
                 className="rounded-2xl border border-sand-200 bg-white p-4 text-center"
               >
-                <p className="text-[24px] font-black leading-none text-ocean-900">
+                <p className="hb-title text-[24px] font-black leading-none text-ocean-900">
                   {(ar ? item.titleAr : item.titleEn || item.titleAr) || "—"}
                 </p>
-                <p className="mt-2 text-[11px] font-bold text-sand-600">
+                <p className="hb-body mt-2 text-[11px] font-bold text-sand-600">
                   {(ar ? item.textAr : item.textEn || item.textAr) || ""}
                 </p>
               </div>
@@ -219,7 +257,7 @@ export default function HomeCustomBlock({ block }: Props) {
                   {(ar ? item.titleAr : item.titleEn || item.titleAr) || "—"}
                   <ChevronDown className="h-4 w-4 shrink-0 text-gold-600 transition group-open:rotate-180" />
                 </summary>
-                <p className="mt-2 text-[12px] leading-7 text-sand-700">
+                <p className="hb-body mt-2 text-[12px] leading-7 text-sand-700">
                   {(ar ? item.textAr : item.textEn || item.textAr) || ""}
                 </p>
               </details>
@@ -252,12 +290,12 @@ export default function HomeCustomBlock({ block }: Props) {
               <Sparkles className="h-5 w-5" />
             </span>
             {title && (
-              <h2 className={`mt-3 text-[22px] font-black leading-9 sm:text-[28px] ${tone.heading}`}>
+              <h2 className={`hb-title mt-3 text-[22px] font-black leading-9 sm:text-[28px] ${tone.heading}`}>
                 {title}
               </h2>
             )}
             {subtitle && (
-              <p className={`mx-auto mt-2 max-w-xl text-[12.5px] leading-7 ${tone.text}`}>
+              <p className={`hb-body mx-auto mt-2 max-w-xl text-[12.5px] leading-7 ${tone.text}`}>
                 {subtitle}
               </p>
             )}
@@ -273,10 +311,15 @@ export default function HomeCustomBlock({ block }: Props) {
     <section className={`${tone.section} py-12`}>
       <div className="mx-auto w-full max-w-[900px] px-4 sm:px-6">
         {heading()}
+        {media && (
+          <div className="mt-5 overflow-hidden rounded-2xl">
+            <MediaLayer media={media} />
+          </div>
+        )}
         {body && (
           <div className="mt-4 space-y-2.5">
             {body.split("\n").filter(Boolean).map((paragraph) => (
-              <p key={paragraph} className={`text-[12.5px] leading-7 ${tone.text}`}>
+              <p key={paragraph} className={`hb-body text-[12.5px] leading-7 ${tone.text}`}>
                 {paragraph}
               </p>
             ))}

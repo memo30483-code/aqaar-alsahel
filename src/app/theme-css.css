@@ -485,3 +485,70 @@ html[data-season-theme="ramadan"] #ai-panel .ai-panel-header {
     animation: none;
   }
 }
+
+/* ============================================================
+   تنسيق أقسام Builder الرئيسية
+   المتغيّرات تُحقن على غلاف القسم من لوحة التحكم، والكلاسات هنا
+   تقرأها فقط عند وجودها حتى لا يتغيّر شكل القسم الافتراضي أبداً.
+   ============================================================ */
+.hb-scope {
+  background-color: var(--hb-bg, transparent);
+  padding-block: var(--hb-py, 0px);
+  text-align: var(--hb-align, start);
+}
+
+/* أنواع الخطوط — المتغيّرات تأتي من next/font في layout */
+.hb-font-cairo {
+  font-family: var(--font-cairo), "Cairo", system-ui, sans-serif;
+}
+.hb-font-tajawal {
+  font-family: var(--font-tajawal), "Tajawal", "Cairo", system-ui, sans-serif;
+}
+.hb-font-amiri {
+  font-family: var(--font-amiri), "Amiri", "Cairo", serif;
+}
+.hb-font-readex {
+  font-family: var(--font-readex), "Readex Pro", "Cairo", system-ui, sans-serif;
+}
+
+/* العناوين والنصوص القابلة للتحرير */
+.hb-has-title-size .hb-title {
+  font-size: var(--hb-title-size);
+  line-height: 1.35;
+}
+.hb-has-title-color .hb-title {
+  color: var(--hb-title-color);
+}
+.hb-has-body-size .hb-body {
+  font-size: var(--hb-body-size);
+}
+.hb-has-body-color .hb-body {
+  color: var(--hb-body-color);
+}
+
+/* الوسائط: صورة أو فيديو أو إطار تضمين */
+.hb-media {
+  display: block;
+  width: 100%;
+}
+.hb-has-media-height .hb-media {
+  height: var(--hb-media-height);
+}
+/* وسائط خلفية القسم (هيرو/بانر): الارتفاع يحكم القسم لا الصورة */
+.hb-bg-media.hb-has-media-height > section {
+  min-height: var(--hb-media-height);
+}
+.hb-bg-media.hb-has-media-height .hb-media {
+  height: 100%;
+}
+.hb-has-media-fit .hb-media {
+  object-fit: var(--hb-media-fit);
+}
+.hb-has-media-radius .hb-media {
+  border-radius: var(--hb-radius);
+  overflow: hidden;
+}
+/* لون خلفية القسم يظهر فوق خلفية القسم الداخلية */
+.hb-has-bg > section {
+  background-color: transparent;
+}

@@ -11,6 +11,8 @@ import {
   OrnateFrame,
   VerifiedSeal,
 } from "@/components/Ornaments";
+import type { HomeBlock } from "@/lib/home-builder-store";
+import { resolveMedia } from "@/lib/home-block-style";
 
 /** بانر إعلاني عائم أسفل الشاشة — يظهر بعد لحظة قصيرة وقابل للإغلاق */
 export default function FeaturedAds() {
@@ -99,14 +101,31 @@ export default function FeaturedAds() {
 
 /** مساحة إعلانية داخل شبكة العقارات في الصفحة الرئيسية */
 export function FeaturedAdSlot({
+  block,
   variant = "soft",
   className = "",
 }: {
+  block?: HomeBlock;
   variant?: "soft" | "bold";
   className?: string;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const isBold = variant === "bold";
+  const title =
+    (locale === "ar" ? block?.titleAr : block?.titleEn || block?.titleAr) ||
+    t("ads.developerProjects");
+  const subtitle =
+    (locale === "ar"
+      ? block?.subtitleAr
+      : block?.subtitleEn || block?.subtitleAr) || t("ads.slotBody");
+  const sponsor =
+    (locale === "ar" ? block?.bodyAr : block?.bodyEn || block?.bodyAr) ||
+    t("ads.developerSponsorships");
+  const cta =
+    (locale === "ar"
+      ? block?.linkLabelAr
+      : block?.linkLabelEn || block?.linkLabelAr) || t("ads.exploreProject");
+  const media = resolveMedia(block?.videoUrl) || resolveMedia(block?.imageUrl);
 
   return (
     <div
@@ -116,6 +135,24 @@ export function FeaturedAdSlot({
           : "border-gold-200 bg-gradient-to-l from-sand-100 via-white to-white"
       } ${className}`}
     >
+      {media?.kind === "image" && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={media.src}
+          alt=""
+          className="hb-media pointer-events-none absolute inset-0 h-full w-full object-cover opacity-15"
+        />
+      )}
+      {media?.kind === "video" && (
+        <video
+          src={media.src}
+          className="hb-media pointer-events-none absolute inset-0 h-full w-full object-cover opacity-15"
+          autoPlay
+          muted
+          loop
+          playsInline
+        />
+      )}
       <div className="pointer-events-none absolute -left-10 -top-10 h-28 w-28 rounded-full bg-gradient-to-br from-gold-400/25 to-transparent blur-2xl" />
 
       <div className="relative flex flex-wrap items-center justify-between gap-4">
@@ -135,34 +172,34 @@ export function FeaturedAdSlot({
                 isBold ? "text-gold-300" : "text-gold-700"
               }`}
             >
-              {t("ads.developerSponsorships")}
+              {sponsor}
             </span>
           </div>
           <p
-            className={`mt-2 text-base font-bold ${
+            className={`hb-title mt-2 text-base font-bold ${
               isBold ? "text-white" : "text-ocean-900"
             }`}
           >
-            {t("ads.developerProjects")}
+            {title}
           </p>
           <p
-            className={`mt-1 text-sm ${
+            className={`hb-body mt-1 text-sm ${
               isBold ? "text-sand-300" : "text-sand-700"
             }`}
           >
-            {t("ads.slotBody")}
+            {subtitle}
           </p>
         </div>
 
         <Link
-          href="/#properties"
+          href={block?.linkUrl || "/#properties"}
           className={`rounded-full px-5 py-2.5 text-sm font-bold transition ${
             isBold
               ? "bg-gold-400 text-gold-900 hover:bg-gold-300"
               : "bg-ocean-700 text-white hover:bg-ocean-800"
           }`}
         >
-          {t("ads.exploreProject")}
+          {cta}
         </Link>
       </div>
     </div>
