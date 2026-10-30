@@ -177,10 +177,18 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-sand-200 bg-white/90 shadow-[0_10px_30px_-24px_rgba(20,26,51,0.45)] backdrop-blur-xl supports-[backdrop-filter]:bg-white/80">
-      {/* خط ذهبي علوي رفيع — توقيع الهوية */}
+      {/* خط ذهبي علوي رفيع — توقيع الهوية، ويتحول للون التمييز عند تفعيل موسم */}
       <span
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-l from-gold-600 via-gold-300 to-gold-200"
+        style={
+          seasonTheme.active
+            ? {
+                backgroundImage:
+                  "linear-gradient(to left, var(--season-accent), rgb(var(--gold-300)), rgb(var(--gold-200)))",
+              }
+            : undefined
+        }
       />
       {seasonTheme.active && seasonTheme.campaignText && (
         <div className="theme-season-banner" dir="rtl">

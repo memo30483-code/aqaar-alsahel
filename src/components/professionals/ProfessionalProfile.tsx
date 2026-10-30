@@ -492,7 +492,7 @@ function ProjectCard({
           className="h-40 w-full object-cover"
         />
       ) : (
-        <div className="grid h-32 w-full place-items-center bg-[linear-gradient(135deg,#141a33,#2d3875)] text-gold-300">
+        <div className="grid h-32 w-full place-items-center bg-gradient-to-br from-ocean-800 to-ocean-950 text-gold-300">
           <Building2 className="h-8 w-8" />
         </div>
       )}

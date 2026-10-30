@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, Palette, RotateCcw, Save, ShieldCheck, Sparkles } from "lucide-react";
+import { AlertTriangle, Eye, Palette, RotateCcw, Save, ShieldCheck, Sparkles } from "lucide-react";
 import { getSiteSettings, saveSiteSettings, type SiteSettings } from "@/lib/admin-system";
 import {
   DEFAULT_THEME,
@@ -17,17 +17,28 @@ import {
 } from "@/lib/theme-season";
 import { BTN_PRIMARY, INPUT, Panel } from "@/components/admin/shared";
 
-const PRESETS: { key: SeasonPreset; labelAr: string; swatch: string }[] = [
-  { key: "ramadan", labelAr: "رمضان", swatch: "#152e36" },
-  { key: "eid-fitr", labelAr: "عيد الفطر", swatch: "#3a2a1a" },
-  { key: "eid-adha", labelAr: "عيد الأضحى", swatch: "#2a2218" },
-  { key: "winter", labelAr: "شتاء", swatch: "#0a1628" },
-  { key: "spring", labelAr: "ربيع", swatch: "#1a3528" },
-  { key: "summer", labelAr: "صيف", swatch: "#332a0a" },
-  { key: "fall", labelAr: "خريف", swatch: "#2e2218" },
-  { key: "october", labelAr: "أكتوبر", swatch: "#2a1818" },
-  { key: "custom", labelAr: "تخصيص يدوي", swatch: "#141a33" },
+const PRESETS: { key: SeasonPreset; labelAr: string }[] = [
+  { key: "ramadan", labelAr: "رمضان" },
+  { key: "eid-fitr", labelAr: "عيد الفطر" },
+  { key: "eid-adha", labelAr: "عيد الأضحى" },
+  { key: "winter", labelAr: "شتاء" },
+  { key: "spring", labelAr: "ربيع" },
+  { key: "summer", labelAr: "صيف" },
+  { key: "fall", labelAr: "خريف" },
+  { key: "october", labelAr: "أكتوبر" },
+  { key: "custom", labelAr: "تخصيص يدوي" },
 ];
+
+/** دائرة معاينة اللون: نصفها لون الأساس ونصفها الذهبي — تُقرأ من نفس البريسِت */
+function presetSwatch(key: SeasonPreset): string {
+  if (key === "custom") {
+    return `linear-gradient(135deg, ${DEFAULT_THEME.ocean} 0 50%, ${DEFAULT_THEME.gold} 50% 100%)`;
+  }
+  const preset = PRESET_MAP[key];
+  return `linear-gradient(135deg, ${preset.ocean ?? DEFAULT_THEME.ocean} 0 50%, ${
+    preset.gold ?? DEFAULT_THEME.gold
+  } 50% 100%)`;
+}
 
 const RAMADAN_MOTIF_OPTIONS: { key: keyof RamadanMotifs; label: string }[] = [
   { key: "crescent", label: "الهلال والنجوم" },
@@ -108,9 +119,11 @@ export default function AdminThemeTab({
     motifs: preset === "ramadan" ? motifs : {},
   });
 
-  /** تغيير الموسم يجلب ألوانه وتدرّجه فوراً داخل النموذج */
+  /** تغيير الموسم يجلب ألوانه وتدرّجه فوراً داخل النموذج ويُفعّله تلقائياً */
   const pickPreset = (next: SeasonPreset) => {
     setPreset(next);
+    /* اختيار موسم = رغبة صريحة في تفعيله — لا نترك المربع مطفأً بالخطأ */
+    if (next !== "custom") setActive(true);
     const colors = next !== "custom" ? PRESET_MAP[next] ?? {} : {};
     setDraft((prev) => ({
       ...prev,
@@ -128,10 +141,10 @@ export default function AdminThemeTab({
     });
   };
 
-  /** معاينة على الصفحة بدون حفظ */
+  /** معاينة فورية على الصفحة — تعمل حتى لو الثيم غير مفعّل */
   const preview = () => {
-    applySeasonThemeToDocument(resolveSeasonTheme(buildCfg()));
-    notify("معاينة مؤقتة — اضغط «حفظ وتفعيل» لتثبيتها لكل الزوار");
+    applySeasonThemeToDocument(resolveSeasonTheme({ ...buildCfg(), active: true }));
+    notify("معاينة مؤقتة على الصفحة — اضغط «حفظ وتفعيل» لتثبيتها");
   };
 
   const save = () => {
@@ -147,7 +160,11 @@ export default function AdminThemeTab({
     /* نطبّق الكامل (لا مجرد الألوان) حتى يظهر غلاف الهيرو والخلفية */
     applySeasonThemeToDocument(resolveSeasonTheme(cfg));
     window.dispatchEvent(new Event(SEASON_THEME_UPDATED_EVENT));
-    notify(active ? "تم حفظ الثيم وتطبيقه" : "تم إيقاف الثيم واستعادة ألوان الموقع");
+    notify(
+      active
+        ? "تم حفظ الثيم وتفعيله — ظاهر الآن على الموقع"
+        : "تم حفظ الإعدادات فقط — الثيم غير مفعّل، لذلك لم يتغيّر شكل الموقع"
+    );
   };
 
   const resetAll = () => {
@@ -194,6 +211,15 @@ export default function AdminThemeTab({
             تفعيل الثيم على الموقع
           </label>
           <div className="flex items-center gap-2">
+            <span
+              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-extrabold ${
+                active
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : "border-sand-300 bg-white text-sand-600"
+              }`}
+            >
+              {active ? "مفعّل الآن" : "غير مفعّل"}
+            </span>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-sand-200 bg-white px-3 py-1 text-[10px] font-extrabold text-sand-700">
               <Palette className="h-3 w-3" /> {draft.ocean} / {draft.gold}
             </span>
@@ -207,6 +233,24 @@ export default function AdminThemeTab({
             </button>
           </div>
         </div>
+
+        {/* تحذير واضح: أشهر سبب لعدم ظهور الثيم */}
+        {!active && (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-amber-300 bg-amber-50 p-3">
+            <p className="flex items-center gap-1.5 text-[11.5px] font-bold leading-5 text-amber-800">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              الثيم غير مفعّل — لن يتغيّر شكل الموقع مهما اخترت من ألوان. فعّله ثم اضغط «حفظ وتفعيل».
+            </p>
+            <button
+              type="button"
+              onClick={() => setActive(true)}
+              disabled={!editable}
+              className="rounded-full bg-amber-500 px-3 py-1.5 text-[11px] font-black text-white disabled:opacity-40"
+            >
+              فعّل الآن
+            </button>
+          </div>
+        )}
 
         {/* ===== اختيار الموسم ===== */}
         <div>
@@ -227,7 +271,7 @@ export default function AdminThemeTab({
                 <span
                   aria-hidden
                   className="h-3.5 w-3.5 shrink-0 rounded-full border border-black/10"
-                  style={{ background: item.swatch }}
+                  style={{ background: presetSwatch(item.key) }}
                 />
                 {item.labelAr}
               </button>

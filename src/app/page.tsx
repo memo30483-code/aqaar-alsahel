@@ -320,6 +320,8 @@ export default function HomePage() {
   const dossierRef = dossierProperty
     ? `VER-2026-${dossierProperty.id.replace(/-/g, "").toUpperCase()}`
     : "VER-2026-0000";
+  /** رمضان: خط الفوانيس المعلّق من الهيدر (104px) يحتاج مسافة أعلى الهيرو */
+  const isRamadan = seasonTheme.active && seasonTheme.preset === "ramadan";
 
   return (
     <>
@@ -353,12 +355,16 @@ export default function HomePage() {
           <RamadanDecorations theme={seasonTheme} />
         )}
 
-        <div className="relative z-10 mx-auto w-full max-w-[1240px] px-4 pb-28 pt-12 sm:px-6 lg:pb-32 lg:pt-16">
+        <div
+          className={`relative z-10 mx-auto w-full max-w-[1240px] px-4 pb-28 sm:px-6 lg:pb-32 ${
+            isRamadan ? "pt-32 lg:pt-36" : "pt-12 lg:pt-16"
+          }`}
+        >
           <div className="max-w-[680px] text-white">
             {/* في رمضان يصبح نص الحملة عنوان الهيرو نفسه — فلا نكرّره في سطر صغير فوقه */}
             {!(seasonTheme.active && seasonTheme.preset === "ramadan") && (
               <p className="flex items-center gap-2.5 text-xs font-bold tracking-wide text-gold-200">
-                <span aria-hidden className="h-px w-8 bg-gold-400" />
+                <span aria-hidden className="h-px w-8 theme-accent-line" />
                 {text("hero", "eyebrow") ?? t("home.hero.eyebrow")}
               </p>
             )}
@@ -573,7 +579,11 @@ export default function HomePage() {
 
             <a
               href="#properties"
-              className="flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-ocean-700 to-ocean-950 px-6 text-sm font-extrabold text-white shadow-[0_12px_24px_-12px_rgba(20,26,51,0.75)] transition hover:from-ocean-800 hover:to-black"
+              className={`flex h-12 items-center justify-center gap-2 rounded-xl px-6 text-sm font-extrabold shadow-[0_12px_24px_-12px_rgba(20,26,51,0.75)] transition ${
+                seasonTheme.active
+                  ? "theme-accent-bg hover:brightness-110"
+                  : "bg-gradient-to-br from-ocean-700 to-ocean-950 text-white hover:from-ocean-800 hover:to-black"
+              }`}
             >
               <Search className="h-4 w-4" />
               {t("home.search.button")}
@@ -718,7 +728,7 @@ export default function HomePage() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="flex items-center gap-2.5 text-xs font-bold text-gold-700">
-                <span aria-hidden className="h-px w-8 bg-gold-400" />
+                <span aria-hidden className="h-px w-8 theme-accent-line" />
                 {text("featured_listings", "eyebrow") ?? t("home.listings.eyebrow")}
               </p>
               <h2 className="mt-2.5 text-2xl font-black tracking-tight text-ocean-900 sm:text-[33px]">
@@ -898,7 +908,7 @@ export default function HomePage() {
       {showBlock("story_dossier") && (
       <div key="story_dossier" style={{ order: orderOf("story_dossier") }} className="w-full">
       {/* ====================== STORY + DOSSIER ====================== */}
-      <section className="relative overflow-hidden bg-[radial-gradient(120%_120%_at_85%_0%,#273155_0%,#141a33_58%,#0f1428_100%)] py-12 text-white sm:py-14">
+      <section className="relative overflow-hidden theme-hero py-12 text-white sm:py-14">
         <span
           aria-hidden
           className="pointer-events-none absolute -left-48 -top-64 h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,rgba(201,146,42,0.18),transparent_62%)] blur-[10px]"
@@ -907,7 +917,7 @@ export default function HomePage() {
         <div className="relative z-10 mx-auto grid w-full max-w-[1240px] items-center gap-8 px-4 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:gap-12">
           <div>
             <p className="flex items-center gap-2.5 text-xs font-bold text-gold-300">
-              <span aria-hidden className="h-px w-8 bg-gold-400" />
+              <span aria-hidden className="h-px w-8 theme-accent-line" />
               {text("story_dossier", "eyebrow") ?? t("home.story.eyebrow")}
             </p>
             <h2 className="mt-3 text-3xl font-black leading-[1.45] tracking-tight sm:text-[38px]">

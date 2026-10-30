@@ -255,6 +255,22 @@ export function buildPalette(colors: {
   return out;
 }
 
+/**
+ * لون النص المناسب فوق «لون التمييز» حتى يظل الزر مقروءاً في كل المواسم.
+ * يعتمد على الإضاءة النسبية (WCAG) — الألوان الفاتحة تأخذ نصاً داكناً والعكس.
+ */
+export function accentInk(accent: string): string {
+  const [r, g, b] = hexToRgbParts(accent, DEFAULT_THEME.accent);
+  const channel = (value: number) => {
+    const unit = value / 255;
+    return unit <= 0.03928 ? unit / 12.92 : Math.pow((unit + 0.055) / 1.055, 2.4);
+  };
+  const luminance =
+    0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+  /* 0.22 = نقطة توازن التباين تقريباً: الفاتح يأخذ نصاً داكناً والداكن يأخذ أبيض */
+  return luminance > 0.22 ? "#141a33" : "#ffffff";
+}
+
 export interface ResolvedSeasonTheme {
   preset: SeasonPreset;
   active: boolean;
@@ -263,6 +279,8 @@ export interface ResolvedSeasonTheme {
   ocean: string;
   heroGradient: string;
   accent: string;
+  /** لون النص المقروء فوق لون التمييز (أبيض أو نيلي داكن) */
+  accentInk: string;
   campaignText: string;
   motifs: RamadanMotifs;
   heroImage: string;
@@ -311,6 +329,7 @@ export function resolveSeasonTheme(
     ocean,
     heroGradient: values.heroGradient ?? DEFAULT_THEME.heroGradient,
     accent: values.accent ?? DEFAULT_THEME.accent,
+    accentInk: accentInk(values.accent ?? DEFAULT_THEME.accent),
     /* نص الحملة خاص برمضان افتراضياً؛ بقية المواسم تظهر فقط لو كتب الأدمن نصاً */
     campaignText: requested.campaignText?.trim() || (isRamadan ? RAMADAN_CAMPAIGN_TEXT : ""),
     motifs,
@@ -348,6 +367,7 @@ export function applySeasonThemeToDocument(theme: ResolvedSeasonTheme): void {
     delete root.dataset.ramadanCoast;
     delete root.dataset.ramadanAssistant;
     style.setProperty("--season-accent", DEFAULT_THEME.accent);
+    style.setProperty("--season-accent-ink", accentInk(DEFAULT_THEME.accent));
     style.setProperty("--hero-gradient-theme", DEFAULT_THEME.heroGradient);
     return;
   }
@@ -356,6 +376,7 @@ export function applySeasonThemeToDocument(theme: ResolvedSeasonTheme): void {
     style.setProperty(`--${name}`, value);
   }
   style.setProperty("--season-accent", theme.accent);
+  style.setProperty("--season-accent-ink", theme.accentInk);
   style.setProperty("--hero-gradient-theme", theme.heroGradient);
   style.setProperty(
     "--theme-bg-image",
@@ -387,10 +408,12 @@ if(mx!==mn){var d=mx-mn;s=l>0.5?d/(2-mx-mn):d/(mx+mn);if(mx===r)h=(g-b)/d+(g<b?6
 function rgb(h,s,l){s/=100;l/=100;var c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2,r=0,g=0,b=0;
 if(h<60){r=c;g=x;}else if(h<120){r=x;g=c;}else if(h<180){g=c;b=x;}else if(h<240){g=x;b=c;}else if(h<300){r=x;b=c;}else{r=c;b=x;}
 return [Math.round((r+m)*255),Math.round((g+m)*255),Math.round((b+m)*255)].join(" ");}
+function ink(h){var p=parts(h,"#c9922a");function ch(v){v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);}var L=0.2126*ch(p[0])+0.7152*ch(p[1])+0.0722*ch(p[2]);return L>0.22?"#141a33":"#ffffff";}
 var root=document.documentElement,st=root.style;
 function ramp(name,base,fb,scale){var hsl=hslOf(parts(base,fb));for(var i=0;i<steps.length;i++){var L=steps[i][1];var f=L>=92?0.7:L>=78?0.85:L>=45?1:0.9;var s=hsl[1]*f*scale;if(s<8)s=8;if(s>85)s=85;st.setProperty("--"+name+"-"+steps[i][0],rgb(hsl[0],s,L));}}
 ramp("ocean",cfg.ocean,"#141a33",1);ramp("sand",cfg.sand,"#fdfbf7",0.8);ramp("gold",cfg.gold,"#c9922a",1);
 if(cfg.accent)st.setProperty("--season-accent",cfg.accent);
+st.setProperty("--season-accent-ink",ink(cfg.accent||"#c9922a"));
 if(cfg.heroGradient)st.setProperty("--hero-gradient-theme",cfg.heroGradient);
 if(cfg.backgroundImage)st.setProperty("--theme-bg-image",'url("'+cfg.backgroundImage+'")');
 st.setProperty("--theme-pattern-opacity",String(cfg.patternOpacity==null?0:cfg.patternOpacity));

@@ -82,7 +82,7 @@ function CompanyCard({ company }: { company: CompanyRecord }) {
     <article className="overflow-hidden rounded-3xl border border-sand-200 bg-white shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)]">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-sand-200 bg-sand-50/50 px-5 py-4">
         <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[linear-gradient(135deg,#141a33,#2d3875)] text-gold-300">
+          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-ocean-800 to-ocean-950 text-gold-300">
             <Building2 className="h-5 w-5" />
           </span>
           <div>
@@ -261,7 +261,7 @@ export default function CompanyContent() {
   return (
     <div className="bg-sand-50">
       {/* Hero */}
-      <section className="relative overflow-hidden bg-[linear-gradient(135deg,#141a33_0%,#242e5c_58%,#141a33_100%)]">
+      <section className="relative overflow-hidden theme-hero">
         <span
           aria-hidden
           className="pointer-events-none absolute -end-24 -top-28 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(217,185,92,0.24),transparent_65%)]"

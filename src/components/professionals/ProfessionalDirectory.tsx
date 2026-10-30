@@ -456,7 +456,7 @@ export default function ProfessionalDirectory({ kind }: Props) {
 
       {/* ====================== JOIN BAND ====================== */}
       <section className="mx-auto w-full max-w-[1180px] px-4 pb-14 sm:px-6">
-        <div className="flex flex-col gap-4 rounded-3xl border border-ocean-900/10 bg-[linear-gradient(140deg,#141a33_0%,#242e5c_100%)] p-5 text-white shadow-[0_30px_80px_-60px_rgba(20,26,51,0.9)] sm:flex-row sm:items-center sm:justify-between sm:p-7">
+        <div className="flex flex-col gap-4 rounded-3xl border border-ocean-900/10 theme-hero p-5 text-white shadow-[0_30px_80px_-60px_rgba(20,26,51,0.9)] sm:flex-row sm:items-center sm:justify-between sm:p-7">
           <div className="flex items-start gap-3">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-gold-300">
               <BadgeCheck className="h-5 w-5" />

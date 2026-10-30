@@ -365,7 +365,7 @@ function JoinForm() {
 
   return (
     <div className="bg-sand-50">
-      <section className="relative overflow-hidden bg-[linear-gradient(135deg,#141a33_0%,#242e5c_58%,#141a33_100%)]">
+      <section className="relative overflow-hidden theme-hero">
         <span
           aria-hidden
           className="pointer-events-none absolute -end-24 -top-28 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(217,185,92,0.24),transparent_65%)]"
@@ -404,7 +404,7 @@ function JoinForm() {
                     onClick={() => setKind(role.id)}
                     className={`flex items-center gap-2 rounded-2xl border p-3 text-start text-[12px] font-bold transition ${
                       active
-                        ? "border-gold-400/70 bg-[linear-gradient(135deg,#141a33,#2d3875)] text-white shadow"
+                        ? "border-gold-400/70 bg-gradient-to-br from-ocean-800 to-ocean-950 text-white shadow"
                         : "border-sand-200 bg-white text-ocean-900 hover:border-gold-300 hover:bg-gold-50/40"
                     }`}
                   >

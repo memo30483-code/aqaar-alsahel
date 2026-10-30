@@ -63,7 +63,7 @@ export default function LegalDocPage({
   return (
     <div className="bg-sand-50">
       {/* ====================== HERO ====================== */}
-      <section className="relative overflow-hidden bg-[linear-gradient(135deg,#141a33_0%,#242e5c_58%,#141a33_100%)]">
+      <section className="relative overflow-hidden theme-hero">
         <span
           aria-hidden
           className="pointer-events-none absolute -end-24 -top-28 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(217,185,92,0.24),transparent_65%)]"
@@ -110,7 +110,7 @@ export default function LegalDocPage({
                 className="scroll-mt-28 rounded-3xl border border-sand-200 bg-white p-5 shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)] sm:p-6"
               >
                 <div className="flex items-start gap-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#141a33,#2d3875)] text-[11px] font-black text-gold-300">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-ocean-800 to-ocean-950 text-[11px] font-black text-gold-300">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <h2 className="mt-1 text-[14.5px] font-black leading-6 text-ocean-900">

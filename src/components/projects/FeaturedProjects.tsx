@@ -82,7 +82,7 @@ export default function FeaturedProjects() {
                       className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
                     />
                   ) : (
-                    <span className="grid h-full w-full place-items-center bg-[linear-gradient(135deg,#141a33,#2d3875)] text-gold-300">
+                    <span className="grid h-full w-full place-items-center bg-gradient-to-br from-ocean-800 to-ocean-950 text-gold-300">
                       <Building2 className="h-8 w-8" />
                     </span>
                   )}

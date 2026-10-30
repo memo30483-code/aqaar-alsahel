@@ -232,7 +232,7 @@ export default function MarketGuideContent() {
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-[linear-gradient(135deg,#141a33_0%,#242e5c_58%,#141a33_100%)]">
+      <section className="relative overflow-hidden theme-hero">
         <span
           aria-hidden
           className="pointer-events-none absolute -end-24 -top-28 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(217,185,92,0.26),transparent_65%)]"
@@ -292,7 +292,7 @@ export default function MarketGuideContent() {
               const inner = (
                 <>
                   <div className="flex items-start justify-between gap-3">
-                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#141a33,#2d3875)] text-gold-300 transition group-hover:scale-105">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-ocean-800 to-ocean-950 text-gold-300 transition group-hover:scale-105">
                       {card.icon}
                     </span>
                     <span
@@ -546,7 +546,7 @@ export default function MarketGuideContent() {
               </ul>
             </div>
 
-            <div className="flex flex-col justify-between rounded-3xl bg-[linear-gradient(140deg,#141a33_0%,#242e5c_100%)] p-6 text-white shadow-[0_30px_80px_-60px_rgba(20,26,51,0.9)] sm:p-8">
+            <div className="flex flex-col justify-between rounded-3xl theme-hero p-6 text-white shadow-[0_30px_80px_-60px_rgba(20,26,51,0.9)] sm:p-8">
               <div>
                 <h2 className="text-xl font-black">
                   {t("marketGuide.add.heading")}

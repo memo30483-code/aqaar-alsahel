@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -79,7 +79,7 @@ export default function OffersPage() {
               className="pointer-events-none absolute -end-20 -top-24 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(201,146,42,0.16),transparent_65%)]"
             />
             <div className="relative">
-              <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#141a33,#2d3875)] text-gold-300">
+              <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-ocean-800 to-ocean-950 text-gold-300">
                 <Gift className="h-7 w-7" />
               </span>
 
@@ -145,7 +145,7 @@ export default function OffersPage() {
   return (
     <div className="bg-sand-50">
       {/* ====================== HERO ====================== */}
-      <section className="relative overflow-hidden bg-[linear-gradient(135deg,#141a33_0%,#242e5c_58%,#141a33_100%)]">
+      <section className="relative overflow-hidden theme-hero">
         <span
           aria-hidden
           className="pointer-events-none absolute -end-24 -top-28 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(217,185,92,0.26),transparent_65%)]"
@@ -222,7 +222,7 @@ export default function OffersPage() {
 
                 <div className="flex flex-1 flex-col p-5 pt-6">
                   <div className="flex items-start gap-3">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#141a33,#2d3875)] text-gold-300">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-ocean-800 to-ocean-950 text-gold-300">
                       {offer.discountPercent ? (
                         <Percent className="h-5 w-5" />
                       ) : (

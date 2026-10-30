@@ -5,7 +5,7 @@
 
 import type { Property, PropertyDocument } from "@/types/property";
 import type { UserRole } from "@/lib/session";
-import { DEFAULT_THEME } from "@/lib/theme-season";
+import { DEFAULT_THEME, type SeasonThemeCfg } from "@/lib/theme-season";
 import { mockProperties, USER_PROPERTIES_KEY } from "@/data/properties";
 
 export type ListingStatus = "pending" | "approved" | "rejected" | "archived" | "deleted";
@@ -428,16 +428,22 @@ export function getAdminLogs(limit = 100): AdminLog[] {
 }
 
 export function getSiteSettings(): SiteSettings {
-  const stored = readJson<SiteSettings>(SITE_SETTINGS_KEY, DEFAULT_SITE_SETTINGS);
-  if (!stored.blocks || stored.blocks.length === 0) {
-    return DEFAULT_SITE_SETTINGS;
-  }
-  /* دمج البلوكات الجديدة مع المحفوظة (مع الاحتفاظ بحالة التفعيل والترتيب) */
+  /*
+   * دمج عميق للإعدادات المحفوظة بدل استبدالها:
+   * كان أي إعداد محفوظ بدون «blocks» (مثل ثيم موسمي فقط) يُلغي كل شيء
+   * ويعيد الافتراضي — فيظهر الثيم في الموقع لكن «مطفأ» في لوحة التحكم.
+   */
+  const stored = readJson<Partial<SiteSettings>>(SITE_SETTINGS_KEY, {});
+  const savedBlocks = Array.isArray(stored.blocks) ? stored.blocks : [];
   const blocks = DEFAULT_SITE_SETTINGS.blocks.map((block) => {
-    const saved = stored.blocks.find((item) => item.key === block.key);
+    const saved = savedBlocks.find((item) => item.key === block.key);
     return saved ? { ...block, enabled: saved.enabled, order: saved.order } : block;
   });
-  return { ...DEFAULT_SITE_SETTINGS, ...stored, blocks };
+  const seasonTheme: SeasonThemeCfg = {
+    ...DEFAULT_THEME,
+    ...(stored.seasonTheme ?? {}),
+  };
+  return { ...DEFAULT_SITE_SETTINGS, ...stored, blocks, seasonTheme };
 }
 
 export function saveSiteSettings(settings: SiteSettings): boolean {

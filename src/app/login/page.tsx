@@ -203,7 +203,7 @@ export default function LoginPage() {
 
         {/* ====================== BRAND PANEL ====================== */}
         <div className="order-1 lg:order-2">
-          <div className="relative overflow-hidden rounded-3xl border border-ocean-900/10 bg-[linear-gradient(140deg,#141a33_0%,#242e5c_58%,#141a33_100%)] p-6 text-white shadow-[0_40px_100px_-70px_rgba(20,26,51,0.9)] sm:p-8">
+          <div className="relative overflow-hidden rounded-3xl border border-ocean-900/10 theme-hero p-6 text-white shadow-[0_40px_100px_-70px_rgba(20,26,51,0.9)] sm:p-8">
             <span
               aria-hidden
               className="pointer-events-none absolute -end-16 -top-20 h-56 w-56 rounded-full bg-[radial-gradient(circle,rgba(217,185,92,0.3),transparent_65%)]"

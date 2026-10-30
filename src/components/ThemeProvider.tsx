@@ -73,10 +73,7 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
           className="theme-backdrop"
           style={
             theme.backgroundImage
-              ? {
-                  backgroundImage: `url("${theme.backgroundImage}")`,
-                  opacity: Math.max(0.05, theme.backgroundOpacity),
-                }
+              ? { opacity: Math.max(0.05, theme.backgroundOpacity) }
               : undefined
           }
         />

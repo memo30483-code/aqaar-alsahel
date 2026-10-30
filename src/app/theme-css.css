@@ -2,16 +2,19 @@
 .theme-hero {
   background: var(--hero-gradient-theme, linear-gradient(135deg,#141a33 0%,#2d3875 58%,#1a2332 100%));
 }
-.theme-btn-gold {
-  background: linear-gradient(to left, rgb(var(--gold-500)), rgb(var(--gold-300)));
-  color: rgb(var(--ocean-950));
-}
-.theme-btn-outline {
-  border-color: rgb(var(--gold-500));
-  color: rgb(var(--gold-600));
+
+/* ============================================================
+   لون التمييز الموسمي (accent) — يتحكم فيه الأدمن من لوحة الثيم
+   ============================================================ */
+.theme-accent-bg {
+  background-color: var(--season-accent, #c9922a);
+  color: var(--season-accent-ink, #141a33);
 }
 .theme-accent-text {
-  color: rgb(var(--gold-500));
+  color: var(--season-accent, #c9922a);
+}
+.theme-accent-line {
+  background-color: var(--season-accent, #c9922a);
 }
 
 /* ============================================================
@@ -22,6 +25,7 @@
   inset: 0;
   z-index: -10;
   pointer-events: none;
+  background-image: var(--theme-bg-image, none);
   background-size: cover;
   background-position: center;
   background-attachment: fixed;

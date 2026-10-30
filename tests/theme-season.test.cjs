@@ -14,7 +14,7 @@ const js = ts.transpileModule(source, {
 }).outputText;
 const loaded = { exports: {} };
 new Function("exports", "require", "module", js)(loaded.exports, require, loaded);
-const { DEFAULT_THEME, RAMADAN_CAMPAIGN_TEXT, PRESET_MAP, resolveSeasonTheme } =
+const { DEFAULT_THEME, RAMADAN_CAMPAIGN_TEXT, PRESET_MAP, resolveSeasonTheme, accentInk } =
   loaded.exports;
 
 const MOTIFS = [
@@ -90,4 +90,23 @@ test("Ramadan keeps its emerald identity unless the admin overrides it", () => {
   assert.equal(overridden.gold, "#ffd700");
   /* تغيير اللون وحده لا يلغي بقية هوية الموسم */
   assert.equal(overridden.ocean, PRESET_MAP.ramadan.ocean);
+});
+
+test("accent ink stays readable on light and dark accent colors", () => {
+  /* الذهبي والرمادي الفاتح: نص داكن */
+  assert.equal(accentInk("#e7c05e"), "#141a33");
+  assert.equal(accentInk("#90a8c0"), "#141a33");
+  /* الأحمر الداكن والأسود: نص أبيض */
+  assert.equal(accentInk("#c04040"), "#ffffff");
+  assert.equal(accentInk("#0a1628"), "#ffffff");
+  /* القيمة غير الصالحة ترجع للون العلامة بدل نص غير مقروء */
+  assert.equal(accentInk("not-a-color"), accentInk(DEFAULT_THEME.accent));
+});
+
+test("every preset resolves a readable accent ink for its call-to-action", () => {
+  for (const [preset, cfg] of Object.entries(PRESET_MAP)) {
+    const theme = resolveSeasonTheme({ preset, active: true });
+    assert.ok(["#141a33", "#ffffff"].includes(theme.accentInk), preset);
+    assert.equal(theme.accent, cfg.accent ?? DEFAULT_THEME.accent, preset);
+  }
 });

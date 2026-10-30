@@ -240,7 +240,7 @@ function SectionHead({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#141a33,#2d3875)] text-white">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-ocean-800 to-ocean-950 text-white">
         <Icon className="h-4 w-4" />
       </span>
       <div>

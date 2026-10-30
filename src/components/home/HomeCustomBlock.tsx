@@ -25,7 +25,7 @@ function toneClasses(tone: HomeBlock["tone"]): {
   if (tone === "navy") {
     return {
       section:
-        "bg-[linear-gradient(135deg,#141a33_0%,#242e5c_58%,#141a33_100%)] text-white",
+        "theme-hero text-white",
       heading: "text-white",
       text: "text-white/70",
       eyebrow: "text-gold-300",
@@ -110,7 +110,7 @@ export default function HomeCustomBlock({ block }: Props) {
         ) : (
           <span
             aria-hidden
-            className="absolute inset-0 bg-[linear-gradient(135deg,#141a33_0%,#242e5c_58%,#141a33_100%)]"
+            className="absolute inset-0 theme-hero"
           />
         )}
         <span

@@ -848,7 +848,7 @@ export default function RegisterPage() {
   return (
     <div className="bg-sand-50 pb-20">
       {/* Hero */}
-      <section className="relative overflow-hidden bg-[linear-gradient(135deg,#141a33_0%,#242e5c_58%,#141a33_100%)] px-4 pb-24 pt-14 text-white sm:px-6">
+      <section className="relative overflow-hidden theme-hero px-4 pb-24 pt-14 text-white sm:px-6">
         <span
           aria-hidden
           className="pointer-events-none absolute -end-20 -top-24 h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(217,185,92,0.28),transparent_65%)]"
@@ -1005,7 +1005,7 @@ export default function RegisterPage() {
                           onClick={() => changeAccountType(type.id)}
                           className={`rounded-2xl border p-4 text-right transition ${
                             active
-                              ? "border-gold-400/70 bg-[linear-gradient(135deg,#141a33,#2d3875)] text-white shadow-lg"
+                              ? "border-gold-400/70 bg-gradient-to-br from-ocean-800 to-ocean-950 text-white shadow-lg"
                               : "border-sand-200 bg-white text-ocean-900 hover:border-gold-300 hover:bg-gold-50/40"
                           }`}
                         >

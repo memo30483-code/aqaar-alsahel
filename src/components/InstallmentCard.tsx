@@ -49,7 +49,7 @@ export default function InstallmentCard({
     <aside className="space-y-4 lg:sticky lg:top-24">
       {/* ===== السعر ===== */}
       <div className="overflow-hidden rounded-3xl border border-sand-200 bg-white shadow-[0_26px_70px_-60px_rgba(20,26,51,0.55)]">
-        <div className="relative overflow-hidden bg-[linear-gradient(135deg,#141a33_0%,#262f61_100%)] p-5 text-white">
+        <div className="relative overflow-hidden theme-hero p-5 text-white">
           <span
             aria-hidden
             className="pointer-events-none absolute -end-14 -top-16 h-40 w-40 rounded-full bg-[radial-gradient(circle,rgba(217,185,92,0.28),transparent_65%)]"

@@ -51,9 +51,9 @@
 
   /* متغيّرات الثيم الموسمي */
   --season-accent: #c9922a;
+  --season-accent-ink: #141a33;
   --hero-gradient-theme: linear-gradient(135deg, #141a33 0%, #2d3875 58%, #1a2332 100%);
   --theme-bg-image: none;
-  --theme-bg-opacity: 0;
   --theme-pattern-opacity: 0;
 }
 

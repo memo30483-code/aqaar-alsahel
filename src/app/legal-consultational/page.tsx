@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function LegalConsultationPage() {
   return (
     <div>
-      <section className="relative overflow-hidden bg-[linear-gradient(135deg,#141a33,#242e5c)] px-4 py-10 text-white sm:px-6">
+      <section className="relative overflow-hidden theme-hero px-4 py-10 text-white sm:px-6">
         <h1 className="text-[26px] font-black sm:text-[32px]">الاستشارات القانونية</h1>
         <p className="mt-2 max-w-2xl text-[12.5px] leading-7 text-white/70">
           قبل ما تدفع مقدم أي عقار، خلّي عقدك يتفحص. محامٍ معتمد يراجع الملكية،

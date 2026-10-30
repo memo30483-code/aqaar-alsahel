@@ -503,7 +503,7 @@ export default function AssistantWidget() {
         style={panelStyle}
       >
         {/* رأس اللوحة */}
-        <div className="ai-panel-header relative shrink-0 overflow-hidden bg-[linear-gradient(135deg,#141a33,#27315e)] px-4 py-3 text-white">
+        <div className="ai-panel-header relative shrink-0 overflow-hidden theme-hero px-4 py-3 text-white">
           <span
             aria-hidden
             className="pointer-events-none absolute -end-8 -top-10 h-24 w-24 rounded-full bg-[radial-gradient(circle,rgba(217,185,92,0.35),transparent_65%)]"
