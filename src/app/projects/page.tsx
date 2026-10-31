@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import ProjectsIndex from "@/components/projects/ProjectsIndex";
+import PageRenderer from "@/components/builder/PageRenderer";
 
 export const metadata: Metadata = {
   title: "المشاريع والعروض | عقار FAMILY",
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function ProjectsPage() {
-  return <ProjectsIndex />;
+  return <PageRenderer pageId="projects" />;
 }

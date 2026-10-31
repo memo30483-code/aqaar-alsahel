@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import MarketGuideContent from "./MarketGuideContent";
+import PageRenderer from "@/components/builder/PageRenderer";
 
 export const metadata: Metadata = {
   title: "البوصلة العقارية | عقار FAMILY",
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function MarketGuidePage() {
-  return <MarketGuideContent />;
+  return <PageRenderer pageId="market-guide" />;
 }

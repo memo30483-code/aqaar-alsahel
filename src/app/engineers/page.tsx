@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import ProfessionalDirectory from "@/components/professionals/ProfessionalDirectory";
+import PageRenderer from "@/components/builder/PageRenderer";
 
 export const metadata: Metadata = {
   title: "المكاتب الهندسية المعتمدة | عقار FAMILY",
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function EngineersPage() {
-  return <ProfessionalDirectory kind="engineer" />;
+  return <PageRenderer pageId="engineers" />;
 }

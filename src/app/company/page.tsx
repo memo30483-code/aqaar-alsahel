@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import CompanyContent from "@/components/CompanyContent";
+import PageRenderer from "@/components/builder/PageRenderer";
 
 export const metadata: Metadata = {
   title: "بيانات الشركة المالكة | عقار FAMILY",
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function CompanyPage() {
-  return <CompanyContent />;
+  return <PageRenderer pageId="company" />;
 }

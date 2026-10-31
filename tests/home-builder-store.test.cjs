@@ -4,14 +4,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const ts = require("typescript");
 
-const sourcePath = path.join(__dirname, "..", "src", "lib", "home-builder-store.ts");
-const source = fs.readFileSync(sourcePath, "utf8");
-const js = ts.transpileModule(source, {
-  compilerOptions: {
-    module: ts.ModuleKind.CommonJS,
-    target: ts.ScriptTarget.ES2020,
-  },
-}).outputText;
+const libDir = path.join(__dirname, "..", "src", "lib");
 
 const memory = new Map();
 global.window = {
@@ -25,33 +18,47 @@ global.window = {
   removeEventListener: () => {},
 };
 
-const loaded = { exports: {} };
-const customRequire = (id) => {
-  if (id === "react") {
-    return {
-      useEffect: () => {},
-      useMemo: (factory) => factory(),
-      useState: (initial) => [typeof initial === "function" ? initial() : initial, () => {}],
-    };
-  }
-  if (id === "@/lib/admin-system") {
-    return {
-      blockOrder: () => 1,
-      isBlockEnabled: () => true,
-    };
-  }
-  if (id === "@/lib/home-block-style") {
-    return {
-      sanitizeBlockStyle: (style) => style,
-    };
-  }
-  return require(id);
+const reactMock = {
+  useEffect: () => {},
+  useMemo: (factory) => factory(),
+  useState: (initial) => [
+    typeof initial === "function" ? initial() : initial,
+    () => {},
+  ],
 };
-new Function("exports", "require", "module", js)(
-  loaded.exports,
-  customRequire,
-  loaded
-);
+
+function loadModule(fileName, resolveOverride) {
+  const source = fs.readFileSync(path.join(libDir, fileName), "utf8");
+  const js = ts.transpileModule(source, {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2020,
+    },
+  }).outputText;
+  const loaded = { exports: {} };
+  const customRequire = (id) => {
+    if (resolveOverride) {
+      const override = resolveOverride(id);
+      if (override) return override;
+    }
+    if (id === "react") return reactMock;
+    if (id === "@/lib/admin-system") {
+      return { blockOrder: () => 1, isBlockEnabled: () => true };
+    }
+    if (id === "@/lib/home-block-style") {
+      return { sanitizeBlockStyle: (style) => style };
+    }
+    return require(id);
+  };
+  new Function("exports", "require", "module", js)(
+    loaded.exports,
+    customRequire,
+    loaded
+  );
+  return loaded.exports;
+}
+
+const engine = loadModule("page-builder-store.ts");
 
 const {
   ADDABLE_BLOCK_TYPES,
@@ -59,9 +66,12 @@ const {
   CORE_BLOCK_TYPES,
   CUSTOM_BLOCK_TYPES,
   HOME_BLOCKS_KEY,
+  PAGE_BUILDER_STORE_KEY,
   addHomeBlock,
   getHomeBlocks,
-} = loaded.exports;
+} = loadModule("home-builder-store.ts", (id) =>
+  id === "@/lib/page-builder-store" ? engine : null
+);
 
 test("every builder template is enabled in the add-section panel", () => {
   assert.deepEqual(
@@ -96,9 +106,14 @@ test("admin can add multiple active instances of the same built-in section", () 
   assert.equal(sliders.length, 3); // النسخة الافتراضية + نسختان جديدتان
   assert.ok(sliders.every((block) => block.visible));
 
-  const stored = JSON.parse(memory.get(HOME_BLOCKS_KEY));
+  const stored = JSON.parse(memory.get(PAGE_BUILDER_STORE_KEY));
   assert.equal(
-    stored.items.filter((block) => block.type === "ad_slider").length,
+    stored.pages.home.items.filter((block) => block.type === "ad_slider").length,
     3
   );
+});
+
+test("legacy home key stays readable for migration only", () => {
+  assert.equal(HOME_BLOCKS_KEY, "aqaar-home-builder");
+  assert.notEqual(HOME_BLOCKS_KEY, PAGE_BUILDER_STORE_KEY);
 });

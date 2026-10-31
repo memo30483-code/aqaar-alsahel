@@ -17,21 +17,26 @@ import {
   X,
 } from "lucide-react";
 import {
-  ADDABLE_BLOCK_TYPES,
   BLOCK_TYPE_META,
-  addHomeBlock,
+  PAGE_FAMILY_LABEL,
+  PAGE_REGISTRY,
+  addPageBlock,
+  addableTypesFor,
+  getPageStyle,
   isCoreBlockType,
-  moveHomeBlock,
-  moveHomeBlockBy,
-  removeHomeBlock,
-  resetHomeBlocks,
-  toggleHomeBlock,
-  updateHomeBlock,
-  useHomeBlocks,
-  type HomeBlock,
-  type HomeBlockItem,
-  type HomeBlockType,
-} from "@/lib/home-builder-store";
+  movePageBlock,
+  movePageBlockBy,
+  removePageBlock,
+  resetPageBlocks,
+  savePageStyle,
+  togglePageBlock,
+  updatePageBlock,
+  usePageBlocks,
+  type PageBlock as HomeBlock,
+  type PageBlockItem as HomeBlockItem,
+  type PageBlockType as HomeBlockType,
+  type PageId,
+} from "@/lib/page-builder-store";
 import { addAdminLog } from "@/lib/admin-system";
 import { getSession } from "@/lib/session";
 import {
@@ -71,7 +76,13 @@ interface EditorState {
   linkUrl: string;
   linkLabelAr: string;
   linkLabelEn: string;
+  secondaryUrl: string;
+  secondaryLabelAr: string;
+  secondaryLabelEn: string;
   tone: "navy" | "sand" | "white";
+  kind: "developer" | "marketer" | "lawyer" | "engineer";
+  componentId: "market_guide" | "company" | "projects_index";
+  showIntro: boolean;
   items: HomeBlockItem[];
   style: HomeBlockStyle;
 }
@@ -93,15 +104,34 @@ function toEditor(block: HomeBlock): EditorState {
     linkUrl: block.linkUrl ?? "",
     linkLabelAr: block.linkLabelAr ?? "",
     linkLabelEn: block.linkLabelEn ?? "",
+    secondaryUrl: block.secondaryUrl ?? "",
+    secondaryLabelAr: block.secondaryLabelAr ?? "",
+    secondaryLabelEn: block.secondaryLabelEn ?? "",
     tone: block.tone ?? "white",
+    kind: block.kind ?? "developer",
+    componentId: block.componentId ?? "market_guide",
+    showIntro: block.showIntro !== false,
     items: (block.items ?? []).map((item) => ({ ...item })),
     style: { ...(block.style ?? {}) },
   };
 }
 
 export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) {
-  const blocks = useHomeBlocks();
+  const [pageId, setPageId] = useState<PageId>("home");
+  const blocks = usePageBlocks(pageId);
+  const pageMeta = PAGE_REGISTRY.find((page) => page.id === pageId) ?? PAGE_REGISTRY[0];
   const canManage = can("site.settings") || can("site.blocks");
+
+  const [pageStyle, setPageStyle] = useState<HomeBlockStyle>({});
+  const [pageStyleOpen, setPageStyleOpen] = useState(false);
+
+  /* تحميل تنسيق الصفحة عند تغيير الصفحة المختارة */
+  useEffect(() => {
+    setPageStyle(getPageStyle(pageId) ?? {});
+    setEditor(null);
+    setAddOpen(false);
+    setConfirmId(null);
+  }, [pageId]);
 
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -133,26 +163,26 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
   const labelOf = (type: HomeBlockType) => BLOCK_TYPE_META[type]?.label ?? type;
 
   const addBlock = (type: HomeBlockType) => {
-    const created = addHomeBlock(type);
+    const created = addPageBlock(pageId, type);
     if (!created) {
-      notify("هذا القسم موجود بالفعل — يمكنك تعديله أو حذفه أولاً");
+      notify("تعذّر إضافة القسم — حاول مرة أخرى");
       return;
     }
-    log("home.block.added", `إضافة قسم للرئيسية: ${labelOf(type)}`);
+    log("home.block.added", `إضافة قسم لصفحة ${pageMeta.labelAr}: ${labelOf(type)}`);
     notify("تمت إضافة نسخة جديدة من القسم وفتح محررها");
     setAddOpen(false);
     setEditor(toEditor(created));
   };
 
   const removeBlock = (block: HomeBlock) => {
-    removeHomeBlock(block.id);
-    log("home.block.deleted", `حذف قسم من الرئيسية: ${labelOf(block.type)}`);
-    notify("تم حذف القسم من الصفحة الرئيسية");
+    removePageBlock(pageId, block.id);
+    log("home.block.deleted", `حذف قسم من ${pageMeta.labelAr}: ${labelOf(block.type)}`);
+    notify("تم حذف القسم من الصفحة");
     setConfirmId(null);
   };
 
   const toggle = (block: HomeBlock) => {
-    toggleHomeBlock(block.id);
+    togglePageBlock(pageId, block.id);
     log(
       block.visible ? "home.block.hidden" : "home.block.shown",
       `${block.visible ? "إخفاء" : "إظهار"} قسم: ${labelOf(block.type)}`
@@ -161,14 +191,14 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
   };
 
   const move = (block: HomeBlock, direction: "up" | "down") => {
-    moveHomeBlockBy(block.id, direction);
+    movePageBlockBy(pageId, block.id, direction);
     log("home.block.reordered", `تغيير ترتيب قسم: ${labelOf(block.type)}`);
   };
 
   const handleDrop = (targetIndex: number) => {
     if (!dragId) return;
     const block = blocks.find((item) => item.id === dragId);
-    moveHomeBlock(dragId, targetIndex);
+    movePageBlock(pageId, dragId, targetIndex);
     if (block) {
       log("home.block.reordered", `سحب قسم: ${labelOf(block.type)}`);
     }
@@ -178,7 +208,7 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
 
   const saveEditor = () => {
     if (!editor) return;
-    updateHomeBlock(editor.id, {
+    updatePageBlock(pageId, editor.id, {
       eyebrowAr: editor.eyebrowAr,
       eyebrowEn: editor.eyebrowEn,
       titleAr: editor.titleAr,
@@ -192,7 +222,13 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
       linkUrl: editor.linkUrl,
       linkLabelAr: editor.linkLabelAr,
       linkLabelEn: editor.linkLabelEn,
+      secondaryUrl: editor.secondaryUrl,
+      secondaryLabelAr: editor.secondaryLabelAr,
+      secondaryLabelEn: editor.secondaryLabelEn,
       tone: editor.tone,
+      kind: editor.kind,
+      componentId: editor.componentId,
+      showIntro: editor.showIntro,
       items: editor.items,
       style: sanitizeBlockStyle(editor.style),
     });
@@ -222,6 +258,16 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
 
   const clearStyle = () =>
     setEditor((prev) => (prev ? { ...prev, style: {} } : prev));
+
+  /** تعديل تنسيق الصفحة العام (خط/حجم/لون/خلفية) */
+  const patchPageStyle = (patch: Partial<HomeBlockStyle>) =>
+    setPageStyle((prev) => ({ ...prev, ...patch }));
+
+  const savePageStyleHandler = () => {
+    savePageStyle(pageId, sanitizeBlockStyle(pageStyle) ?? {});
+    log("page.style.updated", `تعديل تنسيق صفحة ${pageMeta.labelAr}`);
+    notify("تم حفظ تنسيق الصفحة العام");
+  };
 
   const addType = (type: HomeBlockType) => {
     const meta = BLOCK_TYPE_META[type];
@@ -294,14 +340,22 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
     "inline_ad",
     "ad_slider",
     "ad_band",
+    "page_header",
+    "contact_block",
   ];
-  const itemTypes: HomeBlockType[] = ["stats", "faq", "marquee", "ad_slider"];
+  const itemTypes: HomeBlockType[] = [
+    "stats",
+    "faq",
+    "marquee",
+    "ad_slider",
+    "steps",
+  ];
 
   return (
     <div className="space-y-5">
       <Panel
-        title="Builder الصفحة الرئيسية"
-        desc="اسحب أي قسم لترتيبه، أو أخفِه، أو احذفه، أو أضف أقساماً جديدة وحرّر محتواها. التغييرات تظهر على الرئيسية فوراً."
+        title="Builder الصفحات"
+        desc="اختر الصفحة، ثم اسحب الأقسام لترتيبها أو أخفِها أو احذفها أو أضف أقساماً جديدة. كل صفحة لها تخطيطها وتنسيقها المستقل."
         actions={
           <>
             <button
@@ -313,7 +367,7 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
               <Plus className="h-4 w-4" /> إضافة قسم
             </button>
             <Link
-              href="/"
+              href={pageMeta.path}
               target="_blank"
               className="inline-flex items-center gap-1 text-xs font-bold text-gold-600"
             >
@@ -322,6 +376,185 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
           </>
         }
       >
+        {/* اختيار الصفحة + تنسيق الصفحة العام */}
+        <div className="mb-4 rounded-2xl border border-sand-200 bg-sand-50/60 p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <label
+              htmlFor="builder-page-select"
+              className="text-[11px] font-black text-ocean-900"
+            >
+              الصفحة
+            </label>
+            <select
+              id="builder-page-select"
+              value={pageId}
+              onChange={(event) => setPageId(event.target.value as PageId)}
+              className="min-w-[220px] flex-1 rounded-xl border border-sand-200 bg-white px-3 py-2 text-[12px] font-bold text-ocean-900 outline-none focus:border-gold-400"
+            >
+              {PAGE_REGISTRY.map((page) => (
+                <option key={page.id} value={page.id}>
+                  {page.labelAr} — {page.path}
+                </option>
+              ))}
+            </select>
+            <span className="rounded-full bg-ocean-50 px-2.5 py-1 text-[9.5px] font-black text-ocean-700">
+              {PAGE_FAMILY_LABEL[pageMeta.family]}
+            </span>
+            <span className="rounded-full bg-white px-2.5 py-1 text-[9.5px] font-black text-sand-700">
+              {blocks.length} قسم
+            </span>
+            <button
+              type="button"
+              onClick={() => setPageStyleOpen((value) => !value)}
+              className={ROW_ACTION}
+            >
+              <Palette className="h-3 w-3" /> تنسيق الصفحة
+            </button>
+          </div>
+          <p className="mt-2 text-[10.5px] font-semibold leading-5 text-sand-600">
+            {pageMeta.description}
+          </p>
+
+          {pageStyleOpen && (
+            <div className="mt-3 rounded-xl border border-sand-200 bg-white p-3">
+              <p className="mb-2 text-[11.5px] font-black text-ocean-900">
+                تنسيق الصفحة العام — يورث لكل الأقسام، ويمكن لأي قسم تجاوزه
+              </p>
+              <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                <Field label="الخط الأساسي">
+                  <select
+                    value={pageStyle.fontFamily ?? ""}
+                    onChange={(event) =>
+                      patchPageStyle({
+                        fontFamily: (event.target.value ||
+                          undefined) as HomeBlockStyle["fontFamily"],
+                      })
+                    }
+                    className={INPUT}
+                  >
+                    <option value="">خط المنصة الافتراضي</option>
+                    {FONT_OPTIONS.map((font) => (
+                      <option key={font.value} value={font.value}>
+                        {font.label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="حجم عنوان الصفحة (px)">
+                  <input
+                    type="number"
+                    min={12}
+                    max={80}
+                    value={pageStyle.titleSize ?? ""}
+                    onChange={(event) =>
+                      patchPageStyle({
+                        titleSize: event.target.value
+                          ? Number(event.target.value)
+                          : undefined,
+                      })
+                    }
+                    className={INPUT}
+                  />
+                </Field>
+                <Field label="حجم نص الصفحة (px)">
+                  <input
+                    type="number"
+                    min={10}
+                    max={32}
+                    value={pageStyle.bodySize ?? ""}
+                    onChange={(event) =>
+                      patchPageStyle({
+                        bodySize: event.target.value
+                          ? Number(event.target.value)
+                          : undefined,
+                      })
+                    }
+                    className={INPUT}
+                  />
+                </Field>
+                <Field label="لون العناوين">
+                  <input
+                    type="color"
+                    value={pageStyle.titleColor ?? "#141a33"}
+                    onChange={(event) =>
+                      patchPageStyle({ titleColor: event.target.value })
+                    }
+                    className="h-9 w-full rounded-lg border border-sand-200 bg-white p-1"
+                  />
+                </Field>
+                <Field label="لون النصوص">
+                  <input
+                    type="color"
+                    value={pageStyle.bodyColor ?? "#475569"}
+                    onChange={(event) =>
+                      patchPageStyle({ bodyColor: event.target.value })
+                    }
+                    className="h-9 w-full rounded-lg border border-sand-200 bg-white p-1"
+                  />
+                </Field>
+                <Field label="خلفية الصفحة">
+                  <input
+                    type="color"
+                    value={pageStyle.background ?? "#ffffff"}
+                    onChange={(event) =>
+                      patchPageStyle({ background: event.target.value })
+                    }
+                    className="h-9 w-full rounded-lg border border-sand-200 bg-white p-1"
+                  />
+                </Field>
+                <Field label="محاذاة النص">
+                  <select
+                    value={pageStyle.align ?? "start"}
+                    onChange={(event) =>
+                      patchPageStyle({
+                        align: event.target.value as HomeBlockStyle["align"],
+                      })
+                    }
+                    className={INPUT}
+                  >
+                    <option value="start">بداية</option>
+                    <option value="center">وسط</option>
+                    <option value="end">نهاية</option>
+                  </select>
+                </Field>
+                <Field label="مسافة رأسية للصفحة (px)">
+                  <input
+                    type="number"
+                    min={0}
+                    max={80}
+                    value={pageStyle.paddingY ?? ""}
+                    onChange={(event) =>
+                      patchPageStyle({
+                        paddingY: event.target.value
+                          ? Number(event.target.value)
+                          : undefined,
+                      })
+                    }
+                    className={INPUT}
+                  />
+                </Field>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={savePageStyleHandler}
+                  disabled={!canManage}
+                  className={BTN_PRIMARY}
+                >
+                  <Save className="h-3.5 w-3.5" /> حفظ تنسيق الصفحة
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPageStyle({})}
+                  disabled={!canManage}
+                  className={ROW_ACTION}
+                >
+                  <RotateCcw className="h-3 w-3" /> مسح الحقول
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
         {/* إضافة قسم */}
         {addOpen && (
           <div className="mb-4 rounded-2xl border border-gold-200 bg-gold-50/40 p-4">
@@ -339,10 +572,10 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
               </button>
             </div>
             <p className="mb-2 text-[10.5px] font-bold leading-5 text-sand-600">
-              كل القوالب مفعّلة ويمكن إضافتها أكثر من مرة. بعد الإضافة سيفتح محرر النسخة الجديدة لضبط محتواها ومقاساتها.
+              كل القوالب المتاحة لهذه الصفحة مفعّلة ويمكن إضافتها أكثر من مرة. بعد الإضافة سيفتح محرر النسخة الجديدة لضبط محتواها ومقاساتها.
             </p>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {ADDABLE_BLOCK_TYPES.map(addType)}
+              {addableTypesFor(pageId).map(addType)}
             </div>
           </div>
         )}
@@ -682,6 +915,107 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
                             />
                           </Field>
                         </>
+                      )}
+
+                      {editor.type === "page_header" && (
+                        <>
+                          <Field label="رابط الزر الثانوي">
+                            <input
+                              value={editor.secondaryUrl}
+                              onChange={(event) =>
+                                setEditor({
+                                  ...editor,
+                                  secondaryUrl: event.target.value,
+                                })
+                              }
+                              placeholder="/join?role=engineer"
+                              dir="ltr"
+                              className={INPUT}
+                            />
+                          </Field>
+                          <Field label="نص الزر الثانوي بالعربية">
+                            <input
+                              value={editor.secondaryLabelAr}
+                              onChange={(event) =>
+                                setEditor({
+                                  ...editor,
+                                  secondaryLabelAr: event.target.value,
+                                })
+                              }
+                              className={INPUT}
+                            />
+                          </Field>
+                          <Field label="Secondary label (English)">
+                            <input
+                              value={editor.secondaryLabelEn}
+                              onChange={(event) =>
+                                setEditor({
+                                  ...editor,
+                                  secondaryLabelEn: event.target.value,
+                                })
+                              }
+                              dir="ltr"
+                              className={INPUT}
+                            />
+                          </Field>
+                        </>
+                      )}
+
+                      {editor.type === "professionals_directory" && (
+                        <>
+                          <Field label="نوع الدليل">
+                            <select
+                              value={editor.kind}
+                              onChange={(event) =>
+                                setEditor({
+                                  ...editor,
+                                  kind: event.target.value as EditorState["kind"],
+                                })
+                              }
+                              className={INPUT}
+                            >
+                              <option value="developer">المطورون</option>
+                              <option value="marketer">المسوقون</option>
+                              <option value="lawyer">المحامون</option>
+                              <option value="engineer">المكاتب الهندسية</option>
+                            </select>
+                          </Field>
+                          <Field
+                            label="هيرو الدليل الداخلي"
+                            hint="أطفئه إذا أضفت رأس صفحة منفصلًا بالأعلى"
+                          >
+                            <select
+                              value={editor.showIntro ? "show" : "hide"}
+                              onChange={(event) =>
+                                setEditor({
+                                  ...editor,
+                                  showIntro: event.target.value === "show",
+                                })
+                              }
+                              className={INPUT}
+                            >
+                              <option value="show">إظهار</option>
+                              <option value="hide">إخفاء</option>
+                            </select>
+                          </Field>
+                        </>
+                      )}
+
+                      {editor.type === "embed_section" && (
+                        <Field
+                          label="المحتوى المدمج"
+                          hint="محتوى جاهز من المنصة — لا يمكن تغييره"
+                        >
+                          <select
+                            value={editor.componentId}
+                            disabled
+                            className={INPUT}
+                          >
+                            <option value="market_guide">البوصلة العقارية</option>
+                            <option value="company">بيانات الشركة</option>
+                            <option value="projects_index">فهرس المشاريع</option>
+                          </select>
+                        </Field>
                       )}
                     </div>
 
@@ -1147,7 +1481,7 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
 
           {blocks.length === 0 && (
             <p className="rounded-2xl border border-dashed border-sand-200 p-8 text-center text-sm text-sand-600">
-              لا توجد أقسام في الصفحة الرئيسية. اضغط «إضافة قسم» لبناء الصفحة.
+              لا توجد أقسام في «{pageMeta.labelAr}». اضغط «إضافة قسم» لبناء الصفحة.
             </p>
           )}
         </div>
@@ -1155,14 +1489,19 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-sand-200 bg-sand-50/70 px-3 py-2">
           <p className="text-[10.5px] font-semibold leading-5 text-sand-600">
             يمكنك إنشاء أي عدد من كل قالب، وتعديل محتوى كل نسخة وتصميمها بصورة
-            مستقلة. «استعادة الافتراضي» تحذف النسخ الإضافية وتعيد التخطيط الأصلي.
+            مستقلة. «استعادة الافتراضي» تحذف النسخ الإضافية وتعيد تخطيط هذه
+            الصفحة الأصلي.
           </p>
           <button
             type="button"
             onClick={() => {
-              resetHomeBlocks();
-              log("home.blocks.reset", "استعادة ترتيب أقسام الرئيسية الافتراضي");
-              notify("تمت استعادة الترتيب الافتراضي");
+              resetPageBlocks(pageId);
+              setPageStyle({});
+              log(
+                "home.blocks.reset",
+                `استعادة التخطيط الافتراضي لصفحة ${pageMeta.labelAr}`
+              );
+              notify("تمت استعادة التخطيط الافتراضي للصفحة");
             }}
             disabled={!canManage}
             className={ROW_ACTION}

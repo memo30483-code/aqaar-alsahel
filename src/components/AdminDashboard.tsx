@@ -77,7 +77,7 @@ const TABS: {
   permission?: string;
 }[] = [
   { key: "overview", label: "نظرة عامة", Icon: BarChart3 },
-  { key: "builder", label: "Builder الرئيسية", Icon: LayoutTemplate, permission: "site.settings" },
+  { key: "builder", label: "Builder الصفحات", Icon: LayoutTemplate, permission: "site.settings" },
   { key: "listings", label: "الإعلانات", Icon: LayoutList, permission: "listings.view" },
   {
     key: "propertyFields",

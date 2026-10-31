@@ -31,6 +31,8 @@ import {
 
 interface Props {
   kind: ProfessionalKind;
+  /** إخفاء هيرو الدليل وشريط الثقة عندما تُبنى الصفحة من أقسام البلدر */
+  hideIntro?: boolean;
 }
 
 const FIELD =
@@ -82,7 +84,7 @@ function specialtyList(record: ProfessionalRecord): string[] {
   return record.specialtiesAr ?? [];
 }
 
-export default function ProfessionalDirectory({ kind }: Props) {
+export default function ProfessionalDirectory({ kind, hideIntro = false }: Props) {
   const { t, locale } = useI18n();
   const ar = locale === "ar";
   const records = usePublicProfessionals(kind);
@@ -199,6 +201,8 @@ export default function ProfessionalDirectory({ kind }: Props) {
 
   return (
     <div className="bg-sand-50">
+      {!hideIntro && (
+        <>
       {/* ====================== HERO ====================== */}
       <section className="relative overflow-hidden theme-hero">
         <span
@@ -280,6 +284,8 @@ export default function ProfessionalDirectory({ kind }: Props) {
           })}
         </div>
       </section>
+        </>
+      )}
 
       {/* ====================== FILTERS + GRID ====================== */}
       <section className="mx-auto w-full max-w-[1180px] px-4 py-10 sm:px-6 sm:py-12">
