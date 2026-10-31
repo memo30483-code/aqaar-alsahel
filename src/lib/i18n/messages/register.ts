@@ -32,6 +32,14 @@ export const registerMessages = {
     ar: "استشارات وتوثيق عقود",
     en: "Consultations & contract authentication",
   },
+  "register.account.engineer.title": {
+    ar: "مكتب هندسي",
+    en: "Engineering office",
+  },
+  "register.account.engineer.note": {
+    ar: "فحص فني وإشراف على التنفيذ",
+    en: "Technical inspection & construction supervision",
+  },
 
   /* ---------- تسميات الحقول ---------- */
   "register.field.fullName": { ar: "الاسم الكامل", en: "Full name" },

@@ -28,6 +28,7 @@ import {
 } from "@/lib/projects-taxonomy";
 import {
   addProfessionalRequest,
+  hasPortfolio,
   PROFESSIONAL_KIND_META,
   useProfessionalsState,
   type ProfessionalKind,
@@ -162,6 +163,8 @@ function ProfileContent({
   const coverage = record.coverageAr ?? [];
   const displayName = record.companyAr || record.nameAr;
   const isLawyer = kind === "lawyer";
+  const isEngineer = kind === "engineer";
+  const portfolioEnabled = hasPortfolio(kind);
 
   return (
     <div className="bg-sand-50">
@@ -260,11 +263,15 @@ function ProfileContent({
                   label={t("prof.profile.experience")}
                 />
               )}
-              {!isLawyer && (
+              {portfolioEnabled && (
                 <Stat
                   icon={<Briefcase className="h-4 w-4" />}
                   value={String(approvedProjects.length)}
-                  label={t("prof.profile.publishedProjects")}
+                  label={
+                    isEngineer
+                      ? t("prof.profile.portfolioCount")
+                      : t("prof.profile.publishedProjects")
+                  }
                 />
               )}
               <Stat
@@ -327,12 +334,14 @@ function ProfileContent({
             </section>
           )}
 
-          {!isLawyer && (
+          {portfolioEnabled && (
             <section className="rounded-3xl border border-sand-200 bg-white p-5 shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)]">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="flex items-center gap-2 text-[14px] font-black text-ocean-900">
                   <Briefcase className="h-4 w-4 text-gold-600" />
-                  {t("prof.profile.projects")}
+                  {isEngineer
+                    ? t("prof.profile.portfolio")
+                    : t("prof.profile.projects")}
                 </h2>
                 <span className="rounded-full border border-sand-200 bg-sand-50 px-2.5 py-1 text-[10px] font-bold text-sand-600">
                   {approvedProjects.length}
@@ -341,7 +350,9 @@ function ProfileContent({
 
               {approvedProjects.length === 0 ? (
                 <p className="mt-3 rounded-2xl border border-dashed border-sand-300 bg-sand-50/60 px-4 py-6 text-center text-[11.5px] font-semibold text-sand-500">
-                  {t("prof.profile.projectsEmpty")}
+                  {isEngineer
+                    ? t("prof.profile.portfolioEmpty")
+                    : t("prof.profile.projectsEmpty")}
                 </p>
               ) : (
                 <>
@@ -381,6 +392,7 @@ function ProfileContent({
                       <ProjectCard
                         key={project.id}
                         project={project}
+                        kind={kind}
                         t={t}
                         locale={locale}
                       />
@@ -396,7 +408,9 @@ function ProfileContent({
 
               <p className="mt-4 flex items-start gap-1.5 text-[10px] leading-5 text-sand-500">
                 <ShieldCheck className="mt-0.5 h-3 w-3 shrink-0 text-gold-500" />
-                {t("prof.profile.projectsNote")}
+                {isEngineer
+                  ? t("prof.profile.portfolioNote")
+                  : t("prof.profile.projectsNote")}
               </p>
             </section>
           )}
@@ -469,14 +483,17 @@ function Stat({
 
 function ProjectCard({
   project,
+  kind,
   t,
   locale,
 }: {
   project: ProfessionalProject;
+  kind: ProfessionalKind;
   t: ReturnType<typeof useI18n>["t"];
   locale: "ar" | "en";
 }) {
   const purpose = purposeKey(project.purpose);
+  const isEngineer = kind === "engineer";
   return (
     <Link
       href={`/projects/${project.id}`}
@@ -525,10 +542,22 @@ function ProjectCard({
         )}
 
         <dl className="mt-3 grid grid-cols-2 gap-1.5 rounded-2xl border border-sand-200 bg-sand-50/70 p-2.5 text-[10px]">
-          {project.priceFrom && (
+          {project.priceFrom && !isEngineer && (
             <div className="col-span-2 flex items-center gap-1.5 font-bold text-ocean-900">
               <Wallet className="h-3 w-3 text-gold-500" />
               {t("prof.profile.priceFrom")}: {project.priceFrom}
+            </div>
+          )}
+          {isEngineer && project.roleAr && (
+            <div className="col-span-2 flex items-center gap-1.5 font-bold text-ocean-900">
+              <Briefcase className="h-3 w-3 text-gold-500" />
+              {t("prof.profile.role")}: {project.roleAr}
+            </div>
+          )}
+          {isEngineer && project.year && (
+            <div className="flex items-center gap-1.5 font-semibold text-sand-700">
+              <CalendarClock className="h-3 w-3 text-gold-500" />
+              {t("prof.profile.year")}: {project.year}
             </div>
           )}
           {project.deliveryAr && (
@@ -543,7 +572,7 @@ function ProjectCard({
               {t("prof.profile.area")}: {project.areaFrom} م²
             </div>
           )}
-          {typeof project.unitsCount === "number" && (
+          {typeof project.unitsCount === "number" && !isEngineer && (
             <div className="flex items-center gap-1.5 font-semibold text-sand-700">
               <Building2 className="h-3 w-3 text-gold-500" />
               {t("prof.profile.units")}: {project.unitsCount}

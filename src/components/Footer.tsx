@@ -65,9 +65,11 @@ const QUICK_LINKS: { key: MessageKey; href: string }[] = [
   { key: "home.projects.title", href: "/#projects" },
   { key: "nav.compass", href: "/market-guide" },
   { key: "nav.legal", href: "/legal-consultational" },
+  { key: "nav.engineering", href: "/engineering-consultational" },
   { key: "companies.developers", href: "/developers" },
   { key: "companies.brokers", href: "/brokers" },
   { key: "companies.lawyers", href: "/lawyers" },
+  { key: "companies.engineers", href: "/engineers" },
   { key: "companies.join", href: "/login?redirect=%2Fjoin" },
   { key: "nav.addProperty", href: "/add-property" },
 ];

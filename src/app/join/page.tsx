@@ -10,6 +10,7 @@ import {
   Check,
   FileCheck2,
   Film,
+  HardHat,
   ImagePlus,
   Lock,
   Scale,
@@ -43,6 +44,7 @@ const ROLES: {
   { id: "developer", labelKey: "join.role.developer", Icon: Building2 },
   { id: "marketer", labelKey: "join.role.marketer", Icon: BadgeCheck },
   { id: "lawyer", labelKey: "join.role.lawyer", Icon: Scale },
+  { id: "engineer", labelKey: "join.role.engineer", Icon: HardHat },
 ];
 
 interface DocDef {
@@ -116,6 +118,36 @@ const DOC_DEFS: Record<ProfessionalKind, DocDef[]> = {
       required: true,
     },
   ],
+  engineer: [
+    {
+      key: "engineering_syndicate",
+      type: "engineering_syndicate",
+      labelAr: "كارنيه نقابة المهندسين",
+      labelEn: "Engineering syndicate card",
+      required: true,
+    },
+    {
+      key: "commercial_register",
+      type: "commercial_register",
+      labelAr: "السجل التجاري للمكتب",
+      labelEn: "Office commercial register",
+      required: true,
+    },
+    {
+      key: "tax_card",
+      type: "tax_card",
+      labelAr: "البطاقة الضريبية (اختياري)",
+      labelEn: "Tax card (optional)",
+      required: false,
+    },
+    {
+      key: "national_id",
+      type: "national_id",
+      labelAr: "بطاقة المسؤول",
+      labelEn: "Responsible person ID",
+      required: true,
+    },
+  ],
 };
 
 interface UploadedDoc {
@@ -131,7 +163,11 @@ function JoinForm() {
 
   const initialRole = searchParams.get("role");
   const [kind, setKind] = useState<ProfessionalKind>(
-    initialRole === "marketer" || initialRole === "lawyer" ? initialRole : "developer"
+    initialRole === "marketer" ||
+      initialRole === "lawyer" ||
+      initialRole === "engineer"
+      ? initialRole
+      : "developer"
   );
 
   const [name, setName] = useState("");
@@ -295,7 +331,7 @@ function JoinForm() {
       phone,
       accountType: kind,
       verifiedAt: new Date().toISOString(),
-      role: kind === "lawyer" ? "user" : "agent",
+      role: kind === "developer" || kind === "marketer" ? "agent" : "user",
       ownerToken,
     });
     setDone(true);
@@ -506,7 +542,11 @@ function JoinForm() {
                 />
               </label>
               <label className="block">
-                <span className={LABEL}>{t("join.field.license")}</span>
+                <span className={LABEL}>
+                  {kind === "engineer"
+                    ? t("join.field.license.engineer")
+                    : t("join.field.license")}
+                </span>
                 <input
                   value={license}
                   onChange={(event) => setLicense(event.target.value)}

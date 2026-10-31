@@ -56,6 +56,11 @@ const KIND_KEYS: Record<
     title: "prof.lawyers.title",
     desc: "prof.lawyers.desc",
   },
+  engineer: {
+    eyebrow: "prof.engineers.eyebrow",
+    title: "prof.engineers.title",
+    desc: "prof.engineers.desc",
+  },
 };
 
 const TRUST_POINTS = [
@@ -409,7 +414,9 @@ export default function ProfessionalDirectory({ kind }: Props) {
                   {typeof record.projectsCount === "number" && (
                     <div className="flex items-center gap-1.5 font-bold text-ocean-800">
                       <Briefcase className="h-3 w-3 text-gold-500" />
-                      {t("prof.card.projects", { count: record.projectsCount })}
+                      {kind === "engineer"
+                        ? t("prof.card.portfolio", { count: record.projectsCount })
+                        : t("prof.card.projects", { count: record.projectsCount })}
                     </div>
                   )}
                   {typeof record.yearsExperience === "number" && (

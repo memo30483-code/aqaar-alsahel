@@ -38,6 +38,7 @@ import { getSession, hasAdminAccess, type Session } from "@/lib/session";
 import {
   addProfessionalProject,
   addProfessionalReel,
+  hasPortfolio,
   MAX_PROJECTS_PER_PROFESSIONAL,
   PROFESSIONAL_KIND_META,
   PROJECT_STATUS_META,
@@ -150,8 +151,9 @@ export default function ProfessionalDashboard() {
   const kind = professional.kind;
   const meta = PROFESSIONAL_KIND_META[kind];
   const isLawyer = kind === "lawyer";
+  const portfolioEnabled = hasPortfolio(kind);
   /* تبويب المشاريع غير متاح للمحامي — نعرض الملف بدل شاشة فارغة */
-  const visibleTab: Tab = isLawyer && tab === "projects" ? "profile" : tab;
+  const visibleTab: Tab = !portfolioEnabled && tab === "projects" ? "profile" : tab;
   const publicHref = `${meta.path}/${professional.id}`;
 
   return (
@@ -234,15 +236,18 @@ export default function ProfessionalDashboard() {
           {(
             [
               { id: "profile", label: t("prof.dash.tab.profile"), Icon: Building2 },
-              ...(isLawyer
-                ? []
-                : [
+              ...(portfolioEnabled
+                ? [
                     {
                       id: "projects" as const,
-                      label: t("prof.dash.tab.projects"),
+                      label:
+                        kind === "engineer"
+                          ? t("prof.dash.tab.portfolio")
+                          : t("prof.dash.tab.projects"),
                       Icon: Briefcase,
                     },
-                  ]),
+                  ]
+                : []),
               { id: "reels", label: t("prof.dash.tab.reels"), Icon: Film },
             ] as { id: Tab; label: string; Icon: typeof Building2 }[]
           ).map((item) => {
@@ -283,7 +288,7 @@ export default function ProfessionalDashboard() {
               locale={locale}
             />
           )}
-          {visibleTab === "projects" && !isLawyer && (
+          {visibleTab === "projects" && portfolioEnabled && (
             <ProjectsManager
               key={`${professional.id}-projects`}
               record={professional}
@@ -671,7 +676,9 @@ function ProjectsManager({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="flex items-center gap-2 text-[14px] font-black text-ocean-900">
             <Briefcase className="h-4 w-4 text-gold-600" />
-            {t("prof.dash.tab.projects")}
+            {record.kind === "engineer"
+              ? t("prof.dash.tab.portfolio")
+              : t("prof.dash.tab.projects")}
           </h2>
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-sand-200 bg-sand-50 px-2.5 py-1 text-[10px] font-bold text-sand-600">
@@ -748,6 +755,7 @@ function ProjectsManager({
           key={editing?.id ?? "new"}
           recordId={record.id}
           initial={editing}
+          kind={record.kind}
           t={t}
           locale={locale}
           onDone={(message) => {
@@ -874,6 +882,7 @@ function ProjectsManager({
 function ProjectForm({
   recordId,
   initial,
+  kind,
   t,
   locale,
   onDone,
@@ -881,15 +890,19 @@ function ProjectForm({
 }: {
   recordId: string;
   initial: ProfessionalProject | null;
+  kind: ProfessionalRecord["kind"];
   t: ReturnType<typeof useI18n>["t"];
   locale: "ar" | "en";
   onDone: (message: string) => void;
   onCancel: () => void;
 }) {
   const cities = useActiveCities();
+  const isEngineer = kind === "engineer";
   const [title, setTitle] = useState(initial?.titleAr ?? "");
   const [description, setDescription] = useState(initial?.descriptionAr ?? "");
   const [city, setCity] = useState(initial?.cityAr ?? "");
+  const [role, setRole] = useState(initial?.roleAr ?? "");
+  const [year, setYear] = useState(initial?.year ?? "");
   const [typeId, setTypeId] = useState<ProjectTypeId | "">(
     initial?.typeId ?? resolveProjectTypeId(initial?.typeAr) ?? ""
   );
@@ -927,6 +940,8 @@ function ProjectForm({
       priceFrom: price,
       deliveryAr: delivery,
       areaFrom: area,
+      roleAr: isEngineer ? role.trim() || undefined : undefined,
+      year: isEngineer ? year.trim() || undefined : undefined,
       unitsCount: units ? Number(units) : undefined,
       coverUrl: cover,
       gallery: gallery
@@ -1050,6 +1065,32 @@ function ProjectForm({
             className={FIELD}
           />
         </label>
+        {isEngineer && (
+          <>
+            <label className="block">
+              <span className={LABEL}>{t("prof.dash.projectRole")}</span>
+              <input
+                value={role}
+                onChange={(event) => setRole(event.target.value)}
+                placeholder={t("prof.dash.projectRoleHint")}
+                className={FIELD}
+              />
+            </label>
+            <label className="block">
+              <span className={LABEL}>{t("prof.dash.projectYear")}</span>
+              <input
+                value={year}
+                onChange={(event) =>
+                  setYear(event.target.value.replace(/[^0-9]/g, "").slice(0, 4))
+                }
+                inputMode="numeric"
+                dir="ltr"
+                placeholder="2025"
+                className={FIELD}
+              />
+            </label>
+          </>
+        )}
         <label className="block">
           <span className={LABEL}>{t("prof.dash.projectUnits")}</span>
           <input

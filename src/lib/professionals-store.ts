@@ -1,5 +1,6 @@
 /**
- * سجل المهنيين المعتمدين على المنصة: المطورون العقاريون، المسوقون، والمحامون.
+ * سجل المهنيين المعتمدين على المنصة: المطورون العقاريون، المسوقون، المحامون،
+ * والمكاتب الهندسية.
  *
  * قواعد العمل:
  * - التسجيل يأتي من صاحب الحساب بحالة `pending` ولا يظهر للزوار.
@@ -20,7 +21,19 @@ import {
   type ProjectTypeId,
 } from "@/lib/projects-taxonomy";
 
-export type ProfessionalKind = "developer" | "marketer" | "lawyer";
+export type ProfessionalKind =
+  | "developer"
+  | "marketer"
+  | "lawyer"
+  | "engineer";
+
+/** كل أنواع المهنيين بالترتيب المعتمد في الواجهات */
+export const PROFESSIONAL_KINDS: ProfessionalKind[] = [
+  "developer",
+  "marketer",
+  "lawyer",
+  "engineer",
+];
 
 export type ProfessionalStatus = "pending" | "approved" | "rejected" | "archived";
 
@@ -122,6 +135,10 @@ export interface ProfessionalProject {
   deliveryAr?: string;
   areaFrom?: string;
   unitsCount?: number;
+  /** للمكاتب الهندسية: دور المكتب في العمل (تصميم / إشراف / تنفيذ) */
+  roleAr?: string;
+  /** للمكاتب الهندسية: سنة تنفيذ العمل */
+  year?: string;
   /** معرض صور المشروع (روابط) — تُعرض في صفحة المشروع */
   gallery?: string[];
   /** فيديو تعريفي — يوتيوب أو إنستجرام، يُحوَّل لـ embed عند العرض */
@@ -224,7 +241,21 @@ export const PROFESSIONAL_KIND_META: Record<
     singularAr: "محامٍ معتمد",
     path: "/lawyers",
   },
+  engineer: {
+    labelAr: "المكاتب الهندسية",
+    labelEn: "Engineering offices",
+    singularAr: "مكتب هندسي",
+    path: "/engineers",
+  },
 };
+
+/**
+ * هل يمتلك هذا النوع قسم أعمال/سابقة أعمال؟
+ * المحامي لا ينشر أعمالاً، أما المطور والمسوق والمكتب الهندسي فنعم.
+ */
+export function hasPortfolio(kind: ProfessionalKind): boolean {
+  return kind !== "lawyer";
+}
 
 export const STATUS_META: Record<
   ProfessionalStatus,
@@ -401,6 +432,8 @@ function normalizeProject(
     unitsCount: Number.isFinite(item.unitsCount)
       ? Number(item.unitsCount)
       : undefined,
+    roleAr: optional(item.roleAr),
+    year: optional(item.year),
     gallery: Array.isArray(item.gallery)
       ? item.gallery.filter(
           (url): url is string => typeof url === "string" && Boolean(url.trim())
@@ -438,7 +471,14 @@ function normalizeProfessional(
   index: number
 ): ProfessionalRecord | null {
   const kind = raw.kind;
-  if (kind !== "developer" && kind !== "marketer" && kind !== "lawyer") return null;
+  if (
+    kind !== "developer" &&
+    kind !== "marketer" &&
+    kind !== "lawyer" &&
+    kind !== "engineer"
+  ) {
+    return null;
+  }
   const nameAr = text(raw.nameAr).trim() || text(raw.companyAr).trim();
   if (!nameAr) return null;
   const status: ProfessionalStatus =
@@ -941,6 +981,222 @@ export const DEFAULT_PROFESSIONALS: ProfessionalRecord[] = [
     createdAt: "2026-01-15",
     updatedAt: "2026-01-18",
   },
+  {
+    id: "eng-nile",
+    kind: "engineer",
+    status: "approved",
+    verified: true,
+    featured: true,
+    nameAr: "م. طارق الشاذلي",
+    nameEn: "Eng. Tarek El-Shazly",
+    companyAr: "مكتب النيل للاستشارات الهندسية",
+    companyEn: "Nile Engineering Consultants",
+    titleAr: "تصميم وإشراف على المشروعات السكنية",
+    titleEn: "Residential design & construction supervision",
+    bioAr:
+      "مكتب استشاري معتمد متخصص في التصميم المعماري والإشراف على التنفيذ، مع فحص فني للوحدات قبل الشراء وتقارير حالة إنشائية موثقة.",
+    bioEn:
+      "A verified engineering consultancy specialized in architectural design and construction supervision, with pre-purchase technical inspections and documented structural reports.",
+    cityAr: "دمياط الجديدة",
+    coverageAr: ["دمياط الجديدة", "دمياط", "رأس البر"],
+    specialtiesAr: ["فحص فني قبل الشراء", "إشراف على التنفيذ", "تصميم معماري"],
+    phone: "201000000009",
+    email: "nile@eng.example",
+    logoUrl: "",
+    licenseNumber: "ENG-4412",
+    yearsExperience: 18,
+    projectsCount: 3,
+    projects: [
+      seedProject({
+        id: "prj-eng-nile-1",
+        titleAr: "فحص إنشائي — برج سكني دمياط الجديدة",
+        titleEn: "Structural inspection — New Damietta tower",
+        descriptionAr:
+          "فحص شامل للأساسات والأعمدة والبلاطات مع تقرير مصور وتوصيات معالجة قبل إتمام الشراء.",
+        cityAr: "دمياط الجديدة",
+        typeAr: "سكني",
+        purpose: "project",
+        areaFrom: "1,800",
+        roleAr: "فحص فني",
+        year: "2025",
+        order: 1,
+      }),
+      seedProject({
+        id: "prj-eng-nile-2",
+        titleAr: "إشراف على تنفيذ — كمبوند النخيل",
+        titleEn: "Construction supervision — El-Nakheel compound",
+        descriptionAr:
+          "إشراف كامل على مراحل التنفيذ من الأعمال الخرسانية حتى التشطيبات، مع زيارات دورية وتقارير جودة.",
+        cityAr: "دمياط الجديدة",
+        typeAr: "سكني",
+        purpose: "project",
+        areaFrom: "12,000",
+        roleAr: "إشراف",
+        year: "2024",
+        order: 2,
+      }),
+      seedProject({
+        id: "prj-eng-nile-3",
+        titleAr: "تصميم معماري — فيلا رأس البر",
+        titleEn: "Architectural design — Ras El Bar villa",
+        descriptionAr:
+          "تصميم معماري متكامل لفيلا ساحلية بمساحة 420 م² مع دراسة الإطلالة والتهوية الطبيعية.",
+        cityAr: "رأس البر",
+        typeAr: "مصيف",
+        purpose: "project",
+        areaFrom: "420",
+        roleAr: "تصميم",
+        year: "2023",
+        order: 3,
+      }),
+    ],
+    documents: [
+      doc("engineering_syndicate", "كارنيه نقابة المهندسين", "nile-eng-syndicate.pdf"),
+      doc("commercial_register", "السجل التجاري للمكتب", "nile-eng-cr.pdf"),
+    ],
+    licenses: [
+      {
+        id: "lic-eng-nile-1",
+        name: "عضوية نقابة المهندسين",
+        number: "ENG-4412",
+        issuer: "نقابة المهندسين المصرية",
+      },
+    ],
+    reels: [
+      {
+        id: "reel-eng-nile-1",
+        titleAr: "إزاي تفحص شقة قبل ما تشتريها",
+        titleEn: "How to inspect an apartment before buying",
+        url: DEMO_YOUTUBE,
+        platform: "youtube",
+        order: 1,
+      },
+    ],
+    requestedAt: "2026-01-25",
+    reviewedAt: "2026-01-28",
+    order: 1,
+    createdAt: "2026-01-25",
+    updatedAt: "2026-02-01",
+  },
+  {
+    id: "eng-delta",
+    kind: "engineer",
+    status: "approved",
+    verified: true,
+    featured: false,
+    nameAr: "م. سلمى عبد الرحمن",
+    nameEn: "Eng. Salma Abdel Rahman",
+    companyAr: "مكتب الدلتا للتصميم المعماري",
+    companyEn: "Delta Architectural Design",
+    titleAr: "تصميم داخلي ومعماري للوحدات",
+    titleEn: "Interior & architectural unit design",
+    bioAr:
+      "مكتب تصميم معماري وداخلي يعمل على الوحدات السكنية والمكاتب، مع مراجعة الرسومات التنفيذية ومطابقتها للكود.",
+    bioEn:
+      "An architectural and interior design office for residential units and offices, reviewing executive drawings against the building code.",
+    cityAr: "دمياط",
+    coverageAr: ["دمياط", "فارسكور"],
+    specialtiesAr: ["تصميم داخلي", "رسومات تنفيذية", "مراجعة كود"],
+    phone: "201000000010",
+    email: "delta@eng.example",
+    logoUrl: "",
+    licenseNumber: "ENG-5188",
+    yearsExperience: 11,
+    projectsCount: 2,
+    projects: [
+      seedProject({
+        id: "prj-eng-delta-1",
+        titleAr: "تصميم داخلي — شقة 140 م²",
+        titleEn: "Interior design — 140 m² apartment",
+        descriptionAr:
+          "تصميم داخلي كامل مع توزيع الأثاث والإضاءة واختيار الخامات، ورسومات تنفيذية للمقاول.",
+        cityAr: "دمياط",
+        typeAr: "سكني",
+        purpose: "project",
+        areaFrom: "140",
+        roleAr: "تصميم",
+        year: "2025",
+        order: 1,
+      }),
+      seedProject({
+        id: "prj-eng-delta-2",
+        titleAr: "تجهيز مكتب إداري — فارسكور",
+        titleEn: "Office fit-out — Faraskour",
+        descriptionAr:
+          "تصميم وتجهيز مكتب إداري بمساحة 220 م² يشمل تقسيم المساحات وأنظمة الإضاءة والتكييف.",
+        cityAr: "فارسكور",
+        typeAr: "إداري",
+        purpose: "project",
+        areaFrom: "220",
+        roleAr: "تصميم وتنفيذ",
+        year: "2024",
+        order: 2,
+      }),
+    ],
+    documents: [
+      doc("engineering_syndicate", "كارنيه نقابة المهندسين", "delta-eng-syndicate.pdf"),
+      doc("commercial_register", "السجل التجاري للمكتب", "delta-eng-cr.pdf"),
+    ],
+    licenses: [],
+    reels: [],
+    requestedAt: "2026-02-03",
+    reviewedAt: "2026-02-05",
+    order: 2,
+    createdAt: "2026-02-03",
+    updatedAt: "2026-02-05",
+  },
+  {
+    id: "eng-sahel",
+    kind: "engineer",
+    status: "approved",
+    verified: true,
+    featured: false,
+    nameAr: "م. حسام الجندي",
+    nameEn: "Eng. Hossam El-Gendy",
+    companyAr: "مكتب الساحل للاستشارات الإنشائية",
+    companyEn: "Sahel Structural Consultants",
+    titleAr: "استشارات إنشائية وتقييم مباني",
+    titleEn: "Structural consultancy & building assessment",
+    bioAr:
+      "استشاري إنشائي متخصص في تقييم المباني القائمة ودراسات التدعيم، مع تقارير معتمدة تصلح للجهات البنكية.",
+    bioEn:
+      "A structural consultant specialized in existing-building assessment and strengthening studies, with certified reports accepted by banks.",
+    cityAr: "رأس البر",
+    coverageAr: ["رأس البر", "جمصة", "دمياط الجديدة"],
+    specialtiesAr: ["تقييم إنشائي", "دراسات تدعيم", "تقارير بنكية"],
+    phone: "201000000011",
+    email: "sahel@eng.example",
+    logoUrl: "",
+    licenseNumber: "ENG-6093",
+    yearsExperience: 15,
+    projectsCount: 1,
+    projects: [
+      seedProject({
+        id: "prj-eng-sahel-1",
+        titleAr: "تقييم إنشائي — مبنى تجاري جمصة",
+        titleEn: "Structural assessment — Gamasa commercial building",
+        descriptionAr:
+          "تقييم حالة المبنى الإنشائية بعد تعديلات داخلية، مع تقرير تدعيم تفصيلي واعتماده لدى البنك.",
+        cityAr: "جمصة",
+        typeAr: "تجاري",
+        purpose: "project",
+        areaFrom: "2,400",
+        roleAr: "استشارة إنشائية",
+        year: "2025",
+        order: 1,
+      }),
+    ],
+    documents: [
+      doc("engineering_syndicate", "كارنيه نقابة المهندسين", "sahel-eng-syndicate.pdf"),
+    ],
+    licenses: [],
+    reels: [],
+    requestedAt: "2026-02-11",
+    reviewedAt: "2026-02-13",
+    order: 3,
+    createdAt: "2026-02-11",
+    updatedAt: "2026-02-13",
+  },
 ];
 
 function cloneDefaults(): ProfessionalRecord[] {
@@ -1399,6 +1655,8 @@ export interface ProfessionalProjectInput {
   deliveryAr?: string;
   areaFrom?: string;
   unitsCount?: number;
+  roleAr?: string;
+  year?: string;
   gallery?: string[];
   videoUrl?: string;
   featuresAr?: string[];
@@ -1461,6 +1719,8 @@ function projectFromInput(
     unitsCount: Number.isFinite(input.unitsCount)
       ? Number(input.unitsCount)
       : undefined,
+    roleAr: optional(input.roleAr),
+    year: optional(input.year),
     gallery: (input.gallery ?? base.gallery ?? [])
       .filter((url) => typeof url === "string" && Boolean(url.trim()))
       .slice(0, MAX_PROJECT_GALLERY),

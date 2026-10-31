@@ -11,6 +11,7 @@ import {
   Eye,
   FileText,
   Film,
+  HardHat,
   Pencil,
   Phone,
   Plus,
@@ -24,7 +25,9 @@ import {
   X,
 } from "lucide-react";
 import {
+  addProfessionalProject,
   addProfessionalReel,
+  hasPortfolio,
   moveProfessional,
   PROJECT_STATUS_META,
   removeProfessional,
@@ -69,6 +72,7 @@ const VIEWS: { key: ViewKey; label: string; Icon: typeof Building2 }[] = [
   { key: "developer", label: "المطورون", Icon: Building2 },
   { key: "marketer", label: "المسوقون", Icon: Users },
   { key: "lawyer", label: "المحامون", Icon: Scale },
+  { key: "engineer", label: "المكاتب الهندسية", Icon: HardHat },
   { key: "requests", label: "طلبات التواصل", Icon: Phone },
 ];
 
@@ -124,6 +128,15 @@ export default function AdminProfessionalsTab({ can, notify, reloadLogs }: Props
   const [projectsFor, setProjectsFor] = useState<string | null>(null);
   const [projectRejectId, setProjectRejectId] = useState<string | null>(null);
   const [projectRejectNote, setProjectRejectNote] = useState("");
+  /* إضافة عمل/سابقة أعمال من الإدارة مباشرة */
+  const [workOpen, setWorkOpen] = useState(false);
+  const [workTitle, setWorkTitle] = useState("");
+  const [workDesc, setWorkDesc] = useState("");
+  const [workCity, setWorkCity] = useState("");
+  const [workRole, setWorkRole] = useState("");
+  const [workYear, setWorkYear] = useState("");
+  const [workCover, setWorkCover] = useState("");
+  const [workError, setWorkError] = useState("");
   const [rejectFor, setRejectFor] = useState<ProfessionalRecord | null>(null);
   const [rejectNote, setRejectNote] = useState("");
   const [deleteFor, setDeleteFor] = useState<ProfessionalRecord | null>(null);
@@ -377,14 +390,48 @@ export default function AdminProfessionalsTab({ can, notify, reloadLogs }: Props
     notify("تم حذف المشروع نهائياً");
   };
 
+  /** إضافة عمل/سابقة أعمال من الإدارة — تُنشر فوراً بعد الاعتماد التلقائي */
+  const addWork = (record: ProfessionalRecord) => {
+    if (!workTitle.trim()) {
+      setWorkError("اسم العمل مطلوب");
+      return;
+    }
+    const result = addProfessionalProject(record.id, {
+      titleAr: workTitle,
+      descriptionAr: workDesc.trim() || undefined,
+      cityAr: workCity.trim() || undefined,
+      coverUrl: workCover.trim() || undefined,
+      roleAr: record.kind === "engineer" ? workRole.trim() || undefined : undefined,
+      year: record.kind === "engineer" ? workYear.trim() || undefined : undefined,
+    });
+    if (!result.ok) {
+      setWorkError(result.error);
+      return;
+    }
+    setProfessionalProjectStatus(record.id, result.project.id, "approved");
+    log(
+      "professional.project.add",
+      `إضافة عمل «${workTitle.trim()}» لـ ${record.companyAr || record.nameAr}`,
+      { id: record.id, projectId: result.project.id }
+    );
+    notify(`تمت إضافة «${workTitle.trim()}» ونشره في صفحة المهني`);
+    setWorkTitle("");
+    setWorkDesc("");
+    setWorkCity("");
+    setWorkRole("");
+    setWorkYear("");
+    setWorkCover("");
+    setWorkError("");
+    setWorkOpen(false);
+  };
+
   /* نُحدّث نسخة العرض بعد أي تعديل عبر السجل */
   const freshReelsTarget = records.find((record) => record.id === reelsFor) ?? null;
-
   return (
     <div className="space-y-5">
       <Panel
         title="دليل المهنيين"
-        desc="اعتماد المطورين والمسوقين والمحامين بعد مراجعة المستندات، وإدارة الريلز وطلبات التواصل. لا يظهر أي سجل للزوار قبل الاعتماد."
+        desc="اعتماد المطورين والمسوقين والمحامين والمكاتب الهندسية بعد مراجعة المستندات، وإدارة سابقة الأعمال والريلز وطلبات التواصل. لا يظهر أي سجل للزوار قبل الاعتماد."
         actions={
           <>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-[11px] font-black text-amber-700">
@@ -723,7 +770,7 @@ export default function AdminProfessionalsTab({ can, notify, reloadLogs }: Props
                         >
                           <Film className="h-3 w-3" /> الفيديوهات
                         </button>
-                        {record.kind !== "lawyer" && (
+                        {hasPortfolio(record.kind) && (
                           <button
                             type="button"
                             disabled={!canManage}
@@ -1036,21 +1083,145 @@ export default function AdminProfessionalsTab({ can, notify, reloadLogs }: Props
       {/* ===================== المشاريع والعروض ===================== */}
       {projectsTarget && (
         <Modal
-          title={`مشاريع وعروض ${projectsTarget.companyAr || projectsTarget.nameAr}`}
+          title={
+            projectsTarget.kind === "engineer"
+              ? `سابقة أعمال ${projectsTarget.companyAr || projectsTarget.nameAr}`
+              : `مشاريع وعروض ${projectsTarget.companyAr || projectsTarget.nameAr}`
+          }
           onClose={() => {
             setProjectsFor(null);
             setProjectRejectId(null);
             setProjectRejectNote("");
+            setWorkOpen(false);
+            setWorkTitle("");
+            setWorkDesc("");
+            setWorkCity("");
+            setWorkRole("");
+            setWorkYear("");
+            setWorkCover("");
+            setWorkError("");
           }}
         >
           <p className="rounded-xl border border-sand-200 bg-sand-50/70 px-3 py-2 text-[10.5px] font-semibold leading-5 text-sand-600">
-            كل مشروع ينشره المهني يبقى «قيد المراجعة» حتى تعتمده هنا. الاعتماد مستقل عن
-            اعتماد الملف نفسه، والتعديل من المهني يعيد المشروع للمراجعة.
+            {projectsTarget.kind === "engineer"
+              ? "كل عمل ينشره المكتب يبقى «قيد المراجعة» حتى تعتمده هنا. يمكنك أيضاً إضافة عمل مباشرة من الإدارة — يُنشر فوراً بعد الاعتماد التلقائي."
+              : "كل مشروع ينشره المهني يبقى «قيد المراجعة» حتى تعتمده هنا. الاعتماد مستقل عن اعتماد الملف نفسه، والتعديل من المهني يعيد المشروع للمراجعة."}
           </p>
+
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[11px] font-black text-ocean-900">
+              {projectsTarget.projects.length} عمل / مشروع
+            </p>
+            <button
+              type="button"
+              disabled={!canManage}
+              onClick={() => {
+                setWorkOpen((value) => !value);
+                setWorkError("");
+              }}
+              className={`${ROW_ACTION} border-gold-300 text-ocean-900 hover:bg-gold-50`}
+            >
+              <Plus className="h-3 w-3" />
+              {projectsTarget.kind === "engineer" ? "إضافة عمل" : "إضافة مشروع"}
+            </button>
+          </div>
+
+          {workOpen && (
+            <div className="mt-3 rounded-2xl border border-gold-200 bg-gold-50/40 p-3">
+              <div className="grid gap-2.5 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <Field label="اسم العمل / المشروع *">
+                    <input
+                      value={workTitle}
+                      onChange={(event) => setWorkTitle(event.target.value)}
+                      className={INPUT}
+                    />
+                  </Field>
+                </div>
+                <Field label="المدينة">
+                  <input
+                    value={workCity}
+                    onChange={(event) => setWorkCity(event.target.value)}
+                    className={INPUT}
+                  />
+                </Field>
+                <Field label="رابط صورة الغلاف">
+                  <input
+                    value={workCover}
+                    onChange={(event) => setWorkCover(event.target.value)}
+                    dir="ltr"
+                    className={INPUT}
+                  />
+                </Field>
+                {projectsTarget.kind === "engineer" && (
+                  <>
+                    <Field label="دور المكتب" hint="تصميم / إشراف / فحص فني">
+                      <input
+                        value={workRole}
+                        onChange={(event) => setWorkRole(event.target.value)}
+                        className={INPUT}
+                      />
+                    </Field>
+                    <Field label="سنة التنفيذ">
+                      <input
+                        value={workYear}
+                        onChange={(event) =>
+                          setWorkYear(
+                            event.target.value.replace(/[^0-9]/g, "").slice(0, 4)
+                          )
+                        }
+                        inputMode="numeric"
+                        dir="ltr"
+                        placeholder="2025"
+                        className={INPUT}
+                      />
+                    </Field>
+                  </>
+                )}
+                <div className="sm:col-span-2">
+                  <Field label="وصف العمل">
+                    <textarea
+                      value={workDesc}
+                      onChange={(event) => setWorkDesc(event.target.value)}
+                      rows={2}
+                      className={INPUT}
+                    />
+                  </Field>
+                </div>
+              </div>
+              {workError && (
+                <p className="mt-2 rounded-lg bg-rose-50 px-2 py-1 text-[10px] font-bold text-rose-700">
+                  {workError}
+                </p>
+              )}
+              <div className="mt-2.5 flex gap-1.5">
+                <button
+                  type="button"
+                  disabled={!canManage}
+                  onClick={() => addWork(projectsTarget)}
+                  className="inline-flex items-center gap-1 rounded-lg bg-ocean-950 px-3 py-1.5 text-[10.5px] font-black text-white transition hover:bg-ocean-900"
+                >
+                  <Check className="h-3 w-3" /> نشر العمل
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setWorkOpen(false);
+                    setWorkError("");
+                  }}
+                  className={ROW_ACTION}
+                >
+                  إلغاء
+                </button>
+              </div>
+            </div>
+          )}
 
           {projectsTarget.projects.length === 0 ? (
             <p className="mt-3 rounded-xl border border-dashed border-sand-300 bg-sand-50/60 p-4 text-center text-[11.5px] font-bold text-sand-500">
-              لم يضف هذا المهني أي مشاريع أو عروض بعد.
+              {projectsTarget.kind === "engineer"
+                ? "لم يضف هذا المكتب أي أعمال بعد."
+                : "لم يضف هذا المهني أي مشاريع أو عروض بعد."}
             </p>
           ) : (
             <ul className="mt-3 space-y-2.5">

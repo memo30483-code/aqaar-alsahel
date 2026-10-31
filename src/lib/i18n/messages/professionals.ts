@@ -6,10 +6,15 @@ export const professionalsMessages = {
     ar: "محامون موثّقون لفحص الملكية والعقود",
     en: "Verified lawyers for title checks and contracts",
   },
+  "companies.engineers": { ar: "المكاتب الهندسية", en: "Engineering offices" },
+  "companies.engineersDesc": {
+    ar: "فحص فني وإشراف على التنفيذ",
+    en: "Technical inspection & construction supervision",
+  },
   "companies.join": { ar: "انضم إلينا", en: "Join us" },
   "companies.joinDesc": {
-    ar: "سجّل كمطور أو مسوق أو محامٍ وانتظر موافقة الإدارة",
-    en: "Register as a developer, marketer, or lawyer for management approval",
+    ar: "سجّل كمطور أو مسوق أو محامٍ أو مكتب هندسي وانتظر موافقة الإدارة",
+    en: "Register as a developer, marketer, lawyer, or engineering office for management approval",
   },
 
   /* ---------- عناوين الصفحات ---------- */
@@ -51,6 +56,24 @@ export const professionalsMessages = {
     en: "New lawyer? Create your account and submit your bar card for management review.",
   },
 
+  "prof.engineers.eyebrow": { ar: "دليل المكاتب الهندسية", en: "Engineering offices" },
+  "prof.engineers.title": {
+    ar: "مكاتب هندسية معتمدة… افحص قبل ما تدفع",
+    en: "Verified engineering offices — inspect before you pay",
+  },
+  "prof.engineers.desc": {
+    ar: "مكاتب مرّ كارنيه نقابة المهندسين والسجل التجاري على المراجعة، وتُعرض سابقة أعمالها وخدمات الفحص الفني والإشراف على التنفيذ.",
+    en: "Offices whose syndicate card and commercial register passed review, with their documented portfolio and technical inspection and supervision services.",
+  },
+  "prof.engineers.joinCta": {
+    ar: "انضم كمكتب هندسي معتمد",
+    en: "Join as a verified engineering office",
+  },
+  "prof.engineers.joinHint": {
+    ar: "مكتب هندسي جديد؟ سجّل حسابك وقدّم كارنيه النقابة والسجل التجاري للمراجعة.",
+    en: "New engineering office? Create your account and submit your syndicate card and commercial register for review.",
+  },
+
   "prof.stat.verified": { ar: "جهة موثّقة", en: "Verified entities" },
   "prof.stat.reels": { ar: "فيديو تعريفي", en: "Intro videos" },
   "prof.stat.cities": { ar: "مدينة مغطاة", en: "Covered cities" },
@@ -58,8 +81,8 @@ export const professionalsMessages = {
   /* ---------- شريط الثقة ---------- */
   "prof.trust.0.title": { ar: "مستندات مراجَعة", en: "Documents reviewed" },
   "prof.trust.0.text": {
-    ar: "السجل التجاري والبطاقة الضريبية أو كارنيه المحاماة — قبل الاعتماد.",
-    en: "Commercial register, tax card, or bar card — reviewed before approval.",
+    ar: "السجل التجاري والبطاقة الضريبية، أو كارنيه المحاماة، أو كارنيه نقابة المهندسين — قبل الاعتماد.",
+    en: "Commercial register and tax card, bar card, or engineering syndicate card — reviewed before approval.",
   },
   "prof.trust.1.title": { ar: "فحص مستقل", en: "Independent check" },
   "prof.trust.1.text": {
@@ -85,6 +108,7 @@ export const professionalsMessages = {
   "prof.card.verified": { ar: "مستندات موثّقة", en: "Verified documents" },
   "prof.card.featured": { ar: "مميّز", en: "Featured" },
   "prof.card.projects": { ar: "{count} مشروع", en: "{count} projects" },
+  "prof.card.portfolio": { ar: "{count} عمل موثّق", en: "{count} documented works" },
   "prof.card.experience": { ar: "{count} سنة خبرة", en: "{count} yrs experience" },
   "prof.card.coverage": { ar: "التغطية", en: "Coverage" },
   "prof.card.reels": { ar: "{count} فيديو", en: "{count} videos" },
@@ -159,6 +183,18 @@ export const professionalsMessages = {
   "prof.profile.backToDirectory": { ar: "العودة إلى الدليل", en: "Back to the directory" },
   "prof.profile.about": { ar: "نبذة عن الجهة", en: "About" },
   "prof.profile.projects": { ar: "المشاريع والعروض", en: "Projects & offers" },
+  "prof.profile.portfolio": { ar: "سابقة الأعمال", en: "Portfolio" },
+  "prof.profile.portfolioEmpty": {
+    ar: "لم تُضف سابقة أعمال منشورة بعد.",
+    en: "No published portfolio works yet.",
+  },
+  "prof.profile.portfolioNote": {
+    ar: "كل عمل يظهر هنا بعد اعتماد إدارة المنصة ومطابقته للمستندات، والاعتماد مستقل عن الإعلانات المدفوعة.",
+    en: "Each work appears here after management approval and document matching, independent of paid ads.",
+  },
+  "prof.profile.portfolioCount": { ar: "عمل موثّق", en: "Documented works" },
+  "prof.profile.role": { ar: "دور المكتب", en: "Office role" },
+  "prof.profile.year": { ar: "سنة التنفيذ", en: "Year" },
   "prof.profile.projectsEmpty": {
     ar: "لا توجد مشاريع أو عروض منشورة بعد.",
     en: "No projects or offers published yet.",
@@ -183,8 +219,8 @@ export const professionalsMessages = {
   },
   "prof.profile.trustTitle": { ar: "لماذا هذا الملف موثّق؟", en: "Why is this profile verified?" },
   "prof.profile.trustText": {
-    ar: "راجعت الإدارة السجل التجاري والبطاقة الضريبية أو كارنيه المحاماة قبل الاعتماد. التوثيق لا يُشترى بالإعلانات.",
-    en: "Management reviewed the commercial register and tax card, or the bar card, before approval. Verification is never bought with ads.",
+    ar: "راجعت الإدارة السجل التجاري والبطاقة الضريبية، أو كارنيه المحاماة، أو كارنيه نقابة المهندسين قبل الاعتماد. التوثيق لا يُشترى بالإعلانات.",
+    en: "Management reviewed the commercial register and tax card, the bar card, or the engineering syndicate card before approval. Verification is never bought with ads.",
   },
   "prof.profile.manage": { ar: "هل أنت صاحب هذا الملف؟", en: "Is this your profile?" },
   "prof.profile.manageCta": { ar: "إدارة ملفي", en: "Manage my profile" },
@@ -219,6 +255,7 @@ export const professionalsMessages = {
   "prof.dash.viewPublic": { ar: "عرض صفحتي العامة", en: "View my public page" },
   "prof.dash.tab.profile": { ar: "الملف", en: "Profile" },
   "prof.dash.tab.projects": { ar: "المشاريع والعروض", en: "Projects & offers" },
+  "prof.dash.tab.portfolio": { ar: "سابقة الأعمال", en: "Portfolio" },
   "prof.dash.tab.reels": { ar: "الفيديوهات", en: "Videos" },
   "prof.dash.pendingNote": {
     ar: "أي مشروع جديد أو تعديل يبقى «قيد المراجعة» حتى تعتمده الإدارة، ولا يظهر للزوار قبل ذلك.",
@@ -243,6 +280,12 @@ export const professionalsMessages = {
   "prof.dash.projectDelivery": { ar: "موعد التسليم", en: "Delivery date" },
   "prof.dash.projectArea": { ar: "المساحة تبدأ من (م²)", en: "Area from (m²)" },
   "prof.dash.projectUnits": { ar: "عدد الوحدات", en: "Units count" },
+  "prof.dash.projectRole": { ar: "دور المكتب في العمل", en: "Office role in the work" },
+  "prof.dash.projectRoleHint": {
+    ar: "مثال: تصميم، إشراف، فحص فني",
+    en: "e.g. design, supervision, inspection",
+  },
+  "prof.dash.projectYear": { ar: "سنة التنفيذ", en: "Year of completion" },
   "prof.dash.projectCover": { ar: "صورة المشروع", en: "Project image" },
   "prof.dash.submitProject": { ar: "إرسال للمراجعة", en: "Submit for review" },
   "prof.dash.saveProject": { ar: "حفظ وإعادة الإرسال للمراجعة", en: "Save & resubmit for review" },
@@ -289,13 +332,14 @@ export const professionalsMessages = {
   "join.eyebrow": { ar: "طلب انضمام", en: "Join request" },
   "join.title": { ar: "انضم إلى دليل عقار FAMILY", en: "Join the Aqaar FAMILY directory" },
   "join.desc": {
-    ar: "اختر نوع النشاط، وأكمل بياناتك ومستنداتك. يبقى الطلب «قيد المراجعة» حتى موافقة الإدارة، ولا يظهر للزوار قبل ذلك.",
-    en: "Pick your activity type, complete your details and documents. The request stays pending until management approval and is hidden from visitors until then.",
+    ar: "اختر نوع النشاط (مطور، مسوق، محامٍ، أو مكتب هندسي)، وأكمل بياناتك ومستنداتك. يبقى الطلب «قيد المراجعة» حتى موافقة الإدارة، ولا يظهر للزوار قبل ذلك.",
+    en: "Pick your activity type (developer, marketer, lawyer, or engineering office), complete your details and documents. The request stays pending until management approval and is hidden from visitors until then.",
   },
   "join.role": { ar: "نوع النشاط", en: "Activity type" },
   "join.role.developer": { ar: "مطور عقاري", en: "Developer" },
   "join.role.marketer": { ar: "مسوق / وسيط عقاري", en: "Marketer / broker" },
   "join.role.lawyer": { ar: "محامٍ معتمد", en: "Lawyer" },
+  "join.role.engineer": { ar: "مكتب هندسي", en: "Engineering office" },
   "join.section.basic": { ar: "البيانات الأساسية", en: "Basic details" },
   "join.section.docs": { ar: "المستندات المطلوبة", en: "Required documents" },
   "join.section.reels": { ar: "فيديوهات تعريفية (اختياري)", en: "Intro videos (optional)" },
@@ -312,6 +356,10 @@ export const professionalsMessages = {
   "join.field.website": { ar: "الموقع الإلكتروني (اختياري)", en: "Website (optional)" },
   "join.field.bio": { ar: "نبذة تعريفية", en: "Short bio" },
   "join.field.license": { ar: "رقم السجل التجاري / كارنيه المحاماة", en: "Commercial register / bar number" },
+  "join.field.license.engineer": {
+    ar: "رقم عضوية نقابة المهندسين / تصنيف المكتب",
+    en: "Engineering syndicate number / office classification",
+  },
   "join.field.experience": { ar: "سنوات الخبرة", en: "Years of experience" },
   "join.field.projects": { ar: "عدد المشروعات (للمطور/المسوق)", en: "Projects count (developer/marketer)" },
   "join.doc.hint": { ar: "ارفع صورة واضحة — تُستخدم لمراجعة الإدارة فقط ولا تُعرض للزوار.", en: "Upload a clear image — used for management review only, never shown to visitors." },

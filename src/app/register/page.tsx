@@ -22,7 +22,7 @@ import {
 
 /* ============================ الأنواع ============================ */
 
-type AccountType = "individual" | "developer" | "marketer" | "lawyer";
+type AccountType = "individual" | "developer" | "marketer" | "lawyer" | "engineer";
 type IndividualRole = "seeker" | "owner";
 
 type TextFieldName =
@@ -169,10 +169,25 @@ const ACCOUNT_TYPES: {
       />
     ),
   },
+  {
+    id: "engineer",
+    titleKey: "register.account.engineer.title",
+    noteKey: "register.account.engineer.note",
+    icon: (
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.8}
+        d="M4.5 15.75V9.75A1.5 1.5 0 016 8.25h12a1.5 1.5 0 011.5 1.5v6m-15 0a2.25 2.25 0 104.5 0m-4.5 0h4.5m6 0a2.25 2.25 0 104.5 0m-4.5 0h4.5M9 8.25V6a1.5 1.5 0 011.5-1.5h3A1.5 1.5 0 0115 6v2.25M3 19.5h18"
+      />
+    ),
+  },
 ];
 
 /** الحقول المطلوبة لكل نوع حساب — كلها إجبارية بلا استثناء */
 const TYPE_FIELDS: Record<AccountType, Field[]> = {
+  /* يُملأ أسفل التعريف بنفس حقول المطور */
+  engineer: [],
   individual: [
     {
       kind: "text",
@@ -389,6 +404,8 @@ const TYPE_FIELDS: Record<AccountType, Field[]> = {
 
 /** المسوق يحتاج نفس مستندات المطور: سجل تجاري + بطاقة ضريبية + بطاقة المسؤول */
 TYPE_FIELDS.marketer = TYPE_FIELDS.developer;
+/** المكتب الهندسي يحتاج نفس مستندات الشركة، ويُضاف كارنيه النقابة من صفحة الانضمام */
+TYPE_FIELDS.engineer = TYPE_FIELDS.developer;
 
 const STEPS: { id: number; titleKey: MessageKey; descKey: MessageKey }[] = [
   {

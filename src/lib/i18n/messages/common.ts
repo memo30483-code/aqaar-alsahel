@@ -16,6 +16,7 @@ export const commonMessages = {
   "nav.companies": { ar: "الشركات العقارية", en: "Real-estate companies" },
   "nav.compass": { ar: "البوصلة العقارية", en: "Market compass" },
   "nav.legal": { ar: "الاستشارات القانونية", en: "Legal consultations" },
+  "nav.engineering": { ar: "الاستشارات الهندسية", en: "Engineering consultations" },
   "nav.login": { ar: "تسجيل الدخول / حساب جديد", en: "Sign in / New account" },
   "nav.loginShort": { ar: "تسجيل الدخول", en: "Sign in" },
   "nav.account": { ar: "الحساب", en: "Account" },
