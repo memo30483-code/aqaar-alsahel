@@ -151,6 +151,8 @@ export default function Header() {
   }, []);
 
   const handleLogout = () => {
+    /* إنهاء جلسة الأدمن على السيرفر أيضًا — الكوكي httpOnly لا يُمسح من المتصفح */
+    void fetch("/api/admin/logout", { method: "POST" }).catch(() => undefined);
     clearSession();
     setSession(null);
     setOpen(false);

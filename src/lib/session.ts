@@ -36,15 +36,6 @@ export function newOwnerToken(): string {
   return `own-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-/** بيانات الأدمن التجريبي للتطوير */
-export const MOCK_ADMIN = {
-  email: "admin@aqaar.com",
-  password: "admin123",
-  name: "مدير النظام التجريبي",
-  phone: "01000000000",
-  role: "admin" as UserRole,
-};
-
 /** قراءة الجلسة الحالية — ترجع null في حالة عدم وجود تسجيل دخول نشط */
 export function getSession(): Session | null {
   if (typeof window === "undefined") return null;
@@ -56,9 +47,10 @@ export function getSession(): Session | null {
     const session = parsed as Partial<Session>;
     if (typeof session.phone !== "string") return null;
     const email = typeof session.email === "string" ? session.email : "";
-    /* حساب العرض التجريبي: يضمن بقاء صلاحية الإدارة حتى لو كانت الجلسة
-       قديمة/أُنشئت من مسار آخر بلا دور — يُزال مع ربط المصادقة الحقيقية */
-    const role = email.trim().toLowerCase() === MOCK_ADMIN.email ? MOCK_ADMIN.role : session.role;
+    /* الدور يأتي من الجلسة كما حُفظت. صلاحية الإدارة الفعلية تُتحقق على
+       السيرفر عبر كوكي موقّع (src/middleware.ts) — لا يُرقّى أي حساب هنا
+       بناءً على بريده فقط. */
+    const role = session.role;
     /* تطبيع الحقول النصية حتى لا تتعطل الواجهة (Header) على جلسة قديمة أو تالفة */
     return {
       ...(session as Session),

@@ -15,7 +15,7 @@ import {
   Sparkles,
   UserPlus,
 } from "lucide-react";
-import { saveSession, MOCK_ADMIN } from "@/lib/session";
+import { saveSession } from "@/lib/session";
 import { getProfessionalByEmail } from "@/lib/professionals-store";
 import { useT } from "@/lib/i18n";
 
@@ -45,7 +45,7 @@ function LoginContent() {
     }
   }, []);
 
-  const onSubmit = (e: FormEvent) => {
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (loading) return;
 
@@ -62,46 +62,60 @@ function LoginContent() {
     setLoading(true);
     setError(null);
 
-    /** محاكاة عملية تسجيل الدخول عبر API — الآن عبر حسابات تجريبية */
-    setTimeout(() => {
-      /* الهدف المحفوظ من ?redirect= — يُستخدم بعد الدخول ثم يُمسح */
-      const requested = sessionStorage.getItem("aqaar-login-redirect");
-      sessionStorage.removeItem("aqaar-login-redirect");
-      const safeTarget =
-        requested && requested.startsWith("/") && !requested.startsWith("//")
-          ? requested
-          : "/add-property";
+    /* الهدف المحفوظ من ?redirect= — يُستخدم بعد الدخول ثم يُمسح */
+    const requested = sessionStorage.getItem("aqaar-login-redirect");
+    sessionStorage.removeItem("aqaar-login-redirect");
+    const safeTarget =
+      requested && requested.startsWith("/") && !requested.startsWith("//")
+        ? requested
+        : "/add-property";
 
-      if (trimmedEmail === MOCK_ADMIN.email && password === MOCK_ADMIN.password) {
+    /* 1) دخول الأدمن: التحقق على السيرفر فقط، والنجاح يُثبّت كوكي موقّعًا
+       لا يستطيع المتصفح قراءته أو تعديله. */
+    try {
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: trimmedEmail, password }),
+      });
+
+      if (response.ok) {
+        const data = (await response.json()) as {
+          name?: string;
+          email?: string;
+          role?: "admin" | "super_admin";
+        };
         saveSession({
-          name: MOCK_ADMIN.name,
-          email: MOCK_ADMIN.email,
-          phone: MOCK_ADMIN.phone,
-          accountType: "individual",
+          name: data.name || "مدير النظام",
+          email: data.email || trimmedEmail,
+          phone: "",
+          accountType: "admin",
           verifiedAt: new Date().toISOString(),
-          role: MOCK_ADMIN.role,
+          role: data.role === "admin" ? "admin" : "super_admin",
         });
-        /* المدير يذهب للوحة التحكم دائماً — أي وجهة سابقة (مثل «أضف عقارك»)
-           كانت تُحفظ من ضغطة سابقة فلا يجوز أن تقرّر مكان الأدمن بعد الدخول */
+        /* المدير يذهب للوحة التحكم دائماً */
         router.push("/admin");
+        router.refresh();
         return;
       }
+    } catch {
+      /* تعذّر الوصول للسيرفر — نكمل كحساب عادي */
+    }
 
-      /** أي حساب آخر يُتعامل كمستخدم عادي موثق */
-      const ownedProfessional = getProfessionalByEmail(trimmedEmail);
-      saveSession({
-        name: ownedProfessional?.nameAr || trimmedEmail,
-        email: trimmedEmail,
-        phone: ownedProfessional?.phone ?? "",
-        accountType: "individual",
-        verifiedAt: new Date().toISOString(),
-        /* جسر مؤقت حتى ربط المصادقة الحقيقية: السجل المحفوظ على هذا الجهاز
-           يحمل رمز الملكية فيُفتح لصاحبه. لا يغني عن مصادقة على السيرفر. */
-        ownerToken: ownedProfessional?.ownerToken,
-      });
-      /* لا نوجّه المستخدم العادي إلى لوحة الإدارة */
-      router.push(safeTarget === "/admin" ? "/add-property" : safeTarget);
-    }, 600);
+    /* 2) أي حساب آخر: جلسة محلية تجريبية حتى ربط المصادقة الكاملة */
+    const ownedProfessional = getProfessionalByEmail(trimmedEmail);
+    saveSession({
+      name: ownedProfessional?.nameAr || trimmedEmail,
+      email: trimmedEmail,
+      phone: ownedProfessional?.phone ?? "",
+      accountType: "individual",
+      verifiedAt: new Date().toISOString(),
+      /* جسر مؤقت حتى ربط المصادقة الحقيقية: السجل المحفوظ على هذا الجهاز
+         يحمل رمز الملكية فيُفتح لصاحبه. لا يغني عن مصادقة على السيرفر. */
+      ownerToken: ownedProfessional?.ownerToken,
+    });
+    /* لا نوجّه المستخدم العادي إلى لوحة الإدارة */
+    router.push(safeTarget === "/admin" ? "/add-property" : safeTarget);
   };
 
   return (
@@ -191,12 +205,6 @@ function LoginContent() {
                 {loading ? t("login.redirecting") : t("login.loginButton")}
                 {!loading && <ArrowLeft className="h-4 w-4 rtl:rotate-180" />}
               </button>
-
-              <div className="rounded-xl border border-dashed border-gold-300/70 bg-gold-50/50 px-3 py-2.5 text-center">
-                <p className="text-[10.5px] font-bold text-gold-900" dir="ltr">
-                  {t("login.demoAdminHint")}
-                </p>
-              </div>
             </form>
 
             <div className="border-t border-sand-200 bg-sand-50/60 px-5 py-3.5 text-center sm:px-6">

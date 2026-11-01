@@ -19,7 +19,7 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
-import { getSession, type Session } from "@/lib/session";
+import { getSession, saveSession, type Session } from "@/lib/session";
 import {
   DEFAULT_OFFERS_SETTINGS,
   DEFAULT_SITE_SETTINGS,
@@ -107,6 +107,8 @@ const ROLE_LABEL: Record<string, string> = {
 
 export default function AdminDashboard() {
   const [ready, setReady] = useState(false);
+  /** تأكيد جلسة الأدمن من السيرفر — مصدر الحقيقة الوحيد للوصول */
+  const [adminVerified, setAdminVerified] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [tab, setTab] = useState<TabKey>("overview");
   const [listings, setListings] = useState<AdminListing[]>([]);
@@ -123,22 +125,84 @@ export default function AdminDashboard() {
   const [flash, setFlash] = useState("");
 
   useEffect(() => {
-    const current = getSession();
-    setSession(current);
-    if (current) {
-      const userList = getUsers();
-      setUsers(userList);
-      setListings(getListings());
-      setOffers(getOffers());
-      setOffersSettings(getOffersSettings());
-      setSiteSettings(getSiteSettings());
-      setMarquee(getMarqueeItems());
-      setLogs(getAdminLogs(200));
-      setPermissionsCount(
-        userList.reduce((total, user) => total + getAdminPermissions(user.id).length, 0)
-      );
-    }
-    setReady(true);
+    let cancelled = false;
+
+    const load = async () => {
+      /* التحقق من كوكي الأدمن الموقّع على السيرفر — لا نثق بدور محفوظ
+         في localStorage لأنه قابل للتعديل من أدوات المتصفح. */
+      let verified = false;
+      let serverAdmin: {
+        email: string;
+        name: string;
+        role: "admin" | "super_admin";
+      } | null = null;
+
+      try {
+        const response = await fetch("/api/admin/session", {
+          cache: "no-store",
+        });
+        if (response.ok) {
+          const data = (await response.json()) as {
+            authenticated?: boolean;
+            email?: string;
+            name?: string;
+            role?: "admin" | "super_admin";
+          };
+          if (data.authenticated && data.email) {
+            verified = true;
+            serverAdmin = {
+              email: data.email,
+              name: data.name || "",
+              role: data.role === "admin" ? "admin" : "super_admin",
+            };
+          }
+        }
+      } catch {
+        verified = false;
+      }
+
+      if (cancelled) return;
+      setAdminVerified(verified);
+
+      const stored = getSession();
+      const current: Session | null =
+        verified && serverAdmin
+          ? {
+              name: serverAdmin.name || stored?.name || "",
+              email: serverAdmin.email,
+              phone: stored?.phone ?? "",
+              accountType: "admin",
+              verifiedAt: new Date().toISOString(),
+              role: serverAdmin.role,
+            }
+          : stored;
+
+      if (verified && current) saveSession(current);
+      setSession(current);
+
+      if (current) {
+        const userList = getUsers();
+        setUsers(userList);
+        setListings(getListings());
+        setOffers(getOffers());
+        setOffersSettings(getOffersSettings());
+        setSiteSettings(getSiteSettings());
+        setMarquee(getMarqueeItems());
+        setLogs(getAdminLogs(200));
+        setPermissionsCount(
+          userList.reduce(
+            (total, user) => total + getAdminPermissions(user.id).length,
+            0
+          )
+        );
+      }
+      setReady(true);
+    };
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -191,10 +255,12 @@ export default function AdminDashboard() {
   );
 
   const hasAccess = useMemo(() => {
+    /* الوصول يتطلب جلسة أدمن مؤكدة من السيرفر أولًا */
+    if (!adminVerified) return false;
     if (!session?.role) return false;
     if (session.role === "admin" || session.role === "super_admin") return true;
     return TABS.some((item) => item.permission && can(item.permission));
-  }, [session, can]);
+  }, [adminVerified, session, can]);
 
   if (!ready) {
     return (

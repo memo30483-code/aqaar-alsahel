@@ -41,10 +41,6 @@ export const commonMessages = {
     ar: "مستخدم جديد؟ إنشاء حساب",
     en: "New user? Create account",
   },
-  "login.demoAdminHint": {
-    ar: "حساب تجريبي: admin@aqaar.com / admin123",
-    en: "Demo account: admin@aqaar.com / admin123",
-  },
   "login.error.invalid": {
     ar: "البريد الإلكتروني أو كلمة المرور غير صحيحة",
     en: "Invalid email or password",
