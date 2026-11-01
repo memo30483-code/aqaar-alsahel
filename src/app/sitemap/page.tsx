@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import SitemapContent from "@/components/SitemapContent";
+import PageStyleScope from "@/components/builder/PageStyleScope";
 
 export const metadata: Metadata = {
   title: "خريطة الموقع | عقار FAMILY",
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function SitemapPage() {
-  return <SitemapContent />;
+  return (
+    <PageStyleScope pageId="sitemap">
+      <SitemapContent />
+    </PageStyleScope>
+  );
 }

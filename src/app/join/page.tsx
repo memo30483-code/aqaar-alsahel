@@ -1,5 +1,7 @@
 "use client";
 
+import PageStyleScope from "@/components/builder/PageStyleScope";
+
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ChangeEvent, FormEvent, Suspense, useEffect, useMemo, useState } from "react";
@@ -881,8 +883,10 @@ function JoinForm() {
 
 export default function JoinPage() {
   return (
-    <Suspense fallback={<div className="min-h-[50vh] bg-sand-50" />}>
-      <JoinForm />
-    </Suspense>
+    <PageStyleScope pageId="join">
+      <Suspense fallback={<div className="min-h-[50vh] bg-sand-50" />}>
+        <JoinForm />
+      </Suspense>
+    </PageStyleScope>
   );
 }

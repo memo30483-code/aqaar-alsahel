@@ -2,27 +2,22 @@
 
 import { blockCssVars, blockScopeClasses } from "@/lib/home-block-style";
 import {
-  usePageStyle,
   useVisiblePageBlocks,
   type PageId,
 } from "@/lib/page-builder-store";
 import BlockRenderer from "@/components/builder/BlockRenderer";
+import PageStyleScope from "@/components/builder/PageStyleScope";
 
 /**
  * يرندر صفحة محتوى كاملة من أقسام البلدر.
- * كل قسم يُغلَّف بـ `.hb-scope` حتى تُطبَّق عليه تنسيقاته (خط/حجم/لون/خلفية/وسائط).
+ * تنسيق الصفحة العام يُطبَّق على الغلاف، وكل قسم يُغلَّف بـ `.hb-scope`
+ * حتى تُطبَّق عليه تنسيقاته (خط/حجم/لون/خلفية/وسائط) ويتجاوز تنسيق الصفحة.
  */
 export default function PageRenderer({ pageId }: { pageId: PageId }) {
   const blocks = useVisiblePageBlocks(pageId);
-  const pageStyle = usePageStyle(pageId);
 
   return (
-    <div
-      className={["flex w-full flex-col", ...blockScopeClasses(pageStyle)].join(
-        " "
-      )}
-      style={blockCssVars(pageStyle) as React.CSSProperties}
-    >
+    <PageStyleScope pageId={pageId}>
       {blocks.map((block) => (
         <div
           key={block.id}
@@ -37,6 +32,6 @@ export default function PageRenderer({ pageId }: { pageId: PageId }) {
           <BlockRenderer block={block} />
         </div>
       ))}
-    </div>
+    </PageStyleScope>
   );
 }

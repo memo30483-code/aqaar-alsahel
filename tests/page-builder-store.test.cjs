@@ -70,6 +70,7 @@ const {
   getPageBlocks,
   getPageStyle,
   movePageBlock,
+  pageIdForPath,
   removePageBlock,
   resetPageBlocks,
   savePageStyle,
@@ -77,33 +78,53 @@ const {
   updatePageBlock,
 } = loaded.exports;
 
-test("registry covers every content page with unique ids and defaults", () => {
+test("registry covers every platform page with unique ids", () => {
   const ids = PAGE_REGISTRY.map((page) => page.id);
   assert.equal(new Set(ids).size, ids.length);
+  assert.equal(ids.length, 25);
   for (const page of PAGE_REGISTRY) {
     assert.ok(page.path.startsWith("/"), page.id);
     assert.ok(page.labelAr, page.id);
+    if (page.blocksEnabled === false) {
+      assert.deepEqual(page.defaults, [], page.id);
+      continue;
+    }
     assert.ok(page.defaults.length > 0, page.id);
     for (const block of page.defaults) {
       assert.ok(block.type, page.id);
       assert.equal(typeof block.order, "number");
     }
   }
-  assert.deepEqual(
-    [...ids].sort(),
-    [
-      "brokers",
-      "company",
-      "developers",
-      "engineering-consultational",
-      "engineers",
-      "home",
-      "lawyers",
-      "legal-consultational",
-      "market-guide",
-      "projects",
-    ]
-  );
+});
+
+test("builder-enabled pages are the ten content pages", () => {
+  const enabled = PAGE_REGISTRY.filter(
+    (page) => page.blocksEnabled !== false
+  ).map((page) => page.id);
+  assert.deepEqual(enabled.sort(), [
+    "brokers",
+    "company",
+    "developers",
+    "engineering-consultational",
+    "engineers",
+    "home",
+    "lawyers",
+    "legal-consultational",
+    "market-guide",
+    "projects",
+  ]);
+});
+
+test("paths resolve to the right page, including dynamic templates", () => {
+  assert.equal(pageIdForPath("/"), "home");
+  assert.equal(pageIdForPath("/developers"), "developers");
+  assert.equal(pageIdForPath("/developers/eng-nile"), "developer");
+  assert.equal(pageIdForPath("/property/user-12"), "property");
+  assert.equal(pageIdForPath("/projects/proj-1"), "project");
+  assert.equal(pageIdForPath("/engineers/eng-nile/"), "engineer");
+  assert.equal(pageIdForPath("/join"), "join");
+  assert.equal(pageIdForPath("/unknown-page"), undefined);
+  assert.equal(pageIdForPath("/developers/eng-nile/extra"), undefined);
 });
 
 test("home keeps inline_ad while content pages expose the general library", () => {

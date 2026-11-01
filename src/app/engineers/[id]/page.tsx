@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ProfessionalProfile from "@/components/professionals/ProfessionalProfile";
+import PageStyleScope from "@/components/builder/PageStyleScope";
 
 export const metadata: Metadata = {
   title: "ملف مكتب هندسي معتمد | عقار FAMILY",
@@ -12,5 +13,9 @@ export default function EngineerProfilePage({
 }: {
   params: { id: string };
 }) {
-  return <ProfessionalProfile kind="engineer" id={params.id} />;
+  return (
+    <PageStyleScope pageId="engineer">
+      <ProfessionalProfile kind="engineer" id={params.id} />
+    </PageStyleScope>
+  );
 }

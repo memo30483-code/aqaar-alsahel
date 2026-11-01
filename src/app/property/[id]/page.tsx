@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPropertyById, mockProperties } from "@/data/properties";
 import PropertyDetailClient from "@/components/PropertyDetailClient";
+import PageStyleScope from "@/components/builder/PageStyleScope";
 import { DEFAULT_CURRENCY, formatConvertedPrice } from "@/lib/currency-data";
 
 interface PageProps {
@@ -38,10 +39,12 @@ export default function PropertyPage({ params }: PageProps) {
      بدل صفحة 200 فارغة (soft-404) */
   if (!property && !USER_PROPERTY_ID.test(params.id)) notFound();
   return (
-    <PropertyDetailClient
-      id={params.id}
-      /* لا تُمرَّر بيانات تواصل المالك للعميل — كل التواصل عبر إدارة الموقع */
-      initialProperty={property ? { ...property, whatsapp: "" } : undefined}
-    />
+    <PageStyleScope pageId="property">
+      <PropertyDetailClient
+        id={params.id}
+        /* لا تُمرَّر بيانات تواصل المالك للعميل — كل التواصل عبر إدارة الموقع */
+        initialProperty={property ? { ...property, whatsapp: "" } : undefined}
+      />
+    </PageStyleScope>
   );
 }

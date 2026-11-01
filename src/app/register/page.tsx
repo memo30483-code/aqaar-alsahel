@@ -1,5 +1,7 @@
 "use client";
 
+import PageStyleScope from "@/components/builder/PageStyleScope";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -653,6 +655,14 @@ function FileFieldRow({
 /* ============================ الصفحة ============================ */
 
 export default function RegisterPage() {
+  return (
+    <PageStyleScope pageId="register">
+      <RegisterContent />
+    </PageStyleScope>
+  );
+}
+
+function RegisterContent() {
   const t = useT();
   const [step, setStep] = useState<1 | 2>(1);
   const [accountType, setAccountType] = useState<AccountType>("individual");

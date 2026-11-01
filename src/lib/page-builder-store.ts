@@ -101,7 +101,24 @@ export type PageId =
   | "developers"
   | "brokers"
   | "lawyers"
-  | "engineers";
+  | "engineers"
+  /* صفحات النماذج — التنسيق متاح والبناء مقفول */
+  | "add-property"
+  | "join"
+  | "register"
+  | "login"
+  /* قوالب التفاصيل والصفحات المساندة */
+  | "property"
+  | "project"
+  | "developer"
+  | "broker"
+  | "lawyer"
+  | "engineer"
+  | "professional"
+  | "offers"
+  | "privacy"
+  | "terms"
+  | "sitemap";
 
 export type PageFamily = "content" | "form" | "dynamic";
 
@@ -113,7 +130,10 @@ export interface PageMeta {
   family: PageFamily;
   /** وصف قصير يظهر في لوحة التحكم */
   description: string;
+  /** الأقسام الافتراضية للصفحة */
   defaults: PageBlock[];
+  /** هل يمكن للأدمن بناء الصفحة من أقسام؟ (النماذج والقوالب تقبل التنسيق فقط) */
+  blocksEnabled?: boolean;
 }
 
 export const PAGE_FAMILY_LABEL: Record<PageFamily, string> = {
@@ -420,10 +440,195 @@ export const PAGE_REGISTRY: PageMeta[] = [
       directory("engineer", 3),
     ],
   },
+  /* ==================== صفحات النماذج ==================== */
+  {
+    id: "add-property",
+    path: "/add-property",
+    labelAr: "إضافة عقار",
+    labelEn: "Add property",
+    family: "form",
+    description:
+      "نموذج إضافة عقار بخطواته. تحكم في الخط والأحجام والألوان والخلفية، والنموذج نفسه مقفول لحماية البيانات.",
+    defaults: [],
+    blocksEnabled: false,
+  },
+  {
+    id: "join",
+    path: "/join",
+    labelAr: "انضم كمهني",
+    labelEn: "Join",
+    family: "form",
+    description:
+      "نموذج تسجيل المطورين والمسوقين والمحامين والمكاتب الهندسية. التنسيق متاح والنموذج مقفول.",
+    defaults: [],
+    blocksEnabled: false,
+  },
+  {
+    id: "register",
+    path: "/register",
+    labelAr: "إنشاء حساب",
+    labelEn: "Register",
+    family: "form",
+    description:
+      "نموذج إنشاء الحساب والتحقق. التنسيق متاح والنموذج مقفول.",
+    defaults: [],
+    blocksEnabled: false,
+  },
+  {
+    id: "login",
+    path: "/login",
+    labelAr: "تسجيل الدخول",
+    labelEn: "Login",
+    family: "form",
+    description:
+      "صفحة تسجيل الدخول. تحكم في الخط والألوان والخلفية، والنموذج مقفول.",
+    defaults: [],
+    blocksEnabled: false,
+  },
+  /* ==================== قوالب التفاصيل ==================== */
+  {
+    id: "property",
+    path: "/property/[id]",
+    labelAr: "قالب صفحة العقار",
+    labelEn: "Property template",
+    family: "dynamic",
+    description:
+      "قالب تفاصيل العقار لكل الإعلانات. تحكم في الخط والأحجام والألوان، والبيانات تبقى ديناميكية.",
+    defaults: [],
+    blocksEnabled: false,
+  },
+  {
+    id: "project",
+    path: "/projects/[id]",
+    labelAr: "قالب صفحة المشروع",
+    labelEn: "Project template",
+    family: "dynamic",
+    description:
+      "قالب تفاصيل المشروع. تحكم في التنسيق العام، والبيانات تبقى ديناميكية.",
+    defaults: [],
+    blocksEnabled: false,
+  },
+  {
+    id: "developer",
+    path: "/developers/[id]",
+    labelAr: "قالب ملف المطور",
+    labelEn: "Developer profile",
+    family: "dynamic",
+    description:
+      "قالب الملف الكامل للمطور. تحكم في التنسيق العام، والبيانات تبقى ديناميكية.",
+    defaults: [],
+    blocksEnabled: false,
+  },
+  {
+    id: "broker",
+    path: "/brokers/[id]",
+    labelAr: "قالب ملف المسوق",
+    labelEn: "Marketer profile",
+    family: "dynamic",
+    description:
+      "قالب الملف الكامل للمسوق. تحكم في التنسيق العام، والبيانات تبقى ديناميكية.",
+    defaults: [],
+    blocksEnabled: false,
+  },
+  {
+    id: "lawyer",
+    path: "/lawyers/[id]",
+    labelAr: "قالب ملف المحامي",
+    labelEn: "Lawyer profile",
+    family: "dynamic",
+    description:
+      "قالب الملف الكامل للمحامي. تحكم في التنسيق العام، والبيانات تبقى ديناميكية.",
+    defaults: [],
+    blocksEnabled: false,
+  },
+  {
+    id: "engineer",
+    path: "/engineers/[id]",
+    labelAr: "قالب ملف المكتب الهندسي",
+    labelEn: "Engineering office profile",
+    family: "dynamic",
+    description:
+      "قالب الملف الكامل للمكتب الهندسي. تحكم في التنسيق العام، والبيانات تبقى ديناميكية.",
+    defaults: [],
+    blocksEnabled: false,
+  },
+  {
+    id: "professional",
+    path: "/professional",
+    labelAr: "لوحة المهني",
+    labelEn: "Professional dashboard",
+    family: "dynamic",
+    description:
+      "لوحة صاحب الحساب المهني. تحكم في التنسيق العام، والبيانات تبقى ديناميكية.",
+    defaults: [],
+    blocksEnabled: false,
+  },
+  /* ==================== صفحات مساندة ==================== */
+  {
+    id: "offers",
+    path: "/offers",
+    labelAr: "العروض والتخفيضات",
+    labelEn: "Offers",
+    family: "content",
+    description:
+      "صفحة العروض النشطة. تحكم في التنسيق العام؛ بنية الصفحة مقفولة حاليًا.",
+    defaults: [],
+    blocksEnabled: false,
+  },
+  {
+    id: "privacy",
+    path: "/privacy",
+    labelAr: "سياسة الخصوصية",
+    labelEn: "Privacy policy",
+    family: "content",
+    description:
+      "مستند سياسة الخصوصية. تحكم في الخط والأحجام والألوان والخلفية.",
+    defaults: [],
+    blocksEnabled: false,
+  },
+  {
+    id: "terms",
+    path: "/terms",
+    labelAr: "الشروط والأحكام",
+    labelEn: "Terms",
+    family: "content",
+    description:
+      "مستند الشروط والأحكام. تحكم في الخط والأحجام والألوان والخلفية.",
+    defaults: [],
+    blocksEnabled: false,
+  },
+  {
+    id: "sitemap",
+    path: "/sitemap",
+    labelAr: "خريطة الموقع",
+    labelEn: "Sitemap",
+    family: "content",
+    description:
+      "خريطة الموقع. تحكم في التنسيق العام للصفحة.",
+    defaults: [],
+    blocksEnabled: false,
+  },
 ];
 
 export function getPageMeta(pageId: PageId): PageMeta {
   return PAGE_REGISTRY.find((page) => page.id === pageId) ?? PAGE_REGISTRY[0];
+}
+
+/**
+ * يطابق مساراً فعلياً بصفحة في السجل.
+ * يدعم القوالب الديناميكية مثل `/developers/eng-nile` → `developer`.
+ */
+export function pageIdForPath(pathname: string): PageId | undefined {
+  const clean = pathname.replace(/\/+$/, "") || "/";
+  const exact = PAGE_REGISTRY.find((page) => page.path === clean);
+  if (exact) return exact.id;
+  const segments = clean.split("/").filter(Boolean);
+  if (segments.length === 2) {
+    const parent = `/${segments[0]}/[`;
+    const dynamic = PAGE_REGISTRY.find((page) => page.path.startsWith(parent));
+    if (dynamic) return dynamic.id;
+  }
+  return undefined;
 }
 
 /* ============================ ميتا الأقسام ============================ */

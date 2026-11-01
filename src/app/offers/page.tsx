@@ -1,5 +1,7 @@
 "use client";
 
+import PageStyleScope from "@/components/builder/PageStyleScope";
+
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -38,6 +40,14 @@ function readUserProperties(): Property[] {
 }
 
 export default function OffersPage() {
+  return (
+    <PageStyleScope pageId="offers">
+      <OffersContent />
+    </PageStyleScope>
+  );
+}
+
+function OffersContent() {
   const { t, locale } = useI18n();
   const { formatWithSymbol } = useCurrency();
   const site = useSiteSettings();

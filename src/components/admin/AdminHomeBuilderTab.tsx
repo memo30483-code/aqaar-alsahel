@@ -120,6 +120,11 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
   const [pageId, setPageId] = useState<PageId>("home");
   const blocks = usePageBlocks(pageId);
   const pageMeta = PAGE_REGISTRY.find((page) => page.id === pageId) ?? PAGE_REGISTRY[0];
+  const blocksEnabled = pageMeta.blocksEnabled !== false;
+  /** القوالب الديناميكية تُعاين من صفحة الفهرس لأن مسارها يحتاج معرّفاً */
+  const previewHref = pageMeta.path.includes("[")
+    ? pageMeta.path.split("/[")[0]
+    : pageMeta.path;
   const canManage = can("site.settings") || can("site.blocks");
 
   const [pageStyle, setPageStyle] = useState<HomeBlockStyle>({});
@@ -358,16 +363,18 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
         desc="اختر الصفحة، ثم اسحب الأقسام لترتيبها أو أخفِها أو احذفها أو أضف أقساماً جديدة. كل صفحة لها تخطيطها وتنسيقها المستقل."
         actions={
           <>
-            <button
-              type="button"
-              onClick={() => setAddOpen((value) => !value)}
-              disabled={!canManage}
-              className={BTN_PRIMARY}
-            >
-              <Plus className="h-4 w-4" /> إضافة قسم
-            </button>
+            {blocksEnabled && (
+              <button
+                type="button"
+                onClick={() => setAddOpen((value) => !value)}
+                disabled={!canManage}
+                className={BTN_PRIMARY}
+              >
+                <Plus className="h-4 w-4" /> إضافة قسم
+              </button>
+            )}
             <Link
-              href={pageMeta.path}
+              href={previewHref}
               target="_blank"
               className="inline-flex items-center gap-1 text-xs font-bold text-gold-600"
             >
@@ -398,10 +405,10 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
               ))}
             </select>
             <span className="rounded-full bg-ocean-50 px-2.5 py-1 text-[9.5px] font-black text-ocean-700">
-              {PAGE_FAMILY_LABEL[pageMeta.family]}
+              {blocksEnabled ? PAGE_FAMILY_LABEL[pageMeta.family] : "تنسيق فقط"}
             </span>
             <span className="rounded-full bg-white px-2.5 py-1 text-[9.5px] font-black text-sand-700">
-              {blocks.length} قسم
+              {blocksEnabled ? `${blocks.length} قسم` : "بنية مقفولة"}
             </span>
             <button
               type="button"
@@ -414,6 +421,14 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
           <p className="mt-2 text-[10.5px] font-semibold leading-5 text-sand-600">
             {pageMeta.description}
           </p>
+
+          {!blocksEnabled && (
+            <p className="mt-2 rounded-xl border border-gold-200 bg-gold-50/60 px-3 py-2 text-[10.5px] font-bold leading-5 text-gold-800">
+              هذه الصفحة نموذج/قالب وظيفي — البناء مقفول لحماية الوظيفة، لكن يمكنك
+              التحكم الكامل في الخطوط والأحجام والألوان والخلفية والمسافات من
+              «تنسيق الصفحة».
+            </p>
+          )}
 
           {pageStyleOpen && (
             <div className="mt-3 rounded-xl border border-sand-200 bg-white p-3">
@@ -581,6 +596,7 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
         )}
 
         {/* قائمة الأقسام */}
+        {blocksEnabled ? (
         <div className="space-y-2">
           {blocks.map((block, index) => {
             const meta = BLOCK_TYPE_META[block.type];
@@ -1485,12 +1501,18 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
             </p>
           )}
         </div>
+        ) : (
+          <p className="rounded-2xl border border-dashed border-sand-200 bg-white/60 p-6 text-center text-[12px] font-semibold leading-6 text-sand-600">
+            بنية هذه الصفحة محمية لأنها نموذج/قالب وظيفي. استخدم «تنسيق الصفحة»
+            للتحكم في الخط والأحجام والألوان والخلفية والمسافات.
+          </p>
+        )}
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-sand-200 bg-sand-50/70 px-3 py-2">
           <p className="text-[10.5px] font-semibold leading-5 text-sand-600">
-            يمكنك إنشاء أي عدد من كل قالب، وتعديل محتوى كل نسخة وتصميمها بصورة
-            مستقلة. «استعادة الافتراضي» تحذف النسخ الإضافية وتعيد تخطيط هذه
-            الصفحة الأصلي.
+            {blocksEnabled
+              ? "يمكنك إنشاء أي عدد من كل قالب، وتعديل محتوى كل نسخة وتصميمها بصورة مستقلة. «استعادة الافتراضي» تحذف النسخ الإضافية وتعيد تخطيط هذه الصفحة الأصلي."
+              : "«استعادة الافتراضي» تمسح تنسيق هذه الصفحة وتعيدها للمظهر الافتراضي دون المساس ببياناتها أو وظيفتها."}
           </p>
           <button
             type="button"

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ProfessionalDashboard from "@/components/professionals/ProfessionalDashboard";
+import PageStyleScope from "@/components/builder/PageStyleScope";
 
 export const metadata: Metadata = {
   title: "لوحة المهني | عقار FAMILY",
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function ProfessionalDashboardPage() {
-  return <ProfessionalDashboard />;
+  return (
+    <PageStyleScope pageId="professional">
+      <ProfessionalDashboard />
+    </PageStyleScope>
+  );
 }

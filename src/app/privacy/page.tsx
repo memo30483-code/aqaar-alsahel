@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ComplianceContent from "@/components/ComplianceContent";
+import PageStyleScope from "@/components/builder/PageStyleScope";
 
 export const metadata: Metadata = {
   title: "سياسة الخصوصية | عقار FAMILY",
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPage() {
-  return <ComplianceContent kind="privacy" />;
+  return (
+    <PageStyleScope pageId="privacy">
+      <ComplianceContent kind="privacy" />
+    </PageStyleScope>
+  );
 }

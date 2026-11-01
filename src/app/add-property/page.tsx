@@ -1,5 +1,7 @@
 "use client";
 
+import PageStyleScope from "@/components/builder/PageStyleScope";
+
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -255,6 +257,14 @@ function SectionHead({
 }
 
 export default function AddPropertyPage() {
+  return (
+    <PageStyleScope pageId="add-property">
+      <AddPropertyContent />
+    </PageStyleScope>
+  );
+}
+
+function AddPropertyContent() {
   const router = useRouter();
   const { t, locale } = useI18n();
   const cities = useActiveCities();

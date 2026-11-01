@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ProjectDetailClient from "@/components/projects/ProjectDetailClient";
+import PageStyleScope from "@/components/builder/PageStyleScope";
 
 interface PageProps {
   params: { id: string };
@@ -13,5 +14,9 @@ export const metadata: Metadata = {
 };
 
 export default function ProjectPage({ params }: PageProps) {
-  return <ProjectDetailClient id={params.id} />;
+  return (
+    <PageStyleScope pageId="project">
+      <ProjectDetailClient id={params.id} />
+    </PageStyleScope>
+  );
 }

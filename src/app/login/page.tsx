@@ -1,5 +1,7 @@
 "use client";
 
+import PageStyleScope from "@/components/builder/PageStyleScope";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
@@ -18,6 +20,14 @@ import { getProfessionalByEmail } from "@/lib/professionals-store";
 import { useT } from "@/lib/i18n";
 
 export default function LoginPage() {
+  return (
+    <PageStyleScope pageId="login">
+      <LoginContent />
+    </PageStyleScope>
+  );
+}
+
+function LoginContent() {
   const t = useT();
   const router = useRouter();
 
