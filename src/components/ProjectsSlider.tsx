@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -14,7 +14,11 @@ import {
 } from "lucide-react";
 import { useI18n, type MessageKey } from "@/lib/i18n";
 import { useCurrency } from "@/lib/currency";
-import { animateScrollTo, useDragScroll } from "@/lib/use-drag-scroll";
+import {
+  animateScrollTo,
+  nextCarouselPosition,
+  useDragScroll,
+} from "@/lib/use-drag-scroll";
 import type { HomeBlock } from "@/lib/home-builder-store";
 
 interface Project {
@@ -60,6 +64,35 @@ const PROJECTS: Project[] = [
   },
 ];
 
+/** المسافة الحقيقية بين بداية بطاقتين — تشمل عرض البطاقة والفراغ بينهما */
+function projectStrideOf(node: HTMLDivElement): number {
+  const cards = node.querySelectorAll<HTMLElement>("[data-project-card]");
+  if (cards.length < 2) return 0;
+  return Math.abs(cards[1].offsetLeft - cards[0].offsetLeft);
+}
+
+function projectTarget(node: HTMLDivElement, index: number): number {
+  const max = Math.max(0, node.scrollWidth - node.clientWidth);
+  const position = Math.min(max, projectStrideOf(node) * index);
+  const rtl = getComputedStyle(node).direction === "rtl";
+  return (rtl ? -1 : 1) * position;
+}
+
+function projectIndexAt(node: HTMLDivElement): number {
+  const max = Math.max(0, node.scrollWidth - node.clientWidth);
+  if (max <= 1) return 0;
+  const position = Math.abs(node.scrollLeft);
+  const stride = projectStrideOf(node);
+  if (stride <= 0) return 0;
+  if (max - position <= Math.max(2, stride * 0.05)) {
+    return PROJECTS.length - 1;
+  }
+  return Math.max(
+    0,
+    Math.min(PROJECTS.length - 1, Math.round(position / stride))
+  );
+}
+
 /** سلايدر المشاريع المميزة بأسلوب Nawy — أسهم جانبية حقيقية وتمرير أفقي */
 export function ProjectsSlider({
   block,
@@ -72,6 +105,7 @@ export function ProjectsSlider({
   const { formatWithSymbol } = useCurrency();
   const trackRef = useRef<HTMLDivElement>(null);
   const drag = useDragScroll(trackRef);
+  const autoplayPauseUntil = useRef(0);
   const [activeIndex, setActiveIndex] = useState(0);
   const cardStyle = cardWidth ? { width: `${cardWidth}px` } : undefined;
   const eyebrow =
@@ -88,34 +122,47 @@ export function ProjectsSlider({
   const scrollCards = (direction: 1 | -1) => {
     const node = trackRef.current;
     if (!node) return;
+    autoplayPauseUntil.current = Date.now() + 7000;
     const rtl = getComputedStyle(node).direction === "rtl";
     const delta = direction * node.clientWidth * 0.9;
     animateScrollTo(node, node.scrollLeft + (rtl ? -delta : delta));
   };
 
-  /** الخطوة بين بطاقة وأخرى — تُشتق من مدى التمرير الفعلي */
-  const stepOf = (node: HTMLDivElement) =>
-    PROJECTS.length > 1 ? (node.scrollWidth - node.clientWidth) / (PROJECTS.length - 1) : 0;
-
   const handleScroll = () => {
     const node = trackRef.current;
     if (!node) return;
-    const step = stepOf(node);
-    if (step <= 0) {
-      setActiveIndex(0);
-      return;
-    }
-    const position = Math.abs(node.scrollLeft);
-    setActiveIndex(Math.max(0, Math.min(PROJECTS.length - 1, Math.round(position / step))));
+    setActiveIndex(projectIndexAt(node));
   };
 
   const goToCard = (index: number) => {
     const node = trackRef.current;
     if (!node) return;
-    const step = stepOf(node);
-    const rtl = getComputedStyle(node).direction === "rtl";
-    animateScrollTo(node, (rtl ? -1 : 1) * step * index);
+    autoplayPauseUntil.current = Date.now() + 7000;
+    animateScrollTo(node, projectTarget(node, index));
   };
+
+  /**
+   * انتقال تلقائي هادئ بين المشاريع. أي سحب أو ضغط يدوي يمنحه أولوية
+   * ويتوقف التشغيل سبع ثوانٍ، ثم يكمل تلقائياً من البطاقة الحالية.
+   */
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const timer = window.setInterval(() => {
+      const node = trackRef.current;
+      if (!node || drag.dragging || Date.now() < autoplayPauseUntil.current) return;
+
+      const stride = projectStrideOf(node);
+      const max = Math.max(0, node.scrollWidth - node.clientWidth);
+      if (stride <= 0 || max <= 1) return;
+
+      const nextPosition = nextCarouselPosition(node.scrollLeft, max, stride);
+      const rtl = getComputedStyle(node).direction === "rtl";
+      animateScrollTo(node, (rtl ? -1 : 1) * nextPosition);
+    }, 4500);
+
+    return () => window.clearInterval(timer);
+  }, [drag.dragging]);
 
   return (
     <section id="projects" className="scroll-mt-24 border-t border-sand-200 bg-white py-14">
@@ -160,6 +207,9 @@ export function ProjectsSlider({
           <div
             ref={trackRef}
             onScroll={handleScroll}
+            onPointerDownCapture={() => {
+              autoplayPauseUntil.current = Date.now() + 7000;
+            }}
             {...drag.handlers}
             className={`flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth pb-2 touch-pan-y [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
               drag.dragging ? "cursor-grabbing select-none" : "cursor-grab"
@@ -168,6 +218,7 @@ export function ProjectsSlider({
             {PROJECTS.map((project) => (
               <article
                 key={project.name}
+                data-project-card
                 style={cardStyle}
                 className="group w-[300px] shrink-0 snap-start overflow-hidden rounded-2xl border border-sand-200 bg-white shadow-soft transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_-24px_rgba(20,26,51,0.35)] sm:w-[360px]"
               >

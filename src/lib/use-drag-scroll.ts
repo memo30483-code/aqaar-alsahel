@@ -45,6 +45,30 @@ export function scrollLeftAfterDrag(
   return startScroll - dx;
 }
 
+/** إعادة موضع شريط مكرّر إلى الدورة المناظرة بصرياً كي لا يتوقف عند الحافة */
+export function wrapLoopScrollPosition(
+  current: number,
+  cycle: number,
+  rtl: boolean
+): number {
+  if (cycle <= 0) return current;
+  if (rtl && current <= -cycle) return current + cycle;
+  if (!rtl && current >= cycle) return current - cycle;
+  return current;
+}
+
+/** الموضع التالي لكاروسيل يتقدم خطوة ثم يعود للبداية عند آخر موضع */
+export function nextCarouselPosition(
+  current: number,
+  max: number,
+  stride: number
+): number {
+  if (max <= 1 || stride <= 0) return 0;
+  const position = Math.max(0, Math.min(max, Math.abs(current)));
+  const atEnd = max - position <= Math.max(2, stride * 0.05);
+  return atEnd ? 0 : Math.min(max, position + stride);
+}
+
 /** حالة حركة التمرير الجارية لكل عنصر حتى نلغيها قبل بدء حركة جديدة أو سحب */
 interface ScrollAnimation {
   frame: number;

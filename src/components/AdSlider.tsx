@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { ArrowLeft, Building2, MapPin, Megaphone } from "lucide-react";
 import { useI18n, type MessageKey } from "@/lib/i18n";
-import { useDragScroll } from "@/lib/use-drag-scroll";
+import {
+  useDragScroll,
+  wrapLoopScrollPosition,
+} from "@/lib/use-drag-scroll";
 import type { HomeBlock } from "@/lib/home-builder-store";
 
 interface SponsorAd {
@@ -108,8 +111,6 @@ export default function AdSlider({ block }: { block?: HomeBlock }) {
   const { t, locale } = useI18n();
   const trackRef = useRef<HTMLDivElement>(null);
   const drag = useDragScroll(trackRef);
-  /** الإيقاف عند مرور الماوس — مثل السلوك السابق للشريط المتحرك */
-  const paused = useRef(false);
   const customAds: SponsorAd[] = (block?.items ?? []).map((item) => ({
     name: locale === "ar" ? item.titleAr : item.titleEn || item.titleAr,
     city:
@@ -121,6 +122,11 @@ export default function AdSlider({ block }: { block?: HomeBlock }) {
     link: item.linkUrl || block?.linkUrl,
   }));
   const ads = customAds.length > 0 ? customAds : SPONSOR_ADS;
+  /*
+   * نكرّر دورة الإعلانات بما يكفي للشاشات العريضة أيضاً. نسختان فقط كانتا
+   * تصلان إلى حافة التمرير على الشاشات الكبيرة فتبدو الحركة وكأنها توقفت.
+   */
+  const repeatCount = Math.max(3, Math.ceil(20 / ads.length));
   const title =
     (locale === "ar" ? block?.titleAr : block?.titleEn || block?.titleAr) ||
     t("home.adstrip.title");
@@ -136,42 +142,36 @@ export default function AdSlider({ block }: { block?: HomeBlock }) {
   /**
    * حركة تلقائية مستمرة بدل CSS animation:
    * الشريط يحتاج أن يتوقف فور لمس المستخدم حتى يسحبه بحرية، ثم يكمل من
-   * حيث توقّف. المحتوى مكرّر مرتين، فعند تجاوز نصف العرض نرجع لنقطة
-   * مكافئة بصريًا فيبدو الدوران بلا نهاية.
+   * حيث توقّف. عند تجاوز عرض دورة إعلانات كاملة نرجع لنقطة مكافئة
+   * بصريًا فيبدو الدوران بلا نهاية.
    */
   useEffect(() => {
     const node = trackRef.current;
     if (!node) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    let frame = 0;
     let last = performance.now();
     const SPEED = 30; /* بكسل في الثانية */
 
-    const tick = (now: number) => {
-      const seconds = Math.min(64, now - last) / 1000;
+    const tick = () => {
+      const now = performance.now();
+      const seconds = Math.min(100, now - last) / 1000;
       last = now;
 
-      if (!paused.current && !drag.dragging) {
-        const half = node.scrollWidth / 2;
-        if (half > node.clientWidth) {
+      if (!drag.dragging) {
+        const cycle = node.scrollWidth / repeatCount;
+        if (node.scrollWidth > node.clientWidth && cycle > 0) {
           const rtl = getComputedStyle(node).direction === "rtl";
-          node.scrollLeft += (rtl ? -1 : 1) * SPEED * seconds;
-          const current = node.scrollLeft;
-          if (rtl) {
-            if (current <= -half) node.scrollLeft = current + half;
-          } else if (current >= half) {
-            node.scrollLeft = current - half;
-          }
+          const advanced = node.scrollLeft + (rtl ? -1 : 1) * SPEED * seconds;
+          node.scrollLeft = wrapLoopScrollPosition(advanced, cycle, rtl);
         }
       }
-
-      frame = window.requestAnimationFrame(tick);
     };
 
-    frame = window.requestAnimationFrame(tick);
-    return () => window.cancelAnimationFrame(frame);
-  }, [drag.dragging]);
+    /* المؤقّت يظل موثوقاً لو خفّض المتصفح معدل animation frames. */
+    const timer = window.setInterval(tick, 32);
+    return () => window.clearInterval(timer);
+  }, [drag.dragging, repeatCount]);
 
   return (
     <section
@@ -217,32 +217,28 @@ export default function AdSlider({ block }: { block?: HomeBlock }) {
         <div
           ref={trackRef}
           {...drag.handlers}
-          onMouseEnter={() => {
-            paused.current = true;
-          }}
-          onMouseLeave={() => {
-            paused.current = false;
-          }}
           className={`flex w-full items-center overflow-x-auto pb-1 touch-pan-y [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
             drag.dragging ? "cursor-grabbing select-none" : "cursor-grab"
           }`}
         >
-          {[...ads, ...ads].map((ad, index) => {
-            const duplicate = index >= ads.length;
-            return (
-              <span
-                key={`${ad.name}-${index}`}
-                aria-hidden={duplicate || undefined}
-                className="me-3 shrink-0"
-              >
-                <AdCard
-                  ad={ad}
-                  ghost={duplicate}
-                  cardWidth={block?.style?.cardWidth}
-                />
-              </span>
-            );
-          })}
+          {Array.from({ length: repeatCount }, (_, repeatIndex) =>
+            ads.map((ad, adIndex) => {
+              const duplicate = repeatIndex > 0;
+              return (
+                <span
+                  key={`${repeatIndex}-${ad.name}-${adIndex}`}
+                  aria-hidden={duplicate || undefined}
+                  className="me-3 shrink-0"
+                >
+                  <AdCard
+                    ad={ad}
+                    ghost={duplicate}
+                    cardWidth={block?.style?.cardWidth}
+                  />
+                </span>
+              );
+            })
+          )}
         </div>
       </div>
     </section>

@@ -39,7 +39,11 @@ new Function("exports", "require", "module", js)(
   loaded
 );
 
-const { scrollLeftAfterDrag } = loaded.exports;
+const {
+  nextCarouselPosition,
+  scrollLeftAfterDrag,
+  wrapLoopScrollPosition,
+} = loaded.exports;
 
 test("dragging left follows the cursor: content moves left", () => {
   /* سحب الماوس لليسار (dx سالب) يزيد scrollLeft فيتحرك المحتوى لليسار */
@@ -66,4 +70,17 @@ test("the same drag distance always moves the same visual amount", () => {
   const fromMiddle = scrollLeftAfterDrag(-200, -75) - -200;
   assert.equal(fromStart, fromMiddle);
   assert.equal(fromStart, 75);
+});
+
+test("a repeated ad strip wraps to the equivalent cycle instead of stopping", () => {
+  assert.equal(wrapLoopScrollPosition(-1195, 1192, true), -3);
+  assert.equal(wrapLoopScrollPosition(1195, 1192, false), 3);
+  assert.equal(wrapLoopScrollPosition(-800, 1192, true), -800);
+});
+
+test("project autoplay advances and loops when it reaches the final position", () => {
+  assert.equal(nextCarouselPosition(0, 763, 380), 380);
+  assert.equal(nextCarouselPosition(-380, 763, 380), 760);
+  /* آخر 5% تُعدّ الحافة لتجنب وقفة إضافية عند فرق بكسلات بسيط */
+  assert.equal(nextCarouselPosition(-760, 763, 380), 0);
 });
