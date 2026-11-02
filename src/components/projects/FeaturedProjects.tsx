@@ -38,9 +38,11 @@ export default function FeaturedProjects({
     return entries.sort((a, b) => a.project.order - b.project.order);
   }, [records]);
 
-  /* قبل تحميل التخزين لا نعرض شيئاً — ثم يظهر القسم أو البديل */
-  if (!ready) return null;
-  if (featured.length === 0) {
+  /*
+   * نعرض السلايدر الافتراضي فوراً أثناء مزامنة التخزين بدلاً من إخفاء
+   * القسم بالكامل؛ ثم نستبدله بمشاريع الإدارة المميزة إن وُجدت.
+   */
+  if (!ready || featured.length === 0) {
     /* نفس بيانات السلايدر القديم، مع تحقق من الدالة لتفادي فرق التحميل */
     return <ProjectsSlider block={block} cardWidth={cardWidth} />;
   }

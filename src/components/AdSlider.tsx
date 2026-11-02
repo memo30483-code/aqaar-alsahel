@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { ArrowLeft, Building2, MapPin, Megaphone } from "lucide-react";
 import { useI18n, type MessageKey } from "@/lib/i18n";
+import { useDragScroll } from "@/lib/use-drag-scroll";
 import type { HomeBlock } from "@/lib/home-builder-store";
 
 interface SponsorAd {
@@ -104,6 +106,10 @@ function AdCard({
 
 export default function AdSlider({ block }: { block?: HomeBlock }) {
   const { t, locale } = useI18n();
+  const trackRef = useRef<HTMLDivElement>(null);
+  const drag = useDragScroll(trackRef);
+  /** الإيقاف عند مرور الماوس — مثل السلوك السابق للشريط المتحرك */
+  const paused = useRef(false);
   const customAds: SponsorAd[] = (block?.items ?? []).map((item) => ({
     name: locale === "ar" ? item.titleAr : item.titleEn || item.titleAr,
     city:
@@ -126,6 +132,46 @@ export default function AdSlider({ block }: { block?: HomeBlock }) {
     (locale === "ar"
       ? block?.linkLabelAr
       : block?.linkLabelEn || block?.linkLabelAr) || t("home.adstrip.cta");
+
+  /**
+   * حركة تلقائية مستمرة بدل CSS animation:
+   * الشريط يحتاج أن يتوقف فور لمس المستخدم حتى يسحبه بحرية، ثم يكمل من
+   * حيث توقّف. المحتوى مكرّر مرتين، فعند تجاوز نصف العرض نرجع لنقطة
+   * مكافئة بصريًا فيبدو الدوران بلا نهاية.
+   */
+  useEffect(() => {
+    const node = trackRef.current;
+    if (!node) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let frame = 0;
+    let last = performance.now();
+    const SPEED = 30; /* بكسل في الثانية */
+
+    const tick = (now: number) => {
+      const seconds = Math.min(64, now - last) / 1000;
+      last = now;
+
+      if (!paused.current && !drag.dragging) {
+        const half = node.scrollWidth / 2;
+        if (half > node.clientWidth) {
+          const rtl = getComputedStyle(node).direction === "rtl";
+          node.scrollLeft += (rtl ? -1 : 1) * SPEED * seconds;
+          const current = node.scrollLeft;
+          if (rtl) {
+            if (current <= -half) node.scrollLeft = current + half;
+          } else if (current >= half) {
+            node.scrollLeft = current - half;
+          }
+        }
+      }
+
+      frame = window.requestAnimationFrame(tick);
+    };
+
+    frame = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(frame);
+  }, [drag.dragging]);
 
   return (
     <section
@@ -168,7 +214,19 @@ export default function AdSlider({ block }: { block?: HomeBlock }) {
           aria-hidden
           className="pointer-events-none absolute inset-y-0 end-0 z-[2] w-16 bg-gradient-to-r from-white to-transparent"
         />
-        <div className="marquee-track flex w-max items-center">
+        <div
+          ref={trackRef}
+          {...drag.handlers}
+          onMouseEnter={() => {
+            paused.current = true;
+          }}
+          onMouseLeave={() => {
+            paused.current = false;
+          }}
+          className={`flex w-full items-center overflow-x-auto pb-1 touch-pan-y [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+            drag.dragging ? "cursor-grabbing select-none" : "cursor-grab"
+          }`}
+        >
           {[...ads, ...ads].map((ad, index) => {
             const duplicate = index >= ads.length;
             return (

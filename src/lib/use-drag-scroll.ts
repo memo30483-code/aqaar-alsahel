@@ -32,15 +32,17 @@ export interface DragScrollHandlers<T extends HTMLElement> {
 
 /**
  * موضع التمرير الجديد بعد سحب مسافة `dx`.
- * في RTL تصبح قيم `scrollLeft` سالبة، فتنعكس إشارة الحركة حتى يتبع
- * المحتوى المؤشر في الاتجاهين.
+ *
+ * `scrollLeft` يقيس إزاحة المحتوى عن بدايته في الاتجاهين: زيادته تحرّك
+ * المحتوى لليسار ونقصانه تحرّكه لليمين — سواء كانت الصفحة عربية أم
+ * إنجليزية. لذلك يتبع المحتوى المؤشر دائمًا عبر `startScroll - dx`
+ * من غير أي قلب للإشارة حسب اتجاه الصفحة.
  */
 export function scrollLeftAfterDrag(
   startScroll: number,
-  dx: number,
-  rtl: boolean
+  dx: number
 ): number {
-  return startScroll + (rtl ? dx : -dx);
+  return startScroll - dx;
 }
 
 /** حالة حركة التمرير الجارية لكل عنصر حتى نلغيها قبل بدء حركة جديدة أو سحب */
@@ -155,7 +157,6 @@ export function useDragScroll<T extends HTMLElement>(ref: RefObject<T>) {
       const startX = event.clientX;
       const startScroll = node.scrollLeft;
       const pointerId = event.pointerId;
-      const rtl = getComputedStyle(node).direction === "rtl";
 
       /* سحب جديد يوقف أي حركة أسهم جارية */
       cancelHorizontalScroll(node);
@@ -213,7 +214,7 @@ export function useDragScroll<T extends HTMLElement>(ref: RefObject<T>) {
           /* أول سحب يبدأ من النقطة الحالية بلا قفزة */
         }
 
-        node.scrollLeft = scrollLeftAfterDrag(startScroll, dx, rtl);
+        node.scrollLeft = scrollLeftAfterDrag(startScroll, dx);
       }
 
       function onEnd(endEvent: PointerEvent) {

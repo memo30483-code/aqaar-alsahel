@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Images } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 
@@ -12,6 +12,10 @@ interface Props {
 export default function ImageSlider({ images, title }: Props) {
   const { t } = useI18n();
   const [index, setIndex] = useState(0);
+  /** إزاحة الصورة أثناء السحب لمتابعة الإصبع/الماوس */
+  const [offset, setOffset] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const swipe = useRef<{ x: number; id: number; width: number } | null>(null);
   const total = images.length;
 
   const go = useCallback(
@@ -20,6 +24,59 @@ export default function ImageSlider({ images, title }: Props) {
     },
     [total]
   );
+
+  const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (total <= 1) return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    /* لا نبدأ سحبًا من فوق الأزرار (الأسهم والمصغرات) */
+    if ((event.target as HTMLElement).closest("button")) return;
+
+    swipe.current = {
+      x: event.clientX,
+      id: event.pointerId,
+      width: event.currentTarget.clientWidth,
+    };
+    setDragging(true);
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      /* بعض المتصفحات ترفض الالتقاط لمؤشر غير نشط — السحب يعمل بدونه */
+    }
+  };
+
+  const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const start = swipe.current;
+    if (!start || start.id !== event.pointerId) return;
+    const dx = event.clientX - start.x;
+    const limit = Math.max(90, start.width * 0.35);
+    setOffset(Math.max(-limit, Math.min(limit, dx)));
+  };
+
+  const endSwipe = (
+    event: React.PointerEvent<HTMLDivElement>,
+    navigate: boolean
+  ) => {
+    const start = swipe.current;
+    if (!start || start.id !== event.pointerId) return;
+
+    if (navigate) {
+      const dx = event.clientX - start.x;
+      const threshold = Math.max(45, start.width * 0.15);
+      if (dx <= -threshold) go(1);
+      else if (dx >= threshold) go(-1);
+    }
+
+    swipe.current = null;
+    setDragging(false);
+    setOffset(0);
+    try {
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+    } catch {
+      /* انتهى المؤشر بالفعل في بعض المتصفحات — لا يلزم أي إجراء */
+    }
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -34,13 +91,35 @@ export default function ImageSlider({ images, title }: Props) {
 
   return (
     <div className="group relative overflow-hidden rounded-3xl border border-sand-200 bg-ocean-950 shadow-[0_34px_90px_-70px_rgba(20,26,51,0.85)]">
-      <div className="relative aspect-[4/3] w-full sm:aspect-[16/9] lg:aspect-[21/9]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={images[index]}
-          alt={t("property.imageAlt", { title, index: index + 1 })}
-          className="h-full w-full object-cover transition-opacity duration-500"
-        />
+      <div
+        className={`relative aspect-[4/3] w-full touch-pan-y sm:aspect-[16/9] lg:aspect-[21/9] ${
+          total > 1
+            ? dragging
+              ? "cursor-grabbing select-none"
+              : "cursor-grab"
+            : ""
+        }`}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={(event) => endSwipe(event, true)}
+        onPointerCancel={(event) => endSwipe(event, false)}
+      >
+        <div
+          className="absolute inset-0"
+          style={{
+            transform: offset !== 0 ? `translate3d(${offset}px, 0, 0)` : undefined,
+            transition: dragging ? "none" : "transform 260ms ease",
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={images[index]}
+            alt={t("property.imageAlt", { title, index: index + 1 })}
+            draggable={false}
+            onDragStart={(event) => event.preventDefault()}
+            className="h-full w-full object-cover transition-opacity duration-500"
+          />
+        </div>
 
         <span
           aria-hidden

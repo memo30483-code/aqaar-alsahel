@@ -41,29 +41,29 @@ new Function("exports", "require", "module", js)(
 
 const { scrollLeftAfterDrag } = loaded.exports;
 
-test("LTR: dragging content left moves to the next cards", () => {
-  /* سحب الماوس لليسار (dx سالب) يزيد scrollLeft */
-  assert.equal(scrollLeftAfterDrag(0, -120, false), 120);
-  assert.equal(scrollLeftAfterDrag(300, -50, false), 350);
+test("dragging left follows the cursor: content moves left", () => {
+  /* سحب الماوس لليسار (dx سالب) يزيد scrollLeft فيتحرك المحتوى لليسار */
+  assert.equal(scrollLeftAfterDrag(0, -120), 120);
+  assert.equal(scrollLeftAfterDrag(300, -50), 350);
+  assert.equal(scrollLeftAfterDrag(-500, -40), -460);
 });
 
-test("LTR: dragging content right moves back", () => {
-  assert.equal(scrollLeftAfterDrag(300, 80, false), 220);
+test("dragging right follows the cursor: content moves right", () => {
+  assert.equal(scrollLeftAfterDrag(300, 80), 220);
+  assert.equal(scrollLeftAfterDrag(0, 120), -120);
+  assert.equal(scrollLeftAfterDrag(-300, 90), -390);
 });
 
-test("RTL: dragging left keeps scrolling forward with negative scrollLeft", () => {
-  assert.equal(scrollLeftAfterDrag(0, -120, true), -120);
-  assert.equal(scrollLeftAfterDrag(-300, -40, true), -340);
+test("a zero movement keeps the current position", () => {
+  assert.equal(scrollLeftAfterDrag(0, 0), 0);
+  assert.equal(scrollLeftAfterDrag(420, 0), 420);
+  assert.equal(scrollLeftAfterDrag(-420, 0), -420);
 });
 
-test("RTL: dragging right moves back toward the start", () => {
-  assert.equal(scrollLeftAfterDrag(-300, 90, true), -210);
-  assert.equal(scrollLeftAfterDrag(-120, 120, true), 0);
-});
-
-test("a zero movement keeps the current position in both directions", () => {
-  assert.equal(scrollLeftAfterDrag(0, 0, false), 0);
-  assert.equal(scrollLeftAfterDrag(0, 0, true), 0);
-  assert.equal(scrollLeftAfterDrag(420, 0, false), 420);
-  assert.equal(scrollLeftAfterDrag(-420, 0, true), -420);
+test("the same drag distance always moves the same visual amount", () => {
+  /* نفس الإزاحة تعطي نفس النتيجة بغض النظر عن موضع البداية */
+  const fromStart = scrollLeftAfterDrag(0, -75) - 0;
+  const fromMiddle = scrollLeftAfterDrag(-200, -75) - -200;
+  assert.equal(fromStart, fromMiddle);
+  assert.equal(fromStart, 75);
 });
