@@ -200,6 +200,10 @@ export const homeMessages = {
     ar: "مساعد FAMILY — اضغط لفتح المحادثة",
     en: "FAMILY assistant — tap to open the chat",
   },
+  "home.ai.close": {
+    ar: "إغلاق المساعد",
+    en: "Close assistant",
+  },
   "home.ai.launcherShort": { ar: "مساعد FAMILY", en: "FAMILY assistant" },
   "home.adstrip.title": {
     ar: "شركاء ومطورون",

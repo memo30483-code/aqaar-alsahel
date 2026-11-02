@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useI18n, type MessageKey } from "@/lib/i18n";
 import { useCurrency } from "@/lib/currency";
+import { animateScrollTo, useDragScroll } from "@/lib/use-drag-scroll";
 import type { HomeBlock } from "@/lib/home-builder-store";
 
 interface Project {
@@ -70,6 +71,7 @@ export function ProjectsSlider({
   const { t, locale } = useI18n();
   const { formatWithSymbol } = useCurrency();
   const trackRef = useRef<HTMLDivElement>(null);
+  const drag = useDragScroll(trackRef);
   const [activeIndex, setActiveIndex] = useState(0);
   const cardStyle = cardWidth ? { width: `${cardWidth}px` } : undefined;
   const eyebrow =
@@ -87,10 +89,8 @@ export function ProjectsSlider({
     const node = trackRef.current;
     if (!node) return;
     const rtl = getComputedStyle(node).direction === "rtl";
-    node.scrollBy({
-      left: direction * node.clientWidth * 0.9 * (rtl ? -1 : 1),
-      behavior: "smooth",
-    });
+    const delta = direction * node.clientWidth * 0.9;
+    animateScrollTo(node, node.scrollLeft + (rtl ? -delta : delta));
   };
 
   /** الخطوة بين بطاقة وأخرى — تُشتق من مدى التمرير الفعلي */
@@ -114,7 +114,7 @@ export function ProjectsSlider({
     if (!node) return;
     const step = stepOf(node);
     const rtl = getComputedStyle(node).direction === "rtl";
-    node.scrollTo({ left: (rtl ? -1 : 1) * step * index, behavior: "smooth" });
+    animateScrollTo(node, (rtl ? -1 : 1) * step * index);
   };
 
   return (
@@ -160,7 +160,10 @@ export function ProjectsSlider({
           <div
             ref={trackRef}
             onScroll={handleScroll}
-            className="flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            {...drag.handlers}
+            className={`flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth pb-2 touch-pan-y [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+              drag.dragging ? "cursor-grabbing select-none" : "cursor-grab"
+            }`}
           >
             {PROJECTS.map((project) => (
               <article

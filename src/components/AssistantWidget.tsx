@@ -23,6 +23,8 @@ const MASCOT = 64;
 const EDGE = 12;
 /** أعلى نقطة مسموح بيها (تحت الهيدر الثابت) */
 const TOP_SAFE = 88;
+/** مفتاح تذكّر إغلاق الزائر للمساعد حتى لا يظهر له تانيًا في كل صفحة */
+const DISMISS_KEY = "aqaar-ai-assistant-dismissed";
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), Math.max(min, max));
@@ -108,6 +110,8 @@ export default function AssistantWidget() {
   const seasonTheme = useSeasonTheme();
   const [open, setOpen] = useState(false);
   const [ready, setReady] = useState(false);
+  /** الزائر أغلق المساعد بنفسه — يبقى مخفيًا حتى يطلبه صراحةً */
+  const [hidden, setHidden] = useState(false);
   const [pos, setPos] = useState({ x: -999, y: -999 });
   const [viewport, setViewport] = useState({ width: 1280, height: 800 });
   const [reduced, setReduced] = useState(false);
@@ -142,6 +146,13 @@ export default function AssistantWidget() {
     const syncReduced = () => setReduced(query.matches);
     syncReduced();
     query.addEventListener("change", syncReduced);
+
+    /* لو الزائر أغلقه قبل كده، ما نرجّعش نعرضه من غير طلب واضح منه */
+    try {
+      if (localStorage.getItem(DISMISS_KEY) === "1") setHidden(true);
+    } catch {
+      /* التخزين المحلي معطّل — نعرض المساعد بشكل عادي */
+    }
 
     const measure = () => {
       setViewport({
@@ -187,7 +198,7 @@ export default function AssistantWidget() {
 
   /* التنقّل بين الحين والآخر — يتوقف أثناء الفتح أو المرور بالماوس */
   useEffect(() => {
-    if (!ready || open || hovering || reduced) return;
+    if (!ready || open || hovering || reduced || hidden) return;
 
     const timer = window.setTimeout(() => {
       setPos(randomSpot(posRef.current));
@@ -195,7 +206,7 @@ export default function AssistantWidget() {
     }, 6500 + Math.random() * 3000);
 
     return () => window.clearTimeout(timer);
-  }, [ready, open, hovering, reduced, pos, startHop]);
+  }, [ready, open, hovering, reduced, hidden, pos, startHop]);
 
   /* تفاعل مع الماوس: العينان والجسم يتابعان المؤشر */
   useEffect(() => {
@@ -233,9 +244,17 @@ export default function AssistantWidget() {
     };
   }, [reduced]);
 
-  /* الفتح من أي زر في الصفحات الأخرى */
+  /* الفتح من أي زر في الصفحات الأخرى — طلب صريح يعيد إظهار المساعد لو كان مغلقًا */
   useEffect(() => {
-    const handler = () => setOpen(true);
+    const handler = () => {
+      setHidden(false);
+      setOpen(true);
+      try {
+        localStorage.removeItem(DISMISS_KEY);
+      } catch {
+        /* لا شيء */
+      }
+    };
     window.addEventListener(OPEN_AI_EVENT, handler);
     return () => window.removeEventListener(OPEN_AI_EVENT, handler);
   }, []);
@@ -298,6 +317,17 @@ export default function AssistantWidget() {
     }, 650);
   };
 
+  /** إغلاق المساعد نهائيًا لهذا المتصفح — يبقى مخفيًا في الزيارات القادمة */
+  const dismiss = () => {
+    setOpen(false);
+    setHidden(true);
+    try {
+      localStorage.setItem(DISMISS_KEY, "1");
+    } catch {
+      /* التخزين معطّل — يبقى مخفيًا في هذه الصفحة فقط */
+    }
+  };
+
   /** موضع اللوحة بالنسبة للشخصية مع ضمان بقائها داخل الشاشة */
   const panelStyle = useMemo(() => {
     const width = Math.min(352, viewport.width - 2 * EDGE);
@@ -324,6 +354,9 @@ export default function AssistantWidget() {
       maxHeight: Math.min(470, Math.max(220, pos.y - 20)),
     };
   }, [pos, viewport]);
+
+  /* لا نرسم شيئًا قبل التثبيت أو بعد إغلاق الزائر */
+  if (!ready || hidden) return null;
 
   return (
     <>
@@ -486,6 +519,17 @@ export default function AssistantWidget() {
             )}
           </button>
         </div>
+
+        {/* إغلاق المساعد — زر صغير فوق الزاوية حتى لا يغيّر شكل الشخصية */}
+        <button
+          type="button"
+          onClick={dismiss}
+          aria-label={t("home.ai.close")}
+          title={t("home.ai.close")}
+          className="absolute -start-1 -top-1 z-20 grid h-5 w-5 place-items-center rounded-full border border-sand-300 bg-white/95 text-ocean-700 shadow-[0_4px_10px_-4px_rgba(20,26,51,0.55)] transition hover:scale-110 hover:border-gold-300 hover:bg-gold-50 hover:text-ocean-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 focus-visible:ring-offset-1"
+        >
+          <X className="h-3 w-3" strokeWidth={2.6} />
+        </button>
       </div>
 
       {/* ============ لوحة المحادثة المنسدلة ============ */}

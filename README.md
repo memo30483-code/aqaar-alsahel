@@ -81,6 +81,7 @@ ADMIN_NAME=مدير النظام   # اختياري
 
 - `tests/page-builder-store.test.cjs` — محرك البلدر وسجل الصفحات والثيمات.
 - `tests/admin-session.test.cjs` — توقيع جلسة الأدمن ورفض التلاعب والانتهاء.
+- `tests/drag-scroll.test.cjs` — حساب اتجاه السحب في العربية والإنجليزية.
 
 ## النشر
 
