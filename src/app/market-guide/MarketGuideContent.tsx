@@ -125,8 +125,13 @@ function avgPricePerMeter(
   city: City,
   type: PropertyType
 ): number | null {
+  /* سعر المتر يُحسب للبيع فقط: إيجار الوحدة أخفض بكثير من ثمنها فيفسد المتوسط */
   const items = cityProperties(properties, city).filter(
-    (p) => p.type === type && p.area > 0 && !p.priceByAdmin
+    (p) =>
+      p.type === type &&
+      p.area > 0 &&
+      !p.priceByAdmin &&
+      (p.purpose ?? "بيع") === "بيع"
   );
   if (items.length === 0) return null;
   const total = items.reduce((sum, p) => sum + p.price / p.area, 0);
@@ -168,8 +173,12 @@ export default function MarketGuideContent() {
   }, [userProperties, approvedIds]);
 
   const totalListings = allProperties.length;
+  /* الإيجارات مستبعدة من متوسط سعر المتر لأن المقارنة تكون بين أسعار بيع */
   const pricedProperties = allProperties.filter(
-    (p) => !p.priceByAdmin && p.area > 0
+    (p) =>
+      !p.priceByAdmin &&
+      p.area > 0 &&
+      (p.purpose ?? "بيع") === "بيع"
   );
   const overallAvgMeter =
     pricedProperties.length > 0

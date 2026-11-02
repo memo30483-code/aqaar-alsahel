@@ -9,6 +9,8 @@ const PROPERTY_TYPE_KEYS: Record<string, MessageKey> = {
   منزل: "type.house",
   فيلا: "type.villa",
   "شقة دوبلكس": "type.duplex",
+  شاليه: "type.chalet",
+  استوديو: "type.studio",
 };
 
 /** أنواع العقارات المعتمدة بالترتيب المعروض في الواجهة */
@@ -19,6 +21,8 @@ export const PROPERTY_TYPES: PropertyType[] = [
   "منزل",
   "فيلا",
   "شقة دوبلكس",
+  "شاليه",
+  "استوديو",
 ];
 
 /** ربط نوع البائع بمفتاح الترجمة */

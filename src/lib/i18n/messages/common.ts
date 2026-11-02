@@ -122,6 +122,8 @@ export const commonMessages = {
   "type.land": { ar: "أرض", en: "Land" },
   "type.house": { ar: "منزل", en: "House" },
   "type.duplex": { ar: "شقة دوبلكس", en: "Duplex" },
+  "type.chalet": { ar: "شاليه", en: "Chalet" },
+  "type.studio": { ar: "استوديو", en: "Studio" },
   "seller.individual": { ar: "فرد", en: "Individual" },
   "seller.developer": { ar: "مطور", en: "Developer" },
   "seller.marketer": { ar: "مسوق", en: "Marketer" },
