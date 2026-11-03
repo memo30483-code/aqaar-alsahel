@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>معاينة قسم التطبيق — عقار FAMILY</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --navy:#141a33; --navy-800:#1a2140; --navy-900:#0a0f22; --navy-950:#070b18;
+    --gold:#e8c67a; --gold-600:#c79a45; --gold-soft:#f3dcae;
+    --sand:#f6f1e6; --ink:#0f1730; --muted:#8f9bb8;
+    --green:#1f9d6b;
+    --line:rgba(255,255,255,.1);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--navy-950); color:#eef1f8;
+    font-family:"Cairo",system-ui,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1240px;margin:0 auto;padding:0 22px}
+
+  /* ---------- شريط المعاينة ---------- */
+  .note-bar{
+    background:linear-gradient(90deg,#c79a45,#e8c67a);
+    color:#241a06;font-weight:800;font-size:12.5px;text-align:center;
+    padding:9px 16px;letter-spacing:.2px;
+  }
+
+  /* ---------- عناوين الأقسام ---------- */
+  .sec{padding:54px 0}
+  .sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:22px;flex-wrap:wrap}
+  .sec-head h2{margin:0;font-size:22px;font-weight:900}
+  .sec-head p{margin:6px 0 0;font-size:13px;color:var(--muted);line-height:1.8;max-width:640px}
+  .kicker{font-size:11px;font-weight:800;color:var(--gold);letter-spacing:.4px;margin:0 0 6px}
+  .divider{height:1px;background:var(--line)}
+
+  /* ================= الواجهة ================= */
+  .hero{
+    position:relative;overflow:hidden;background:
+      radial-gradient(900px 520px at 78% 18%,rgba(232,198,122,.17),transparent 62%),
+      radial-gradient(800px 600px at 12% 92%,rgba(64,120,180,.22),transparent 60%),
+      linear-gradient(160deg,#0b1229 0%,#141a33 46%,#0a1024 100%);
+    border-bottom:1px solid var(--line);
+  }
+  .hero::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px);
+    background-size:22px 22px;opacity:.5;
+    mask-image:linear-gradient(90deg,transparent,#000 40%,#000 70%,transparent);
+  }
+  .hero-inner{
+    position:relative;z-index:2;display:grid;grid-template-columns:1.02fr .98fr;
+    gap:30px;align-items:center;padding:58px 0 66px;
+  }
+  .eyebrow{display:flex;align-items:center;gap:10px;margin:0;font-size:12px;font-weight:800;color:var(--gold-soft)}
+  .eyebrow::before{content:"";width:34px;height:1px;background:var(--gold)}
+  .hero h1{margin:16px 0 0;font-size:clamp(34px,3.6vw,55px);line-height:1.22;font-weight:900;letter-spacing:-.5px}
+  .hero h1 .gold{color:var(--gold)}
+  .hero .sub{margin:16px 0 0;max-width:520px;font-size:14.5px;line-height:1.95;color:#dbe2f2;font-weight:500}
+  .points{list-style:none;display:flex;flex-wrap:wrap;gap:10px;padding:0;margin:20px 0 0}
+  .points li{
+    display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:#eaf0fb;
+    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);
+    padding:7px 12px;border-radius:999px;
+  }
+  .points svg{width:13px;height:13px;stroke:var(--gold);fill:none;stroke-width:2.4}
+  .stores{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap}
+  .store{
+    display:flex;align-items:center;gap:10px;min-width:158px;
+    background:#0b1020;border:1px solid rgba(255,255,255,.16);border-radius:13px;
+    padding:9px 14px;color:#fff;text-decoration:none;
+  }
+  .store svg{width:22px;height:22px;flex:none}
+  .store .s1{display:block;font-size:9.5px;color:#a9b4cd;font-weight:600;line-height:1.2}
+  .store .s2{display:block;font-size:14px;font-weight:900;line-height:1.25}
+  .soon{margin:12px 0 0;font-size:11.5px;color:#9aa6c3}
+  .soon b{color:var(--gold-soft)}
+
+  .hero-phones{position:relative;height:600px}
+  .hero-phones .stage{position:absolute;inset:0}
+  .glow{position:absolute;width:420px;height:420px;border-radius:50%;filter:blur(60px);
+    background:radial-gradient(circle,rgba(232,198,122,.28),transparent 68%);
+    left:80px;top:80px}
+  .phone{
+    position:absolute;width:286px;height:596px;border-radius:46px;background:linear-gradient(160deg,#2a3150,#0b1020);
+    padding:9px;box-shadow:0 40px 80px -28px #000, 0 0 0 1px rgba(255,255,255,.08), inset 0 0 0 1px rgba(255,255,255,.05);
+  }
+  .phone .screen{
+    position:relative;width:100%;height:100%;border-radius:38px;overflow:hidden;background:#f7f8fc;
+    display:flex;flex-direction:column;color:#161b2e;
+  }
+  .notch{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:92px;height:24px;border-radius:14px;background:#0b1020;z-index:20}
+  .phone.main{right:26px;top:0;z-index:3}
+  .phone.back{left:0;top:42px;transform:rotate(-7deg) scale(.93);z-index:2;opacity:.96}
+  .hero-phones .tagline{
+    position:absolute;left:6px;bottom:6px;z-index:6;font-size:10.5px;color:#9fabc7;
+    background:rgba(10,15,34,.72);border:1px solid var(--line);border-radius:99px;padding:6px 12px;backdrop-filter:blur(8px)
+  }
+
+  /* ---------- واجهة التطبيق ---------- */
+  .statusbar{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 4px;font-size:10px;font-weight:800;color:#20263c}
+  .statusbar .icons{display:flex;gap:3px;align-items:center;opacity:.6}
+  .statusbar .icons i{display:block;width:9px;height:5px;border-radius:1px;background:#20263c}
+  .statusbar .icons i.battery{width:14px;border-radius:2px;position:relative}
+  .statusbar .icons i.battery::after{content:"";position:absolute;inset:1px;left:3px;background:#f7f8fc;border-radius:1px}
+  .appbar{display:flex;align-items:center;gap:8px;padding:8px 16px 10px}
+  .appbar .logo{width:28px;height:28px;border-radius:9px;background:linear-gradient(145deg,#e8c67a,#c79a45);color:#141a33;font-weight:900;font-size:14px;display:grid;place-items:center}
+  .appbar .name{font-size:12.5px;font-weight:900;line-height:1.1}
+  .appbar .name small{display:block;font-size:8px;color:#7b8499;font-weight:600;margin-top:1px}
+  .appbar .bell{margin-inline-start:auto;width:26px;height:26px;border-radius:9px;background:#eef0f6;display:grid;place-items:center}
+  .appbar .bell svg{width:13px;height:13px;stroke:#4a5470;fill:none;stroke-width:1.9}
+  .loc{display:inline-flex;align-items:center;gap:5px;margin:0 16px;background:#eef4ff;color:#33507f;border-radius:99px;padding:4px 9px;font-size:9px;font-weight:800}
+  .loc svg{width:9px;height:9px;fill:#33507f}
+  .search{margin:9px 16px 0;display:flex;align-items:center;gap:7px;background:#fff;border:1px solid #e4e8f2;border-radius:11px;padding:9px 11px;font-size:9.5px;color:#98a1b6;box-shadow:0 3px 10px rgba(16,23,48,.05)}
+  .search svg{width:11px;height:11px;stroke:#98a1b6;fill:none;stroke-width:2.2}
+  .chips{display:flex;gap:6px;padding:9px 16px 0;overflow:hidden}
+  .chip{font-size:8.5px;font-weight:800;padding:5px 10px;border-radius:99px;background:#eef0f6;color:#5c6680;white-space:nowrap}
+  .chip.on{background:#141a33;color:#fff}
+  .sec-title{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 6px}
+  .sec-title b{font-size:10.5px;font-weight:900}
+  .sec-title span{font-size:8.5px;color:#7b8499;font-weight:700}
+  .feat{margin:0 16px;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px -14px rgba(16,23,48,.35);border:1px solid #e9edf6}
+  .feat .img{position:relative;height:104px;background:#dfe4ef}
+  .feat .img img{width:100%;height:100%;object-fit:cover;display:block}
+  .badge-v{position:absolute;top:8px;inset-inline-start:8px;display:flex;align-items:center;gap:4px;background:rgba(12,88,62,.92);color:#d9f7ea;font-size:7.5px;font-weight:800;padding:3px 7px;border-radius:99px}
+  .badge-v svg{width:8px;height:8px;stroke:#8ff0c4;fill:none;stroke-width:2.4}
+  .price-tag{position:absolute;bottom:8px;inset-inline-end:8px;background:rgba(10,15,34,.86);color:#fff;font-size:9px;font-weight:900;padding:3px 8px;border-radius:7px}
+  .feat .body{padding:9px 10px 10px}
+  .feat .body b{display:block;font-size:10.5px;font-weight:900}
+  .feat .body p{margin:4px 0 0;font-size:8.5px;color:#7b8499;font-weight:600}
+  .mini-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:9px 16px 0}
+  .mini{background:#fff;border-radius:11px;overflow:hidden;border:1px solid #e9edf6}
+  .mini img{width:100%;height:56px;object-fit:cover;display:block}
+  .mini div{padding:6px 7px 7px}
+  .mini b{display:block;font-size:8.5px;font-weight:900}
+  .mini span{display:block;margin-top:2px;font-size:7.5px;color:#7b8499;font-weight:700}
+  .tabbar{
+    margin-top:auto;display:grid;grid-template-columns:repeat(4,1fr);align-items:center;
+    background:rgba(255,255,255,.98);border-top:1px solid #e7ebf4;padding:9px 8px 14px;
+  }
+  .tab{display:grid;justify-items:center;gap:3px;font-size:7px;font-weight:800;color:#9aa3b8}
+  .tab svg{width:15px;height:15px;stroke:#9aa3b8;fill:none;stroke-width:1.8}
+  .tab.on{color:#141a33}
+  .tab.on svg{stroke:#141a33}
+  .tab.on::after{content:"";width:14px;height:2px;border-radius:2px;background:var(--gold)}
+
+  /* تفاصيل العقار */
+  .detail .hero-img{position:relative;height:210px;background:#dfe4ef}
+  .detail .hero-img img{width:100%;height:100%;object-fit:cover;display:block}
+  .detail .navrow{position:absolute;top:12px;inset-inline:12px;display:flex;justify-content:space-between}
+  .detail .round{width:28px;height:28px;border-radius:50%;background:rgba(10,15,34,.55);backdrop-filter:blur(6px);display:grid;place-items:center;color:#fff;font-size:12px}
+  .detail .sheet{background:#fff;border-radius:18px 18px 0 0;margin-top:-18px;position:relative;z-index:3;padding:13px 14px;flex:1;display:flex;flex-direction:column}
+  .detail h4{margin:0;font-size:11.5px;font-weight:900}
+  .detail .addr{margin:4px 0 0;font-size:8.5px;color:#7b8499;font-weight:700}
+  .detail .p{display:flex;align-items:baseline;gap:6px;margin-top:9px}
+  .detail .p b{font-size:15px;font-weight:900;color:#0f1730}
+  .detail .p small{font-size:8px;color:#7b8499;font-weight:700}
+  .specs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+  .spec{background:#f4f6fb;border-radius:9px;padding:7px 6px;text-align:center}
+  .spec b{display:block;font-size:9.5px;font-weight:900}
+  .spec span{display:block;font-size:6.8px;color:#7b8499;font-weight:700;margin-top:2px}
+  .verify{display:flex;gap:7px;align-items:flex-start;margin-top:10px;background:#effaf4;border:1px solid #cfeee0;border-radius:10px;padding:8px 9px}
+  .verify svg{width:13px;height:13px;stroke:#1f9d6b;fill:none;stroke-width:2.2;flex:none;margin-top:1px}
+  .verify b{display:block;font-size:8.5px;font-weight:900;color:#0f5f43}
+  .verify span{display:block;font-size:7.3px;color:#3d7a63;font-weight:700;line-height:1.6;margin-top:1px}
+  .mini-map{position:relative;margin-top:9px;height:54px;border-radius:10px;overflow:hidden;border:1px solid #e4e9f2;background:linear-gradient(90deg,#8fd0dd 0 24%,#f2e6c9 24% 33%,#eef1f5 33% 100%)}
+  .mini-map::before{content:"";position:absolute;inset:0;background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);background-size:24px 20px;opacity:.9}
+  .mini-map .pin-s{position:absolute;top:18px;left:28px;width:14px;height:14px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#141a33;border:2px solid #fff;box-shadow:0 3px 6px rgba(0,0,0,.25)}
+  .mini-map small{position:absolute;bottom:5px;inset-inline-start:7px;font-size:6.5px;font-weight:800;color:#5c6680;background:#fff;border-radius:4px;padding:2px 6px;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+  .cta{margin-top:auto;display:flex;gap:7px}  .cta button{flex:1;border:0;border-radius:10px;padding:10px;font-family:inherit;font-size:9.5px;font-weight:900;cursor:default}
+  .cta .gold{background:linear-gradient(145deg,#e8c67a,#c79a45);color:#241a06}
+  .cta .ghost{flex:0 0 40px;background:#f0f2f8;color:#4a5470;font-size:14px}
+
+  /* خريطة */
+  .map-screen{position:relative;flex:1;background:#e8eef2;overflow:hidden}
+  .map-screen .water{position:absolute;inset-inline-start:0;top:0;bottom:0;width:38%;background:linear-gradient(160deg,#8fd0dd,#5fb6c9)}
+  .map-screen .sand{position:absolute;inset-inline-start:32%;top:0;bottom:0;width:12%;background:#f2e6c9}
+  .map-screen .road{position:absolute;background:#fff;box-shadow:0 0 0 1px #dfe6ee}
+  .map-screen .pin{position:absolute;width:24px;height:24px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#141a33;border:2px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.25)}
+  .map-screen .pin.gold{background:#c79a45}
+  .map-screen .pin::after{content:"";position:absolute;inset:7px;border-radius:50%;background:#fff}
+  .map-head{position:absolute;top:12px;inset-inline:12px;display:flex;gap:7px}
+  .map-head .box{flex:1;background:#fff;border-radius:10px;padding:8px 10px;font-size:8.5px;font-weight:800;color:#5c6680;box-shadow:0 6px 16px -8px rgba(0,0,0,.35)}
+  .map-sheet{position:absolute;inset-inline:0;bottom:0;background:#fff;border-radius:16px 16px 0 0;padding:10px 12px 12px;box-shadow:0 -12px 30px -18px rgba(0,0,0,.4)}
+  .map-sheet .handle{width:34px;height:4px;border-radius:2px;background:#e2e6ef;margin:0 auto 8px}
+  .map-sheet b{font-size:9.5px;font-weight:900;display:block}
+  .map-sheet p{margin:3px 0 8px;font-size:8px;color:#7b8499;font-weight:700}
+  .map-sheet .row{display:flex;align-items:center;gap:8px;background:#f7f8fc;border-radius:9px;padding:5px}
+  .map-sheet .row img{width:42px;height:34px;object-fit:cover;border-radius:6px}
+  .map-sheet .row div b{font-size:8px}
+  .map-sheet .row div span{font-size:7px;color:#7b8499}
+
+  /* ================= قسم التطبيق ================= */
+  .app-section{background:linear-gradient(180deg,#0c1226,#0a0f22);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .app-grid{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center}
+  .app-copy h2{margin:8px 0 0;font-size:clamp(24px,2.4vw,34px);font-weight:900;line-height:1.35}
+  .app-copy h2 span{color:var(--gold)}
+  .app-copy .lead{margin:14px 0 0;font-size:14px;line-height:1.95;color:#c6cee1;max-width:520px}
+  .features{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:24px;max-width:560px}
+  .feature{background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:14px;padding:13px 14px}
+  .feature .ic{width:32px;height:32px;border-radius:10px;background:rgba(232,198,122,.14);display:grid;place-items:center;margin-bottom:9px}
+  .feature .ic svg{width:16px;height:16px;stroke:var(--gold);fill:none;stroke-width:1.9}
+  .feature b{display:block;font-size:12.5px;font-weight:900}
+  .feature p{margin:4px 0 0;font-size:11px;line-height:1.7;color:#9aa6c3}
+  .dl{display:flex;align-items:center;gap:16px;margin-top:24px;flex-wrap:wrap}
+  .qr{width:88px;height:88px;border-radius:12px;background:#fff;padding:7px;flex:none}
+  .qr img{width:100%;height:100%;display:block;border-radius:5px}
+  .dl .txt b{display:block;font-size:12px;font-weight:900}
+  .dl .txt span{display:block;font-size:11px;color:#9aa6c3;margin-top:3px;line-height:1.7}
+  .app-phones{position:relative;height:600px}
+  .app-phones .phone.map-phone{right:50%;top:0;transform:translateX(50%);z-index:3}
+  .app-phones .phone.map-phone .screen{background:#eef2f7}
+
+  /* ================= شريط التنقل ================= */
+  .nav-mock{
+    display:flex;align-items:center;gap:18px;background:#0e1530;border:1px solid var(--line);
+    border-radius:16px;padding:12px 18px;box-shadow:0 24px 60px -40px #000;
+  }
+  .nav-mock .brand{display:flex;align-items:center;gap:9px;font-weight:900;font-size:13px}
+  .nav-mock .brand .logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(145deg,#e8c67a,#c79a45);color:#141a33;display:grid;place-items:center;font-size:14px;font-weight:900}
+  .nav-links{display:flex;gap:16px;font-size:11.5px;color:#aab4ca;font-weight:700;margin-inline-start:12px;flex-wrap:wrap}
+  .nav-links span.on{color:#fff}
+  .nav-app{
+    margin-inline-start:auto;display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:900;
+    background:linear-gradient(145deg,#e8c67a,#c79a45);color:#241a06;border-radius:10px;padding:7px 12px;
+    box-shadow:0 8px 18px -10px rgba(232,198,122,.8);
+  }
+  .nav-app svg{width:13px;height:13px;stroke:#241a06;fill:none;stroke-width:2}
+
+  /* ================= بانر الموبايل ================= */
+  .mob-grid{display:grid;grid-template-columns:300px 1fr;gap:36px;align-items:center}
+  .mob-phone{position:relative;width:300px;height:560px;border-radius:42px;background:linear-gradient(160deg,#2a3150,#0b1020);padding:8px;box-shadow:0 40px 80px -30px #000}
+  .mob-phone .screen{border-radius:33px;overflow:hidden;background:#f7f8fc;height:100%;position:relative;display:flex;flex-direction:column}
+  .mob-phone .fake-page{padding:16px 12px;display:flex;flex-direction:column;gap:10px;flex:1;background:#f7f8fc}
+  .skeleton{height:12px;border-radius:6px;background:#e6eaf3}
+  .skeleton.img{height:110px;border-radius:12px;background:#e0e5ef}
+  .mob-banner{
+    position:absolute;inset-inline:8px;bottom:8px;display:flex;align-items:center;gap:9px;
+    background:#0f1730;border-radius:14px;padding:9px 10px;box-shadow:0 14px 30px -12px rgba(0,0,0,.6);
+    border:1px solid rgba(255,255,255,.1);
+  }
+  .mob-banner .logo{width:32px;height:32px;border-radius:10px;background:linear-gradient(145deg,#e8c67a,#c79a45);color:#141a33;font-weight:900;display:grid;place-items:center;font-size:14px;flex:none}
+  .mob-banner .t{flex:1;min-width:0}
+  .mob-banner .t b{display:block;font-size:9px;color:#fff;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mob-banner .t span{display:block;font-size:7.5px;color:#b7c1d8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mob-banner .x{width:20px;height:20px;border-radius:7px;background:rgba(255,255,255,.1);color:#cfd7e8;display:grid;place-items:center;font-size:9px;flex:none}
+  .mob-banner .go{background:var(--gold);color:#241a06;font-size:8px;font-weight:900;border-radius:7px;padding:5px 8px;flex:none;white-space:nowrap}
+  .mob-note{max-width:520px}
+  .mob-note h3{margin:0 0 8px;font-size:18px;font-weight:900}
+  .mob-note p{margin:0 0 12px;font-size:12.5px;color:#a7b2c9;line-height:1.9}
+  .mob-note ul{margin:0;padding-inline-start:18px;color:#c6cee1;font-size:12px;line-height:2}
+
+  /* ================= القرارات ================= */
+  .decisions{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .dec{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .dec b{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:900;margin-bottom:8px}
+  .dec b i{width:20px;height:20px;border-radius:6px;background:rgba(232,198,122,.16);color:var(--gold);display:grid;place-items:center;font-size:10px;font-style:normal;font-weight:900}
+  .dec p{margin:0;font-size:11.5px;color:#a7b2c9;line-height:1.85}
+  .dec p b2{color:#fff}
+
+  footer.pg{border-top:1px solid var(--line);padding:22px 0 40px;color:#6f7b98;font-size:11.5px;text-align:center}
+
+
+  @media (max-width:980px){
+    .hero-inner{grid-template-columns:1fr;gap:8px;padding-top:36px}
+    .hero-phones{height:520px;transform:scale(.92);transform-origin:top center}
+    .app-grid{grid-template-columns:1fr;gap:26px}
+    .app-phones{height:560px}
+    .mob-grid{grid-template-columns:1fr;justify-items:center}
+    .decisions{grid-template-columns:1fr}
+    .nav-links{display:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="note-bar">معاينة تصميم فقط — قسم التطبيق لم يُضَف للموقع بعد</div>
+
+<!-- ================= 1) الواجهة ================= -->
+<section class="hero">
+  <div class="wrap hero-inner">
+    <div class="hero-copy">
+      <p class="eyebrow">تطبيق عقار FAMILY</p>
+      <h1>عقار أحلامك<br /><span class="gold">في جيبك</span></h1>
+      <p class="sub">نفس الثقة ونفس فحص المستندات… بس أسرع. تصفّح العقارات، شوفها على الخريطة، واحفظ اللي يعجبك — واستلم تنبيه أول ما ينزل عقار موثّق في مدينتك.</p>
+      <ul class="points">
+        <li><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg> تنبيهات فورية</li>
+        <li><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg> بحث بالخريطة</li>
+        <li><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg> تواصل مع الإدارة فقط</li>
+      </ul>
+      <div class="stores">
+        <a class="store" href="#">
+          <svg viewBox="0 0 24 24" fill="#fff"><path d="M16.365 1.43c0 1.14-.417 2.2-1.25 3.04-.833.84-1.9 1.33-3.03 1.24-.02-1.1.43-2.2 1.24-3.02.81-.83 1.98-1.35 3.04-1.26zM20.5 17.2c-.53 1.22-.78 1.76-1.46 2.84-.95 1.5-2.29 3.36-3.95 3.37-1.47.02-1.85-.96-3.85-.95-2 0-2.42.97-3.89.95-1.66-.02-2.93-1.7-3.88-3.2-2.66-4.2-2.94-9.13-1.3-11.75 1.17-1.86 3.01-2.95 4.74-2.95 1.76 0 2.87.97 4.33.97 1.41 0 2.27-.97 4.31-.97 1.54 0 3.17.84 4.33 2.29-3.8 2.09-3.19 7.52.62 9.4z"/></svg>
+          <span><span class="s1">قريبًا على</span><span class="s2">App Store</span></span>
+        </a>
+        <a class="store" href="#">
+          <svg viewBox="0 0 24 24"><path fill="#48c1f0" d="M3.6 1.8 14 12 3.6 22.2c-.4-.2-.6-.7-.6-1.2V3c0-.5.2-1 .6-1.2z"/><path fill="#f9d34e" d="m17.2 8.8-3.2 3.2L3.6 1.8c.2-.1.5-.2.8-.2.3 0 .6.1.9.3l11.9 6.9z"/><path fill="#ef5350" d="m17.2 15.2-11.9 7c-.3.1-.6.2-.9.2-.3 0-.6-.1-.8-.2l10.4-10.2 3.2 3.2z"/><path fill="#66bb6a" d="m21 13.2-3.8 2.2-3.2-3.4 3.2-3.2L21 10.8c.6.3 1 .9 1 1.6 0 .3-.4.6-1 .8z"/></svg>
+          <span><span class="s1">قريبًا على</span><span class="s2">Google Play</span></span>
+        </a>
+      </div>
+      <p class="soon">الإطلاق قريب — <b>سجّل اهتمامك</b> وهنبعتلك أول ما التطبيق ينزل.</p>
+    </div>
+
+    <div class="hero-phones">
+      <div class="glow"></div>
+      <div class="stage">
+        <!-- الهاتف الخلفي: تفاصيل عقار -->
+        <div class="phone back detail">
+          <div class="screen">
+            <div class="notch"></div>
+            <div class="hero-img">
+              <img src="img/p1.jpg" alt="" />
+              <div class="navrow">
+                <span class="round">‹</span>
+                <span class="round">♡</span>
+              </div>
+            </div>
+            <div class="sheet">
+              <h4>شقة 3 غرف على كورنيش راس البر</h4>
+              <p class="addr">راس البر · شارع ٢٤ · الدور الثالث</p>
+              <div class="p"><b>2,400,000 ج.م</b><small>السعر قابل للتفاوض</small></div>
+              <div class="specs">
+                <div class="spec"><b>120 م²</b><span>المساحة</span></div>
+                <div class="spec"><b>3</b><span>غرف</span></div>
+                <div class="spec"><b>2</b><span>حمام</span></div>
+              </div>
+              <div class="verify">
+                <svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.4 8.3-8 9-4.6-.7-8-4-8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
+                <div><b>المستندات مفحوصة</b><span>تم التحقق من الملكية والتراخيص. التواصل عبر إدارة الموقع فقط.</span></div>
+              </div>
+              <div class="mini-map"><span class="pin-s"></span><small>شارع ٢٤ — راس البر</small></div>
+              <div class="cta"><button class="gold">تواصل مع الإدارة</button><button class="ghost">↗</button></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- الهاتف الأمامي: الرئيسية -->
+        <div class="phone main">
+          <div class="screen">
+            <div class="notch"></div>
+            <div class="statusbar"><span>9:41</span><span class="icons"><i></i><i></i><i class="battery"></i></span></div>
+            <div class="appbar">
+              <div class="logo">F</div>
+              <div class="name">عقار FAMILY<small>عقار موثّق… مش مجرد إعلان</small></div>
+              <div class="bell"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10.5 21a2 2 0 0 0 3 0"/></svg></div>
+            </div>
+            <div class="loc"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg> راس البر، دمياط</div>
+            <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg> ابحث عن شقة، فيلا، شاليه…</div>
+            <div class="chips">
+              <span class="chip on">الكل</span><span class="chip">شقق</span><span class="chip">فيلات</span><span class="chip">شاليهات</span><span class="chip">محلات</span>
+            </div>
+            <div class="sec-title"><b>عقارات موثّقة قريبة منك</b><span>عرض الكل</span></div>
+            <div class="feat">
+              <div class="img">
+                <img src="img/p2.jpg" alt="" />
+                <span class="badge-v"><svg viewBox="0 0 24 24"><path d="m9 12 2 2 4-4"/></svg> موثّق</span>
+                <span class="price-tag">3,150,000 ج.م</span>
+              </div>
+              <div class="body">
+                <b>فيلا مستقلة بحديقة — دمياط الجديدة</b>
+                <p>الحي الثاني · 240 م² · 4 غرف · 3 حمام</p>
+              </div>
+            </div>
+            <div class="mini-row">
+              <div class="mini">
+                <img src="img/p3.jpg" alt="" />
+                <div><b>شاليه على البحر</b><span>راس البر · 95 م²</span></div>
+              </div>
+              <div class="mini">
+                <img src="img/p4.jpg" alt="" />
+                <div><b>شقة 2 غرف</b><span>دمياط · 85 م²</span></div>
+              </div>
+            </div>
+            <div class="tabbar">
+              <div class="tab on"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg> الرئيسية</div>
+              <div class="tab"><svg viewBox="0 0 24 24"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"/><path d="M9 3v16M15 5v16"/></svg> الخريطة</div>
+              <div class="tab"><svg viewBox="0 0 24 24"><path d="M20.8 5.6a5.5 5.5 0 0 0-7.8 0L12 6.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l8.8 8.8 8.8-8.8a5.5 5.5 0 0 0 0-7.8z"/></svg> المحفوظات</div>
+              <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg> حسابي</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 2) مكان التطبيق في التنقل ================= -->
+<section class="sec" id="nav">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <p class="kicker">مكان واضح وظاهر</p>
+        <h2>أول حاجة: زر «التطبيق» في الهيدر</h2>
+        <p>زر ذهبي مميّز على يمين القائمة — ظاهر في كل الصفحات، وبيودّي على صفحة التطبيق. وعلى الموبايل يتحوّل لأيقونة موبايل صغيرة جنب زر «أضف عقارك».</p>
+      </div>
+    </div>
+    <div class="nav-mock">
+      <div class="brand"><span class="logo">F</span> عقار FAMILY</div>
+      <div class="nav-links">
+        <span class="on">الرئيسية</span><span>العقارات</span><span>المشاريع</span><span>المدن</span><span>المدونة</span><span>تواصل</span>
+      </div>
+      <div class="nav-app">
+        <svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>
+        التطبيق
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 3) قسم التطبيق ================= -->
+<section class="sec app-section" id="app">
+  <div class="wrap app-grid">
+    <div class="app-copy">
+      <p class="kicker">قسم داخل الصفحة الرئيسية + صفحة /app</p>
+      <h2>التطبيق اللي بيخليك<br /><span>أقرب لعقارك</span></h2>
+      <p class="lead">كل عقار في المنصة موثّق ومفحوص — والتطبيق بيوصّلك بيه في ثانية، بنفس بيانات الموقع ونفس فريق الإدارة.</p>
+      <div class="features">
+        <div class="feature">
+          <div class="ic"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10.5 21a2 2 0 0 0 3 0"/></svg></div>
+          <b>تنبيه فوري</b>
+          <p>أول ما ينزل عقار مطابق لبحثك، يوصلك إشعار على الموبايل.</p>
+        </div>
+        <div class="feature">
+          <div class="ic"><svg viewBox="0 0 24 24"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"/><path d="M9 3v16M15 5v16"/></svg></div>
+          <b>بحث بالخريطة</b>
+          <p>شوف الكورنيش والكمبوندات والأسعار على الخريطة مباشرة.</p>
+        </div>
+        <div class="feature">
+          <div class="ic"><svg viewBox="0 0 24 24"><path d="M20.8 5.6a5.5 5.5 0 0 0-7.8 0L12 6.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l8.8 8.8 8.8-8.8a5.5 5.5 0 0 0 0-7.8z"/></svg></div>
+          <b>حفظ ومقارنة</b>
+          <p>احفظ اللي يعجبك وقارن بين ٣ عقارات جنب بعض.</p>
+        </div>
+        <div class="feature">
+          <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.4 8.3-8 9-4.6-.7-8-4-8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></div>
+          <b>توثيق زي الموقع</b>
+          <p>نفس فحص المستندات، والتواصل عبر الإدارة بدون أرقام ملاك.</p>
+        </div>
+      </div>
+      <div class="dl">
+        <div class="qr"><img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=0&data=https%3A%2F%2Faqaar-alsahel.vercel.app" alt="QR" /></div>
+        <div class="txt">
+          <b>امسح الكود وجرّب المنصة على الموبايل</b>
+          <span>التطبيق نفسه هيبقى متاح على App Store و Google Play — والكود ده بيودّي على نسخة الويب دلوقتي.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="app-phones">
+      <div class="phone map-phone">
+        <div class="screen">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:41</span><span class="icons"><i></i><i></i><i class="battery"></i></span></div>
+          <div class="map-screen" style="margin-top:6px">
+            <div class="water"></div>
+            <div class="sand"></div>
+            <div class="road" style="top:60px;left:0;right:0;height:14px"></div>
+            <div class="road" style="top:150px;left:0;right:0;height:10px"></div>
+            <div class="road" style="top:250px;left:0;right:0;height:16px"></div>
+            <div class="road" style="left:150px;top:0;bottom:0;width:12px"></div>
+            <div class="road" style="left:245px;top:0;bottom:0;width:9px"></div>
+            <div class="pin" style="top:96px;left:120px"></div>
+            <div class="pin gold" style="top:190px;left:215px"></div>
+            <div class="pin" style="top:280px;left:95px"></div>
+            <div class="pin gold" style="top:330px;left:250px"></div>
+            <div class="map-head">
+              <div class="box">🔍 ابحث في الخريطة</div>
+              <div class="box" style="flex:0 0 46px;text-align:center">⌖</div>
+            </div>
+            <div class="map-sheet">
+              <div class="handle"></div>
+              <b>٤٢ عقار موثّق في راس البر</b>
+              <p>حرّك الخريطة تشوف الأسعار في كل شارع</p>
+              <div class="row">
+                <img src="img/p2.jpg" alt="" />
+                <div><b>فيلا بحديقة — 3,150,000 ج.م</b><span>دمياط الجديدة · 240 م²</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="tab"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg> الرئيسية</div>
+            <div class="tab on"><svg viewBox="0 0 24 24"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"/><path d="M9 3v16M15 5v16"/></svg> الخريطة</div>
+            <div class="tab"><svg viewBox="0 0 24 24"><path d="M20.8 5.6a5.5 5.5 0 0 0-7.8 0L12 6.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l8.8 8.8 8.8-8.8a5.5 5.5 0 0 0 0-7.8z"/></svg> المحفوظات</div>
+            <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg> حسابي</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 4) بانر الموبايل ================= -->
+<section class="sec" id="banner">
+  <div class="wrap mob-grid">
+    <div class="mob-phone">
+      <div class="screen">
+        <div class="fake-page">
+          <div style="display:flex;gap:8px;align-items:center">
+            <div class="skeleton" style="width:30px;height:30px;border-radius:9px;background:#e3d3ae"></div>
+            <div style="flex:1"><div class="skeleton" style="width:70%"></div><div class="skeleton" style="width:45%;margin-top:6px;height:8px"></div></div>
+          </div>
+          <div class="skeleton" style="height:34px;border-radius:10px"></div>
+          <div class="skeleton img"></div>
+          <div class="skeleton" style="width:80%"></div>
+          <div class="skeleton" style="width:55%"></div>
+          <div class="skeleton img" style="height:80px"></div>
+        </div>
+        <div class="mob-banner">
+          <div class="logo">F</div>
+          <div class="t"><b>عقار FAMILY على الموبايل</b><span>تنبيهات عقارات + بحث بالخريطة</span></div>
+          <div class="go">تثبيت</div>
+          <div class="x">✕</div>
+        </div>
+      </div>
+    </div>
+    <div class="mob-note">
+      <p class="kicker">اختياري — لكنه بيجيب تحميلات</p>
+      <h3>بانر صغير أسفل شاشة الموبايل</h3>
+      <p>يظهر بعد ما الزائر يتفرّج على عقارين، وبيتقفل بضغطة. ده اللي بتعمله نون وأمازون وعقار — بيفرّق فعلًا في عدد التحميلات.</p>
+      <ul>
+        <li>مش بيغطّي أزرار التواصل (بيظهر بعد ثانية من التمرير).</li>
+        <li>بيختفي نهائيًا لو الزائر قال «مش مهتم».</li>
+        <li>على الكمبيوتر مش بيظهر خالص — مكانه قسم التطبيق في الصفحة.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 5) القرارات ================= -->
+<section class="sec" id="decisions">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <p class="kicker">قبل التنفيذ</p>
+        <h2>محتاج قرارك في ٦ حاجات</h2>
+      </div>
+    </div>
+    <div class="decisions">
+      <div class="dec"><b><i>1</i> صيغة الإطلاق</b><p>«قريبًا» + تسجيل اهتمام (الأمانة)، ولا «حمّل الآن» من غير لينكات؟ الأفضل الأول.</p></div>
+      <div class="dec"><b><i>2</i> صورة الواجهة</b><p>الواجهة تبقى موبايلات التطبيق زي المعاينة، ولا صورة عقار + الموبايلات جنبها؟</p></div>
+      <div class="dec"><b><i>3</i> العنوان</b><p>«عقار أحلامك في جيبك» ولا نسيب «عقار أحلامك بثقة موثّقة» ونحط التطبيق في سطر تحته؟</p></div>
+      <div class="dec"><b><i>4</i> الأماكن</b><p>زر في الهيدر + قسم في الرئيسية + صفحة /app + فوتر + بانر موبايل. نوافق على الكل؟</p></div>
+      <div class="dec"><b><i>5</i> الاسم والشعار</b><p>نفس الاسم «عقار FAMILY» ونفس أيقونة الـ F الذهبية، ولا أيقونة تطبيق مختلفة؟</p></div>
+      <div class="dec"><b><i>6</i> الوعد الأساسي</b><p>«نفس التوثيق… أسرع» ولا «كل عقارات الدلتا في جيبك»؟ الأول أقوى لهوية المنصة.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer class="pg">
+  معاينة تصميم — الصور داخل التطبيق تجريبية، والأسعار والبيانات للعرض فقط.
+</footer>
+
+<script>
+  const target = new URLSearchParams(location.search).get("s");
+  if (target) {
+    document.querySelectorAll("section").forEach((s) => { if (s.id !== target) s.style.display = "none"; });
+    const bar = document.querySelector(".note-bar");
+    if (bar) bar.style.display = "none";
+    window.scrollTo(0, 0);
+  }
+</script>
+</body>
+</html>

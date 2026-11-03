@@ -15,8 +15,10 @@ import {
   ListChecks,
   MapPin,
   Megaphone,
+  Palette,
   Settings,
   ShieldCheck,
+  Smartphone,
   Users,
 } from "lucide-react";
 import { getSession, saveSession, type Session } from "@/lib/session";
@@ -53,6 +55,8 @@ import AdminCitiesTab from "@/components/admin/AdminCitiesTab";
 import AdminCompanyTab from "@/components/admin/AdminCompanyTab";
 import AdminProjectsTab from "@/components/admin/AdminProjectsTab";import AdminHomeBuilderTab from "@/components/admin/AdminHomeBuilderTab";
 import AdminOverviewTab from "@/components/admin/AdminOverviewTab";
+import AdminBrandTab from "@/components/admin/AdminBrandTab";
+import AdminAppTab from "@/components/admin/AdminAppTab";
 
 type TabKey =
   | "overview"
@@ -63,6 +67,8 @@ type TabKey =
   | "cities"
   | "company"
   | "site"
+  | "brand"
+  | "app"
   | "marquee"
   | "users"
   | "permissions"
@@ -89,6 +95,8 @@ const TABS: {
   { key: "cities", label: "المدن", Icon: MapPin, permission: "site.settings" },
   { key: "company", label: "بيانات الشركة", Icon: Landmark, permission: "site.settings" },
   { key: "site", label: "إعدادات الموقع", Icon: Settings, permission: "site.settings" },
+  { key: "brand", label: "الهوية والشعارات", Icon: Palette, permission: "settings.full" },
+  { key: "app", label: "تطبيق الموبايل", Icon: Smartphone, permission: "settings.full" },
   { key: "marquee", label: "البنرات والشريط", Icon: Megaphone, permission: "banners.manage" },
   { key: "users", label: "المستخدمون", Icon: Users, permission: "users.view" },
   { key: "permissions", label: "الصلاحيات", Icon: ShieldCheck, permission: "users.roles" },
@@ -421,6 +429,26 @@ export default function AdminDashboard() {
 
         {tab === "site" && (
           <AdminSiteTab
+            settings={siteSettings}
+            can={can}
+            onChange={setSiteSettings}
+            notify={notify}
+            reloadLogs={reloadLogs}
+          />
+        )}
+
+        {tab === "brand" && (
+          <AdminBrandTab
+            settings={siteSettings}
+            can={can}
+            onChange={setSiteSettings}
+            notify={notify}
+            reloadLogs={reloadLogs}
+          />
+        )}
+
+        {tab === "app" && (
+          <AdminAppTab
             settings={siteSettings}
             can={can}
             onChange={setSiteSettings}

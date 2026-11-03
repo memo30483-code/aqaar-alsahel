@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Check, Clock3, Mail, MapPin, Phone, Send, ShieldCheck } from "lucide-react";
+import { Check, Clock3, Mail, MapPin, Phone, Send, ShieldCheck, Smartphone } from "lucide-react";
 import { useI18n, type MessageKey } from "@/lib/i18n";
 import { cityLabel } from "@/lib/i18n/cities";
 import { useActiveCities } from "@/lib/cities-store";
 import { usePrimaryCompany } from "@/lib/company-store";
 import BrandLogo from "@/components/BrandLogo";
+import StoreButtons from "@/components/app/StoreButtons";
+import { qrImageSrc, resolveAppSettings } from "@/lib/app-settings";
 import { telHref, useSiteSettings } from "@/lib/site-settings";
 
 function XIcon({ className }: { className?: string }) {
@@ -79,6 +81,7 @@ export default function Footer() {
   const { t, locale } = useI18n();
   const cities = useActiveCities();
   const site = useSiteSettings();
+  const app = resolveAppSettings(site.app);
   const company = usePrimaryCompany();
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
@@ -118,7 +121,7 @@ export default function Footer() {
         className="pointer-events-none absolute -left-40 -top-56 h-[480px] w-[480px] rounded-full bg-[radial-gradient(circle,rgba(201,146,42,0.18),transparent_62%)]"
       />
       <div className="relative mx-auto w-full max-w-[1240px] px-4 pb-0 pt-14 sm:px-6">
-        <div className="grid gap-10 pb-10 md:grid-cols-2 lg:grid-cols-[1.4fr_0.8fr_0.8fr_1.1fr] lg:gap-12">
+        <div className={`grid gap-10 pb-10 md:grid-cols-2 ${app.enabled ? "lg:grid-cols-[1.2fr_0.62fr_0.62fr_0.9fr_1.12fr]" : "lg:grid-cols-[1.4fr_0.8fr_0.8fr_1.1fr]"} lg:gap-10`}>
           {/* الهوية + نبذة + سوشيال */}
           <div>
             <Link href="/" aria-label={t("brand.name")} className="inline-flex">
@@ -183,6 +186,44 @@ export default function Footer() {
               ))}
             </ul>
           </nav>
+
+          {/* تطبيق الموبايل */}
+          {app.enabled && (
+            <div>
+              <h2 className="mb-4 flex items-center gap-1.5 text-xs font-extrabold tracking-wide text-gold-300">
+                <Smartphone className="h-3.5 w-3.5" />
+                تطبيق الموبايل
+              </h2>
+              <p className="mb-3 text-[11px] leading-6 text-[#98a1b8]">
+                {app.status === "live"
+                  ? "نفس العقارات الموثّقة على أندرويد وآيفون."
+                  : "قريبًا على أندرويد وآيفون — سجّل اهتمامك."}
+              </p>
+              <StoreButtons app={app} compact />
+              <div className="mt-4 flex items-center gap-2.5">
+                <span className="h-14 w-14 shrink-0 rounded-lg bg-white p-1">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={qrImageSrc(app.qrUrl)}
+                    alt="رمز QR لتطبيق عقار FAMILY"
+                    className="h-full w-full rounded object-contain"
+                    onError={(event) => {
+                      event.currentTarget.style.display = "none";
+                    }}
+                  />
+                </span>
+                <Link
+                  href="/app"
+                  className="text-[10.5px] font-bold text-[#aab2c7] transition hover:text-gold-200"
+                >
+                  تفاصيل التطبيق
+                  <span className="block text-[9.5px] font-semibold text-[#7d879f]">
+                    امسح الكود أو افتح الصفحة
+                  </span>
+                </Link>
+              </div>
+            </div>
+          )}
 
           {/* النشرة البريدية + التواصل */}
           <div>

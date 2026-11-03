@@ -6,6 +6,8 @@
 import type { Property, PropertyDocument } from "@/types/property";
 import type { UserRole } from "@/lib/session";
 import { DEFAULT_THEME, type SeasonThemeCfg } from "@/lib/theme-season";
+import { DEFAULT_BRANDING, resolveBranding, type BrandingCfg } from "@/lib/branding";
+import { DEFAULT_APP_SETTINGS, resolveAppSettings, type AppSettings } from "@/lib/app-settings";
 import { mockProperties, USER_PROPERTIES_KEY } from "@/data/properties";
 
 export type ListingStatus = "pending" | "approved" | "rejected" | "archived" | "deleted";
@@ -128,6 +130,10 @@ export interface SiteSettings {
   footerTextAr?: string;
   footerTextEn?: string;
   seasonTheme?: import("@/lib/theme-season").SeasonThemeCfg;
+  /** الشعارات والخطوط والألوان الأساسية — يتحكم بها الأدمن كاملة */
+  branding?: BrandingCfg;
+  /** محتوى قسم التطبيق وصفحة /app وبانر الموبايل */
+  app?: AppSettings;
 }
 
 export interface Offer {
@@ -284,6 +290,8 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   managementPhone: "+20 100 123 4567",
   managementEmail: "info@aqarfamily.com",
   seasonTheme: { preset: "custom", active: false, gold: DEFAULT_THEME.gold, sand: DEFAULT_THEME.sand, ocean: DEFAULT_THEME.ocean, heroGradient: DEFAULT_THEME.heroGradient, accent: DEFAULT_THEME.accent },
+  branding: DEFAULT_BRANDING,
+  app: DEFAULT_APP_SETTINGS,
 };
 
 export const DEFAULT_OFFERS_SETTINGS: OffersSettings = {
@@ -443,7 +451,14 @@ export function getSiteSettings(): SiteSettings {
     ...DEFAULT_THEME,
     ...(stored.seasonTheme ?? {}),
   };
-  return { ...DEFAULT_SITE_SETTINGS, ...stored, blocks, seasonTheme };
+  return {
+    ...DEFAULT_SITE_SETTINGS,
+    ...stored,
+    blocks,
+    seasonTheme,
+    branding: resolveBranding(stored.branding),
+    app: resolveAppSettings(stored.app),
+  };
 }
 
 export function saveSiteSettings(settings: SiteSettings): boolean {

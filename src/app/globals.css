@@ -58,14 +58,27 @@
 }
 
 html {
+  /* حجم الخط الأساسي — يتحكم به الأدمن من لوحة الهوية (14–19px) */
+  font-size: var(--brand-base-size, 16px);
   scroll-behavior: smooth;
 }
 
+/* عائلة الخط — يتحكم بها الأدمن (عناوين ونصوص) */
 body {
   /* يتبع لوحة الثيم الموسمي — تتغيّر مع اختيار الموسم */
   color: rgb(var(--ocean-900));
   background: rgb(var(--sand-50));
   min-height: 100vh;
+  font-family: var(--font-body, var(--font-cairo)), Tahoma, sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading, var(--font-body, var(--font-cairo))), Tahoma, sans-serif;
 }
 
 /* ------------------------------------------------------------------

@@ -1,9 +1,29 @@
 "use client";
 
 import { useI18n } from "@/lib/i18n";
+import { useBranding } from "@/components/ThemeProvider";
+import { logoSrc } from "@/lib/branding";
 
 /** الشعار الرسمي لعقار FAMILY: بلاطة نيلية + سقف ذهبي + ثلاثة أقواس عائلية */
-export function BrandMark({ className = "h-11 w-11" }: { className?: string }) {
+export function BrandMark({
+  className = "h-11 w-11",
+  src = "",
+}: {
+  className?: string;
+  /** شعار مخصّص من لوحة الإدارة — يتجاوز الرسم الافتراضي */
+  src?: string;
+}) {
+  if (src) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt=""
+        className={`inline-block shrink-0 rounded-[14px] object-contain ${className}`}
+      />
+    );
+  }
+
   return (
     <span
       className={`relative inline-grid place-items-center rounded-[14px] bg-gradient-to-br from-ocean-800 to-ocean-950 shadow-[0_6px_16px_rgba(30,38,73,0.22)] ${className}`}
@@ -66,16 +86,18 @@ export default function BrandLogo({
   className = "",
 }: Props) {
   const { t } = useI18n();
+  const branding = useBranding();
+  const customMark = logoSrc(branding, tone);
   const words = t("brand.name").split(" ");
   const first = words[0];
   const rest = words.slice(1).join(" ");
 
   return (
     <span className={`flex items-center gap-2.5 ${className}`}>
-      <BrandMark className={markClassName} />
+      <BrandMark className={markClassName} src={customMark} />
       <span className="flex flex-col leading-none">
         <span
-          className={`text-lg font-black tracking-tight sm:text-xl ${
+          className={`font-heading text-lg font-black tracking-tight sm:text-xl ${
             tone === "dark" ? "text-white" : "text-ocean-900"
           }`}
         >

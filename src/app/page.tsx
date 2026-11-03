@@ -55,6 +55,11 @@ import { blockCssVars, blockScopeClasses, resolveMedia, type HomeBlockStyle } fr
 import RamadanDecorations from "@/components/RamadanDecorations";
 import SeasonDecorations from "@/components/SeasonDecorations";
 import { useSeasonTheme } from "@/components/ThemeProvider";
+import AppSection from "@/components/AppSection";
+import AppShowcase from "@/components/app/AppShowcase";
+import StoreButtons from "@/components/app/StoreButtons";
+import { resolveAppSettings } from "@/lib/app-settings";
+import { useSiteSettings } from "@/lib/site-settings";
 import {
   LISTING_OVERRIDE_KEY,
   getApprovedListingIds,
@@ -93,6 +98,8 @@ const HERO_FALLBACK =
 export default function HomePage() {
   const { t, locale } = useI18n();
   const seasonTheme = useSeasonTheme();
+  const siteSettings = useSiteSettings();
+  const appSettings = resolveAppSettings(siteSettings.app);
   const { formatWithSymbol } = useCurrency();
   const cityOptions = useCityOptions();
   const [search, setSearch] = useState("");
@@ -337,6 +344,15 @@ export default function HomePage() {
     : "VER-2026-0000";
   /** رمضان: خط الفوانيس المعلّق من الهيدر (104px) يحتاج مسافة أعلى الهيرو */
   const isRamadan = seasonTheme.active && seasonTheme.preset === "ramadan";
+  /** الهيرو = واجهة التطبيق (بدل صورة العقار) — يتحكم به الأدمن */
+  const heroAppMode = appSettings.heroMode && appSettings.enabled;
+  /**
+   * موضع قسم التطبيق: نفس ترتيب شريط التحقق — وعند تساوي الترتيب يحسم ترتيب
+   * الـDOM (القسم يأتي بعد الشريط في الملف) فيظهر بعده مباشرة.
+   * ملاحظة: `order` يقبل أعداداً صحيحة فقط، لذا لا نستخدم كسوراً.
+   */
+  const appOrder =
+    layout.find((block) => block.type === "verify_strip")?.order ?? 2;
   return (
     <>
       <div className="flex w-full flex-col">
@@ -346,6 +362,12 @@ export default function HomePage() {
       <div key={block.id} {...shellFor(block.order, block.style, true)}>
       {/* ====================== HERO ====================== */}
       <section className="relative overflow-hidden bg-ocean-950">
+        {heroAppMode ? (
+          <span
+            aria-hidden
+            className="absolute inset-0 bg-[radial-gradient(900px_520px_at_78%_18%,rgba(201,146,42,0.16),transparent_62%),radial-gradient(800px_600px_at_12%_92%,rgba(64,120,180,0.22),transparent_60%),linear-gradient(160deg,#0b1229_0%,#141a33_46%,#0a1024_100%)]"
+          />
+        ) : (
         <div className="absolute inset-0">
           {heroMedia ? (
             heroMedia.kind === "embed" ? (
@@ -388,6 +410,7 @@ export default function HomePage() {
             }`}
           />
         </div>
+        )}
         {seasonTheme.active && seasonTheme.preset === "ramadan" && (
           <RamadanDecorations theme={seasonTheme} />
         )}
@@ -397,34 +420,41 @@ export default function HomePage() {
         <div
           className={`relative z-10 mx-auto w-full max-w-[1240px] px-4 pb-28 sm:px-6 lg:pb-32 ${
             isRamadan ? "pt-32 lg:pt-36" : "pt-12 lg:pt-16"
-          }`}
+          } ${heroAppMode ? "grid items-center gap-10 lg:grid-cols-[1.02fr_0.98fr]" : ""}`}
         >
           <div className="max-w-[680px] text-white">
             {/* في رمضان يصبح نص الحملة عنوان الهيرو نفسه — فلا نكرّره في سطر صغير فوقه */}
             {!(seasonTheme.active && seasonTheme.preset === "ramadan") && (
               <p className="flex items-center gap-2.5 text-xs font-bold tracking-wide text-gold-200">
                 <span aria-hidden className="h-px w-8 theme-accent-line" />
-                {textOf(block, "eyebrow") ?? t("home.hero.eyebrow")}
+                {heroAppMode
+                  ? appSettings.eyebrowAr
+                  : textOf(block, "eyebrow") ?? t("home.hero.eyebrow")}
               </p>
             )}
 
             <h1 className="hb-title mt-4 text-4xl font-black leading-[1.24] tracking-tight sm:text-5xl lg:text-[56px]">
-              <span
-                className={`relative text-gold-300 ${
-                  /* عنوان رمضان أطول من عنوان العلامة — يُسمح بالتفاف السطر على الموبايل */
-                  seasonTheme.active && seasonTheme.preset === "ramadan"
-                    ? ""
-                    : "whitespace-nowrap"
-                }`}
-              >
-                {seasonTheme.active && seasonTheme.preset === "ramadan"
-                  ? seasonTheme.campaignText || "رمضان احلى مع عقار FAMILY"
-                  : textOf(block, "title") ?? t("home.hero.titleGold")}
-              </span>
-              {!textOf(block, "title") && !(seasonTheme.active && seasonTheme.preset === "ramadan") && (
+              {seasonTheme.active && seasonTheme.preset === "ramadan" ? (
+                <span className="relative text-gold-300">
+                  {seasonTheme.campaignText || "رمضان احلى مع عقار FAMILY"}
+                </span>
+              ) : heroAppMode ? (
                 <>
+                  <span className="relative text-white">{appSettings.titleAr}</span>
                   <br />
-                  {t("home.hero.titleRest")}
+                  <span className="text-gold-300">{appSettings.subtitleAr}</span>
+                </>
+              ) : (
+                <>
+                  <span className="relative whitespace-nowrap text-gold-300">
+                    {textOf(block, "title") ?? t("home.hero.titleGold")}
+                  </span>
+                  {!textOf(block, "title") && (
+                    <>
+                      <br />
+                      {t("home.hero.titleRest")}
+                    </>
+                  )}
                 </>
               )}
             </h1>
@@ -432,8 +462,38 @@ export default function HomePage() {
             <p className="hb-body mt-4 max-w-[600px] text-sm font-medium leading-8 text-[#e8ecf6] sm:text-base">
               {seasonTheme.active && seasonTheme.preset === "ramadan"
                 ? "ابحث عن بيتك القادم في رأس البر ودمياط، وسط ليالي رمضان المصرية"
-                : textOf(block, "subtitle") ?? t("home.hero.description")}
+                : heroAppMode
+                  ? appSettings.descriptionAr
+                  : textOf(block, "subtitle") ?? t("home.hero.description")}
             </p>
+
+            {heroAppMode && (
+              <>
+                <ul className="mt-5 flex flex-wrap gap-2">
+                  {["تنبيهات فورية", "بحث بالخريطة", "تواصل مع الإدارة فقط"].map(
+                    (item) => (
+                      <li
+                        key={item}
+                        className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-[11px] font-bold text-[#eaf0fb]"
+                      >
+                        <Check className="h-3.5 w-3.5 text-gold-300" />
+                        {item}
+                      </li>
+                    )
+                  )}
+                </ul>
+                <div className="mt-6 flex flex-wrap items-center gap-3">
+                  <StoreButtons app={appSettings} />
+                  <Link
+                    href="/app"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 px-3.5 py-2 text-[12px] font-black text-white transition hover:border-gold-400/60 hover:bg-white/5"
+                  >
+                    تفاصيل التطبيق
+                    <ArrowLeft className="h-3 w-3" />
+                  </Link>
+                </div>
+              </>
+            )}
 
             <div className="mt-7 grid grid-cols-2 gap-y-5 sm:flex sm:flex-wrap sm:items-stretch">
               <div className="border-e border-white/[0.16] pe-4 sm:pe-7">
@@ -467,6 +527,7 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+          {heroAppMode && <AppShowcase className="hidden lg:block" />}
         </div>
       </section>
 
@@ -752,6 +813,14 @@ export default function HomePage() {
       </section>
       </div>
       ))}
+
+      {/*
+        قسم التطبيق يأخذ ترتيب شريط التحقق نفسه؛ وموقعه اللاحق في DOM
+        يجعله يظهر بعد الشريط مباشرة داخل حاوية flex.
+      */}
+      <div style={{ order: appOrder }} className="w-full">
+        <AppSection />
+      </div>
 
       {blocksOf("marquee").map((block) => (
       <div key={block.id} {...shellFor(block.order, block.style)}>

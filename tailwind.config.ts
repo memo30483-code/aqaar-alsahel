@@ -41,7 +41,12 @@ const config: Config = {
         gold: palette("gold"),
       },
       fontFamily: {
-        sans: ["var(--font-cairo)", "Tahoma", "sans-serif"],
+        sans: ["var(--font-body, var(--font-cairo))", "Tahoma", "sans-serif"],
+        heading: [
+          "var(--font-heading, var(--font-body, var(--font-cairo)))",
+          "Tahoma",
+          "sans-serif",
+        ],
       },
       boxShadow: {
         soft: "0 8px 30px rgba(30, 38, 73, 0.08)",

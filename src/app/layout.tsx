@@ -5,8 +5,10 @@ import AppProviders from "@/components/AppProviders";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SiteWidgets from "@/components/SiteWidgets";
+import MobileAppBanner from "@/components/MobileAppBanner";
 import SeasonRibbon from "@/components/SeasonRibbon";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme-season";
+import { BRANDING_BOOT_SCRIPT } from "@/lib/branding";
 import "./theme-css.css";
 import "./globals.css";
 
@@ -59,6 +61,8 @@ export default function RootLayout({
           قبل الـhydration — وهو السلوك المقصود لمنع الومضة.
         */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+        {/* حقن الهوية (الخطوط/الأحجام/ألوان العلامة/الفافيكون) قبل أول رسم */}
+        <script dangerouslySetInnerHTML={{ __html: BRANDING_BOOT_SCRIPT }} />
       </head>
       <body
         className={`${cairo.variable} ${tajawal.variable} ${amiri.variable} ${readex.variable} font-sans antialiased min-h-screen flex flex-col`}
@@ -70,6 +74,7 @@ export default function RootLayout({
           <SeasonRibbon />
           <main className="flex-1 min-h-0 flex flex-col">{children}</main>
           <Footer />
+          <MobileAppBanner />
           <SiteWidgets />
           </ThemeProvider>
         </AppProviders>

@@ -19,6 +19,7 @@ import {
   Plus,
   Scale,
   ShieldCheck,
+  Smartphone,
   User,
   X,
 } from "lucide-react";
@@ -38,18 +39,19 @@ import BrandLogo from "@/components/BrandLogo";
 import { RamadanGarland } from "@/components/RamadanDecorations";
 import OffersHeaderLink from "@/components/OffersHeaderLink";
 import { useSeasonTheme } from "@/components/ThemeProvider";
+import { useSiteSettings } from "@/lib/site-settings";
 
 /** نمط موحّد لروابط التنقّل الرئيسية */
 const NAV_LINK =
-  "flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium text-ocean-700 transition duration-200 hover:bg-ocean-50 hover:text-ocean-900";
+  "flex items-center gap-1.5 whitespace-nowrap rounded-xl px-2 py-2 text-[13px] font-medium text-ocean-700 transition duration-200 hover:bg-ocean-50 hover:text-ocean-900";
 
 /** نمط موحّد لمشغّلات القوائم المنسدلة */
 const TRIGGER =
-  "flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium text-ocean-700 transition duration-200 hover:bg-ocean-50 hover:text-ocean-900";
+  "flex items-center gap-1.5 whitespace-nowrap rounded-xl px-2 py-2 text-[13px] font-medium text-ocean-700 transition duration-200 hover:bg-ocean-50 hover:text-ocean-900";
 
 /** نمط موحّد لمشغّلات التفضيلات المختصرة */
 const PREF_TRIGGER =
-  "flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-ocean-100 bg-white/70 px-2.5 py-2 text-ocean-700 transition duration-200 hover:border-ocean-200 hover:bg-white hover:text-ocean-900";
+  "flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-ocean-100 bg-white/70 px-2 py-2 text-ocean-700 transition duration-200 hover:border-ocean-200 hover:bg-white hover:text-ocean-900";
 
 /** نمط موحّد لعناصر لوحات القوائم — ملموم، بشادوه ناعم وحدّ خفيف، ولا يمتد طولاً زائداً */
 const PANEL =
@@ -122,6 +124,7 @@ function Dropdown({
 export default function Header() {
   const { t, locale, setLocale } = useI18n();
   const seasonTheme = useSeasonTheme();
+  const siteSettings = useSiteSettings();
   const cities = useActiveCities();
   const { currency, setCurrency, live, updatedAt } = useCurrency();
   const [open, setOpen] = useState(false);
@@ -220,7 +223,7 @@ export default function Header() {
           <BrandLogo markClassName="h-10 w-10 transition duration-200 group-hover:scale-105" />
         </Link>
 
-        <nav className="hidden items-center gap-1 xl:flex">
+        <nav className="hidden items-center gap-0.5 min-[1640px]:flex">
           {/* قائمة المدن */}
           <Dropdown
             ariaLabel={t("nav.cities")}
@@ -325,7 +328,7 @@ export default function Header() {
             <LayoutGrid className="h-4 w-4 text-ocean-500" />
             {t("nav.projects")}
           </Link>
-          <Link href="/market-guide" className={NAV_LINK}>
+          <Link href="/market-guide" className={`${NAV_LINK} max-[1639px]:hidden`}>
             <Compass className="h-4 w-4 text-ocean-500" />
             {t("nav.compass")}
           </Link>
@@ -333,7 +336,10 @@ export default function Header() {
             <Scale className="h-4 w-4 text-ocean-500" />
             {t("nav.legal")}
           </Link>
-          <Link href="/engineering-consultational" className={NAV_LINK}>
+          <Link
+            href="/engineering-consultational"
+            className={`${NAV_LINK} max-[1639px]:hidden`}
+          >
             <HardHat className="h-4 w-4 text-ocean-500" />
             {t("nav.engineering")}
           </Link>
@@ -508,6 +514,19 @@ export default function Header() {
             </Link>
           )}
 
+          {siteSettings.app?.enabled !== false && (
+            <Link
+              href="/app"
+              title={locale === "ar" ? "تطبيق عقار FAMILY" : "Aqaar FAMILY App"}
+              className="ms-1 grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-gold-300 to-gold-500 text-ocean-950 shadow-lg shadow-gold-600/25 transition duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-gold-600/40 min-[1640px]:flex min-[1640px]:w-auto min-[1640px]:items-center min-[1640px]:gap-1.5 min-[1640px]:px-3.5 min-[1640px]:py-2.5"
+            >
+              <Smartphone className="h-4 w-4" />
+              <span className="hidden text-sm font-black min-[1640px]:inline">
+                {locale === "ar" ? "التطبيق" : "App"}
+              </span>
+            </Link>
+          )}
+
           <button
             type="button"
             onClick={handleAddPropertyClick}
@@ -520,7 +539,7 @@ export default function Header() {
 
         <button
           type="button"
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-ocean-200/80 bg-white/70 text-ocean-800 transition hover:bg-ocean-50 xl:hidden"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-ocean-200/80 bg-white/70 text-ocean-800 transition hover:bg-ocean-50 min-[1640px]:hidden"
           onClick={() => setOpen((v) => !v)}
           aria-label={t("nav.menu")}
           aria-expanded={open}
@@ -531,7 +550,7 @@ export default function Header() {
 
       {/* القائمة الجانبية للموبايل والتابلت */}
       {open && (
-        <div className="max-h-[calc(100vh-72px)] overflow-y-auto border-t border-white/60 bg-white/95 px-4 py-3 backdrop-blur-xl xl:hidden">
+        <div className="max-h-[calc(100vh-72px)] overflow-y-auto border-t border-white/60 bg-white/95 px-4 py-3 backdrop-blur-xl min-[1640px]:hidden">
           <div className="flex flex-col gap-1">
             <p className="px-3 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wide text-ocean-400">
               {t("nav.sectionCities")}
@@ -607,6 +626,17 @@ export default function Header() {
             <div className="px-1 py-1">
               <OffersHeaderLink />
             </div>
+
+            {siteSettings.app?.enabled !== false && (
+              <Link
+                href="/app"
+                className="mt-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-gold-300 to-gold-500 px-4 py-2.5 text-sm font-black text-ocean-950 shadow-lg shadow-gold-600/25"
+                onClick={closeMobile}
+              >
+                <Smartphone className="h-4 w-4" />
+                {locale === "ar" ? "تطبيق عقار FAMILY" : "Aqaar FAMILY App"}
+              </Link>
+            )}
 
             <p className="px-3 pb-1 pt-3 text-[11px] font-bold uppercase tracking-wide text-ocean-400">
               {t("pref.language")} · {t("pref.currency")}
