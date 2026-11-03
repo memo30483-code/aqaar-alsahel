@@ -518,7 +518,7 @@ export default function Header() {
             <Link
               href="/app"
               title={locale === "ar" ? "تطبيق عقار FAMILY" : "Aqaar FAMILY App"}
-              className="ms-1 grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-gold-300 to-gold-500 text-ocean-950 shadow-lg shadow-gold-600/25 transition duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-gold-600/40 min-[1640px]:flex min-[1640px]:w-auto min-[1640px]:items-center min-[1640px]:gap-1.5 min-[1640px]:px-3.5 min-[1640px]:py-2.5"
+              className="ms-1 grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-gold-300 bg-gold-50 text-gold-800 transition duration-200 hover:border-gold-400 hover:bg-gold-100 min-[1640px]:flex min-[1640px]:w-auto min-[1640px]:items-center min-[1640px]:gap-1.5 min-[1640px]:px-3 min-[1640px]:py-2.5"
             >
               <Smartphone className="h-4 w-4" />
               <span className="hidden text-sm font-black min-[1640px]:inline">
@@ -630,7 +630,7 @@ export default function Header() {
             {siteSettings.app?.enabled !== false && (
               <Link
                 href="/app"
-                className="mt-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-gold-300 to-gold-500 px-4 py-2.5 text-sm font-black text-ocean-950 shadow-lg shadow-gold-600/25"
+                className="mt-1 flex items-center justify-center gap-2 rounded-xl border border-gold-300 bg-gold-50 px-4 py-2.5 text-sm font-black text-gold-800"
                 onClick={closeMobile}
               >
                 <Smartphone className="h-4 w-4" />

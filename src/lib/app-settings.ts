@@ -1,6 +1,6 @@
 /**
- * إعدادات قسم التطبيق — كل ما يظهر للزائر في الهيرو وقسم التطبيق
- * وصفحة /app وبانر الموبايل، قابل للتحكم من لوحة الإدارة.
+ * إعدادات قسم التطبيق — التنويهات المختصرة في الرئيسية وصفحة /app
+ * وبانر الموبايل، وكلها قابلة للتحكم من لوحة الإدارة.
  */
 export type AppReleaseStatus = "soon" | "live";
 
@@ -17,7 +17,7 @@ export interface AppSettings {
   /** إظهار التطبيق في الموقع كله (الهيدر/الأقسام/الصفحة/الفوتر/البانر) */
   enabled: boolean;
   status: AppReleaseStatus;
-  /** الهيرو الرئيسي يتحوّل إلى واجهة التطبيق (موبايلات) بدل صورة العقار */
+  /** حقل قديم للتوافق مع الإعدادات السابقة؛ الهيرو الآن عقاري دائماً. */
   heroMode: boolean;
   eyebrowAr: string;
   titleAr: string;
@@ -38,7 +38,7 @@ export interface AppSettings {
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   enabled: true,
   status: "soon",
-  heroMode: true,
+  heroMode: false,
   eyebrowAr: "تطبيق عقار FAMILY",
   titleAr: "عقار أحلامك",
   subtitleAr: "في جيبك",
@@ -73,7 +73,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   iosUrl: "",
   androidUrl: "",
   qrUrl: "https://aqaar-alsahel.vercel.app",
-  showMobileBanner: true,
+  showMobileBanner: false,
   bannerDelaySec: 6,
   interestEmail: "",
 };
@@ -103,8 +103,10 @@ export function resolveAppSettings(config: Partial<AppSettings> | null | undefin
     ...cfg,
     status: cfg.status === "live" ? "live" : "soon",
     enabled: cfg.enabled !== false,
-    heroMode: cfg.heroMode !== false,
-    showMobileBanner: cfg.showMobileBanner !== false,
+    /* لا يُسمح للتطبيق باستبدال واجهة المنصة العقارية. */
+    heroMode: false,
+    /* البانر اختياري ولا يظهر افتراضياً حتى لا يزاحم العقارات. */
+    showMobileBanner: cfg.showMobileBanner === true,
     bannerDelaySec: Number.isFinite(delay) ? Math.min(30, Math.max(0.5, delay)) : DEFAULT_APP_SETTINGS.bannerDelaySec,
     features,
   };

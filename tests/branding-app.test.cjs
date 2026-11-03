@@ -107,9 +107,14 @@ test("app settings default to soon and enabled, live only when explicit", () => 
   const defaults = resolveAppSettings(undefined);
   assert.equal(defaults.status, "soon");
   assert.equal(defaults.enabled, true);
+  /* التطبيق لا يستبدل الهيرو العقاري ولا يعرض بانراً مزعجاً افتراضياً. */
+  assert.equal(defaults.heroMode, false);
+  assert.equal(defaults.showMobileBanner, false);
   assert.equal(resolveAppSettings({ status: "live" }).status, "live");
   assert.equal(resolveAppSettings({ status: "weird" }).status, "soon");
   assert.equal(resolveAppSettings({ enabled: false }).enabled, false);
+  assert.equal(resolveAppSettings({ heroMode: true }).heroMode, false);
+  assert.equal(resolveAppSettings({ showMobileBanner: true }).showMobileBanner, true);
 });
 
 test("QR source encodes the target URL", () => {

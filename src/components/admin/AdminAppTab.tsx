@@ -76,16 +76,9 @@ export default function AdminAppTab({ settings, can, onChange, notify, reloadLog
         <div className="grid gap-3 md:grid-cols-2">
           <ToggleRow
             title="إظهار التطبيق في الموقع"
-            hint="زر الهيدر + قسم الرئيسية + الفوتر + بانر الموبايل + صفحة /app."
+            hint="تنويه صغير أعلى الرئيسية + قسم مختصر بأسفلها + الفوتر + صفحة /app."
             checked={app.enabled}
             onChange={(enabled) => update({ enabled })}
-            disabled={!editable}
-          />
-          <ToggleRow
-            title="الهيرو يعرض واجهة التطبيق"
-            hint="يستبدل صورة العقار في الهيرو بموبايلات التطبيق — كما في التصميم المعتمد."
-            checked={app.heroMode}
-            onChange={(heroMode) => update({ heroMode })}
             disabled={!editable}
           />
           <Field label="حالة الإطلاق">
@@ -170,8 +163,8 @@ export default function AdminAppTab({ settings, can, onChange, notify, reloadLog
       </Panel>
 
       <Panel
-        title="محتوى الهيرو"
-        desc="العنوان والوصف في هيرو الرئيسية وصفحة /app. يمكنك الرجوع لأي وقت للقيم الافتراضية."
+        title="محتوى صفحة التطبيق والتنويه"
+        desc="العنوان والوصف يظهران داخل صفحة /app، ويظهر منهما تنويه مختصر أسفل الرئيسية."
       >
         <div className="grid gap-3 md:grid-cols-2">
           <Field label="السطر الصغير (Eyebrow)">
