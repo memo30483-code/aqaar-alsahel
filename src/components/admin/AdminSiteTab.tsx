@@ -10,6 +10,7 @@ import {
   type SiteSettings,
 } from "@/lib/admin-system";
 import AdminThemeTab from "@/components/admin/AdminThemeTab";
+import AdminCloudPanel from "@/components/admin/AdminCloudPanel";
 import { BTN_PRIMARY, Field, INPUT, Panel } from "@/components/admin/shared";
 
 interface Props {
@@ -67,6 +68,7 @@ export default function AdminSiteTab({ settings, can, onChange, notify, reloadLo
 
   return (
     <div className="space-y-5">
+      <AdminCloudPanel notify={notify} />
       <Panel
         title="إعدادات الموقع العامة"
         desc="بيانات إدارة الموقع التي تظهر للزوار فقط — لا تُعرض بيانات المالك أو الوسيط."

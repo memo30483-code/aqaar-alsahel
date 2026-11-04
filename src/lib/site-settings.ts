@@ -6,6 +6,7 @@ import {
   getSiteSettings,
   type SiteSettings,
 } from "@/lib/admin-system";
+import { CLOUD_EVENT } from "@/lib/cloud/keys";
 
 /**
  * قراءة إعدادات الموقع المحفوظة من لوحة التحكم.
@@ -15,7 +16,17 @@ export function useSiteSettings(): SiteSettings {
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS);
 
   useEffect(() => {
-    setSettings(getSiteSettings());
+    const sync = () => setSettings(getSiteSettings());
+    sync();
+
+    window.addEventListener(CLOUD_EVENT, sync);
+    window.addEventListener("aqaar-branding-updated", sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(CLOUD_EVENT, sync);
+      window.removeEventListener("aqaar-branding-updated", sync);
+      window.removeEventListener("storage", sync);
+    };
   }, []);
 
   return settings;

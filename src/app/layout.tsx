@@ -7,10 +7,18 @@ import Footer from "@/components/Footer";
 import SiteWidgets from "@/components/SiteWidgets";
 import MobileAppBanner from "@/components/MobileAppBanner";
 import SeasonRibbon from "@/components/SeasonRibbon";
+import CloudBridge from "@/components/CloudBridge";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme-season";
 import { BRANDING_BOOT_SCRIPT } from "@/lib/branding";
+import { cloudBootScript, loadCloudBoot } from "@/lib/cloud/boot";
 import "./theme-css.css";
 import "./globals.css";
+
+/**
+ * الصفحات تُبنى مسبقًا وتُحدَّث كل دقيقة من قاعدة البيانات،
+ * كما تُحدَّث فورًا عند حفظ الأدمن (revalidatePath في /api/state).
+ */
+export const revalidate = 60;
 
 const cairo = Cairo({
   subsets: ["arabic", "latin"],
@@ -45,11 +53,14 @@ export const metadata: Metadata = {
     "سوق عقاري موثّق في رأس البر، دمياط، دمياط الجديدة، فارسكور، جمصة والمنصورة الجديدة — شقق، فلل، شاليهات، محلات وأراضي بعد التحقق من المستندات والسلامة القانونية.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  /* آخر حالة محفوظة في السحابة — تُحقن قبل أول رسم */
+  const cloud = await loadCloudBoot();
+
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
       <head>
@@ -63,6 +74,8 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
         {/* حقن الهوية (الخطوط/الأحجام/ألوان العلامة/الفافيكون) قبل أول رسم */}
         <script dangerouslySetInnerHTML={{ __html: BRANDING_BOOT_SCRIPT }} />
+        {/* حقن آخر حالة من قاعدة البيانات — يجعل تعديلات الأدمن عامة */}
+        <script dangerouslySetInnerHTML={{ __html: cloudBootScript(cloud) }} />
       </head>
       <body
         className={`${cairo.variable} ${tajawal.variable} ${amiri.variable} ${readex.variable} font-sans antialiased min-h-screen flex flex-col`}
@@ -76,6 +89,7 @@ export default function RootLayout({
           <Footer />
           <MobileAppBanner />
           <SiteWidgets />
+          <CloudBridge />
           </ThemeProvider>
         </AppProviders>
       </body>
