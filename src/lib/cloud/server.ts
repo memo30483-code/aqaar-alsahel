@@ -132,16 +132,17 @@ export function cloudPublicUrl(path: string): string {
   return `${supabaseUrl()}/storage/v1/object/public/media/${path}`;
 }
 
-/** رفع ملف إلى bucket الصور وإرجاع رابطه العام */
-export async function cloudUpload(
+/** رفع ملف إلى bucket محدد. لا نُنشئ رابطًا عامًا للمستندات الخاصة. */
+export async function cloudUploadToBucket(
+  bucket: "media" | "documents",
   path: string,
   body: ArrayBuffer | Uint8Array,
   contentType: string
-): Promise<string> {
+): Promise<{ path: string; publicUrl?: string }> {
   requireCloud();
 
   const response = await fetch(
-    `${supabaseUrl()}/storage/v1/object/media/${path}`,
+    `${supabaseUrl()}/storage/v1/object/${bucket}/${path}`,
     {
       method: "POST",
       headers: {
@@ -162,5 +163,82 @@ export async function cloudUpload(
     );
   }
 
-  return cloudPublicUrl(path);
+  return {
+    path,
+    ...(bucket === "media" ? { publicUrl: cloudPublicUrl(path) } : {}),
+  };
+}
+
+/** رفع صورة عامة — دالة توافقية للاستخدامات القائمة */
+export async function cloudUpload(
+  path: string,
+  body: ArrayBuffer | Uint8Array,
+  contentType: string
+): Promise<string> {
+  const uploaded = await cloudUploadToBucket("media", path, body, contentType);
+  return uploaded.publicUrl ?? "";
+}
+
+/** قراءة مستند خاص للسيرفر فقط — لا يُنشأ له رابط عام دائم. */
+export async function cloudDownloadDocument(
+  path: string
+): Promise<{ bytes: ArrayBuffer; contentType: string }> {
+  requireCloud();
+  const response = await fetch(
+    `${supabaseUrl()}/storage/v1/object/documents/${path}`,
+    {
+      headers: {
+        apikey: serviceKey(),
+        Authorization: `Bearer ${serviceKey()}`,
+      },
+      cache: "no-store",
+    }
+  );
+  if (!response.ok) {
+    throw new Error(`المستند غير متاح (${response.status})`);
+  }
+  return {
+    bytes: await response.arrayBuffer(),
+    contentType: response.headers.get("content-type") || "application/octet-stream",
+  };
+}
+
+export interface CloudInquiryInput {
+  kind: string;
+  name?: string;
+  phone?: string;
+  email?: string;
+  message?: string;
+  payload?: Record<string, unknown>;
+  status?: string;
+}
+
+/** حفظ طلب زائر داخل جدول inquiries */
+export async function cloudInsertInquiry(
+  input: CloudInquiryInput
+): Promise<{ id: string; created_at: string }> {
+  requireCloud();
+  const response = await fetch(`${supabaseUrl()}/rest/v1/inquiries`, {
+    method: "POST",
+    headers: headers({ Prefer: "return=representation" }),
+    body: JSON.stringify({
+      kind: input.kind,
+      name: input.name || null,
+      phone: input.phone || null,
+      email: input.email || null,
+      message: input.message || null,
+      payload: input.payload ?? {},
+      status: input.status ?? "new",
+    }),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `فشل حفظ الطلب في Supabase (${response.status}): ${await response.text()}`
+    );
+  }
+
+  const rows = (await response.json()) as { id: string; created_at: string }[];
+  return rows[0];
 }

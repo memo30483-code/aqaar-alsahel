@@ -31,6 +31,8 @@ export interface PropertyDocument {
   name: string;
   size: number;
   type: string;
+  /** مسار داخلي في bucket خاص — لا يتحول إلى رابط عام */
+  storagePath?: string;
 }
 
 /** نوع العرض: بيع أو إيجار */

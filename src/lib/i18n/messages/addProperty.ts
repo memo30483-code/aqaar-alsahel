@@ -146,8 +146,8 @@ export const addPropertyMessages = {
   "addProperty.doc.remove": { ar: "حذف", en: "Remove" },
   "addProperty.doc.uploaded": { ar: "تم الرفع", en: "Uploaded" },
   "addProperty.doc.hint": {
-    ar: "صورة واضحة أو ملف PDF، بحجم أقصى 5 ميجابايت للمستند.",
-    en: "A clear photo or PDF file, up to 5 MB per document.",
+    ar: "صورة واضحة أو ملف PDF، بحجم أقصى 4 ميجابايت للمستند.",
+    en: "A clear photo or PDF file, up to 4 MB per document.",
   },
 
   /* ---------- الإقرار ---------- */
@@ -261,8 +261,8 @@ export const addPropertyMessages = {
     en: "The document must be an image or a PDF file.",
   },
   "addProperty.errorDocSize": {
-    ar: "حجم المستند أكبر من 5 ميجابايت، اضغطه أو ارفع نسخة أصغر.",
-    en: "The document exceeds 5 MB; compress it or upload a smaller copy.",
+    ar: "حجم المستند أكبر من 4 ميجابايت، اضغطه أو ارفع نسخة أصغر.",
+    en: "The document exceeds 4 MB; compress it or upload a smaller copy.",
   },
 
   /* ---------- عناصر التصميم ---------- */

@@ -680,6 +680,17 @@ export default function AdminListingsTab({
                   <span className="shrink-0 text-[10px] font-bold text-sand-500">
                     {formatBytes(doc.size)}
                   </span>
+                  {doc.storagePath && (
+                    <a
+                      href={`/api/admin/documents?path=${encodeURIComponent(doc.storagePath)}&name=${encodeURIComponent(doc.name)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-ocean-200 px-2 py-1 text-[10px] font-bold text-ocean-800 transition hover:bg-ocean-50"
+                    >
+                      <Eye className="h-3 w-3" />
+                      عرض
+                    </a>
+                  )}
                 </div>
               ))}
               {(docsFor.documents ?? []).length === 0 && (

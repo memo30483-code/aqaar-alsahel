@@ -18,10 +18,9 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
-import { sellerTypes, USER_PROPERTIES_KEY } from "@/data/properties";
+import { sellerTypes } from "@/data/properties";
 import {
   City,
-  Property,
   PropertyDocument,
   PropertyType,
   Purpose,
@@ -97,8 +96,8 @@ const DOCUMENTS: {
   },
 ];
 
-/** الحد الأقصى لحجم المستند الواحد: 5 ميجابايت */
-const MAX_DOC_SIZE = 5 * 1024 * 1024;
+/** الحد الأقصى لحجم المستند الواحد: 4 ميجابايت (متوافق مع رفع Vercel الآمن) */
+const MAX_DOC_SIZE = 4 * 1024 * 1024;
 
 interface FormState {
   title: string;
@@ -143,17 +142,6 @@ function normalizeWhatsApp(raw: string): string | null {
   if (digits.startsWith("20")) return digits;
   if (digits.startsWith("0")) return `20${digits.slice(1)}`;
   return `20${digits}`;
-}
-
-/** قراءة الإعلانات المحفوظة بأمان — أي تلف في التخزين لا يعطّل الحفظ */
-function readUserProperties(): Property[] {
-  try {
-    const stored = localStorage.getItem(USER_PROPERTIES_KEY);
-    const parsed: unknown = stored ? JSON.parse(stored) : [];
-    return Array.isArray(parsed) ? (parsed as Property[]) : [];
-  } catch {
-    return [];
-  }
 }
 
 /** حجم المستند بصيغة مقروءة */
@@ -272,6 +260,7 @@ function AddPropertyContent() {
   const [form, setForm] = useState<FormState>(initial);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState<SubmittedRequest | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [checking, setChecking] = useState(true);
   /** إعدادات الأدمن: أي حقل إجباري وأي حقل اختياري */
   const [fieldSettings, setFieldSettings] = useState<AddPropertyFieldSettings>(
@@ -283,6 +272,10 @@ function AddPropertyContent() {
   );
   /** إعادة تصفير حقول الملفات بعد حذف مستند حتى يمكن رفع نفس الملف مرة أخرى */
   const [docNonce, setDocNonce] = useState(0);
+  /** الملفات نفسها تبقى في الذاكرة حتى تُرفع إلى Storage الخاص عند الإرسال */
+  const [documentFiles, setDocumentFiles] = useState<
+    Partial<Record<DocKey, File>>
+  >({});
 
   /** Auth Guard + تحميل إعدادات الحقول التي حددها الأدمن */
   useEffect(() => {
@@ -396,7 +389,9 @@ function AddPropertyContent() {
       if (!file) return;
 
       const isPdf = file.type === "application/pdf";
-      const isImage = file.type.startsWith("image/");
+      const isImage = ["image/jpeg", "image/png", "image/webp"].includes(
+        file.type
+      );
       if (!isPdf && !isImage) {
         setError(t("addProperty.errorDocType"));
         return;
@@ -420,6 +415,7 @@ function AddPropertyContent() {
           },
         },
       }));
+      setDocumentFiles((prev) => ({ ...prev, [spec.key]: file }));
     };
 
   const removeDocument = (key: DocKey) => {
@@ -429,6 +425,11 @@ function AddPropertyContent() {
       return { ...prev, documents: next };
     });
     setDocNonce((value) => value + 1);
+    setDocumentFiles((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
   };
 
   const pricePerMeter =
@@ -444,11 +445,13 @@ function AddPropertyContent() {
     setForm(initial);
     setError("");
     setSubmitted(null);
+    setDocumentFiles({});
+    setSubmitting(false);
     setDocNonce((value) => value + 1);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const onSubmit = (e: FormEvent) => {
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     const missing: string[] = [];
@@ -536,61 +539,111 @@ function AddPropertyContent() {
     }
 
     setError("");
+    setSubmitting(true);
 
-    const id = `user-${Date.now()}`;
-    const reference = `AQF-${new Date().getFullYear()}-${String(
-      Date.now()
-    ).slice(-4)}`;
-    const documents = DOCUMENTS.map((doc) => form.documents[doc.key]).filter(
-      (doc): doc is PropertyDocument => Boolean(doc)
-    );
-    const image =
-      form.imagePreview || `https://picsum.photos/seed/${id}/800/600`;
-
-    const property: Property = {
-      id,
-      title: form.title.trim() || "عقار جديد",
-      purpose: form.purpose,
-      city: form.city as City,
-      district: form.district.trim(),
-      type: form.type as PropertyType,
-      area: Number(form.area) || 0,
-      rooms: Number(form.rooms) || 0,
-      bathrooms: Number(form.bathrooms) || 0,
-      price: priceByAdmin ? 0 : Number(form.price) || 0,
-      priceByAdmin: priceByAdmin || undefined,
-      negotiable: priceByAdmin
-        ? undefined
-        : negotiableEnabled && form.negotiable
-          ? form.negotiable === "yes"
-          : undefined,
-      sellerType: form.sellerType || "فرد",
-      whatsapp,
-      description: form.description.trim(),
-      image,
-      images: [image],
-      lat: form.lat,
-      lng: form.lng,
-      /* لا نشر تلقائي: الطلب يبقى «قيد المراجعة» حتى موافقة الإدارة */
-      status: "pending",
-      documents,
-      submittedAt: new Date().toISOString(),
-      reference,
-    };
-
-    const list = readUserProperties();
     try {
-      localStorage.setItem(
-        USER_PROPERTIES_KEY,
-        JSON.stringify([...list, property])
-      );
-    } catch {
-      setError(t("addProperty.errorStorage"));
-      return;
-    }
+      const submissionId = crypto.randomUUID();
 
-    setSubmitted({ reference, title: property.title, city: property.city });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+      const upload = async (
+        file: Blob,
+        fileName: string,
+        kind: "image" | "document",
+        documentKey = "cover"
+      ) => {
+        const data = new FormData();
+        data.append("file", file, fileName);
+        data.append("kind", kind);
+        data.append("submissionId", submissionId);
+        data.append("documentKey", documentKey);
+        const response = await fetch("/api/uploads/property", {
+          method: "POST",
+          body: data,
+        });
+        const result = (await response.json()) as {
+          ok?: boolean;
+          path?: string;
+          url?: string;
+          error?: string;
+        };
+        if (!response.ok || !result.ok || !result.path) {
+          throw new Error(result.error || "تعذر رفع الملف");
+        }
+        return result;
+      };
+
+      let imageUrl = "";
+      if (form.imagePreview) {
+        const blob = await fetch(form.imagePreview).then((response) => response.blob());
+        const uploaded = await upload(
+          blob,
+          form.imageName || "property.jpg",
+          "image"
+        );
+        imageUrl = uploaded.url || "";
+      }
+
+      const documents: PropertyDocument[] = [];
+      for (const spec of DOCUMENTS) {
+        const meta = form.documents[spec.key];
+        const file = documentFiles[spec.key];
+        if (!meta || !file) continue;
+        const uploaded = await upload(file, file.name, "document", spec.key);
+        documents.push({ ...meta, storagePath: uploaded.path });
+      }
+
+      const response = await fetch("/api/property-submissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          submissionId,
+          title: form.title.trim() || "عقار جديد",
+          purpose: form.purpose,
+          city: form.city,
+          district: form.district.trim(),
+          type: form.type,
+          area: Number(form.area) || 0,
+          rooms: Number(form.rooms) || 0,
+          bathrooms: Number(form.bathrooms) || 0,
+          price: priceByAdmin ? 0 : Number(form.price) || 0,
+          priceByAdmin,
+          negotiable:
+            !priceByAdmin && negotiableEnabled && form.negotiable
+              ? form.negotiable === "yes"
+              : undefined,
+          sellerType: form.sellerType || "فرد",
+          whatsapp,
+          description: form.description.trim(),
+          image: imageUrl,
+          lat: form.lat,
+          lng: form.lng,
+          documents,
+        }),
+      });
+      const result = (await response.json()) as {
+        ok?: boolean;
+        reference?: string;
+        property?: { title?: string; city?: City };
+        error?: string;
+      };
+      if (!response.ok || !result.ok || !result.reference) {
+        throw new Error(result.error || "تعذر إرسال الطلب");
+      }
+
+      setSubmitted({
+        reference: result.reference,
+        title: result.property?.title || form.title.trim() || "عقار جديد",
+        city: (result.property?.city || form.city) as City,
+      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (submissionError) {
+      setError(
+        submissionError instanceof Error
+          ? submissionError.message
+          : t("addProperty.errorStorage")
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const steps = [
@@ -1218,7 +1271,7 @@ function AddPropertyContent() {
                           <input
                             key={`${spec.key}-${docNonce}`}
                             type="file"
-                            accept="image/*,application/pdf"
+                            accept="image/jpeg,image/png,image/webp,application/pdf"
                             onChange={onDocument(spec)}
                             className="sr-only"
                           />
@@ -1254,10 +1307,19 @@ function AddPropertyContent() {
             <div className="flex flex-wrap items-center gap-2.5 rounded-3xl border border-sand-200 bg-white p-4 sm:p-5">
               <button
                 type="submit"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-l from-gold-500 to-gold-400 px-7 py-3 text-[13px] font-black text-ocean-950 shadow-[0_18px_38px_-24px_rgba(201,146,42,0.95)] transition hover:-translate-y-0.5"
+                disabled={submitting}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-l from-gold-500 to-gold-400 px-7 py-3 text-[13px] font-black text-ocean-950 shadow-[0_18px_38px_-24px_rgba(201,146,42,0.95)] transition hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-60"
               >
-                <ShieldCheck className="h-4 w-4" />
-                {t("addProperty.submit")}
+                {submitting ? (
+                  <Clock className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ShieldCheck className="h-4 w-4" />
+                )}
+                {submitting
+                  ? locale === "ar"
+                    ? "جارٍ رفع الملفات وحفظ الطلب..."
+                    : "Uploading and saving..."
+                  : t("addProperty.submit")}
               </button>
               <Link
                 href="/"

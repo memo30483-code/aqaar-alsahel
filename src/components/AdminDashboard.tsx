@@ -22,6 +22,7 @@ import {
   Users,
 } from "lucide-react";
 import { getSession, saveSession, type Session } from "@/lib/session";
+import { applyRemoteValue } from "@/lib/cloud/push";
 import {
   DEFAULT_OFFERS_SETTINGS,
   DEFAULT_SITE_SETTINGS,
@@ -171,6 +172,32 @@ export default function AdminDashboard() {
 
       if (cancelled) return;
       setAdminVerified(verified);
+
+      /*
+       * الأدمن يحتاج النسخة الكاملة (ومنها الطلبات والمستندات الخاصة)،
+       * بينما الزائر يستلم نسخة منقّاة فقط. نجلبها بعد التحقق من الكوكي
+       * وقبل قراءة مخازن اللوحة حتى تظهر الطلبات الجديدة فورًا.
+       */
+      if (verified) {
+        try {
+          const cloudResponse = await fetch("/api/state?all=1", {
+            cache: "no-store",
+          });
+          if (cloudResponse.ok) {
+            const cloudData = (await cloudResponse.json()) as {
+              rows?: Record<
+                string,
+                { value: unknown; updated_at: string }
+              >;
+            };
+            for (const [key, row] of Object.entries(cloudData.rows ?? {})) {
+              applyRemoteValue(key, row.value, row.updated_at);
+            }
+          }
+        } catch {
+          /* انقطاع مؤقت: اللوحة تستمر بالنسخة المحلية ولا تتعطّل */
+        }
+      }
 
       const stored = getSession();
       const current: Session | null =

@@ -72,6 +72,11 @@ insert into storage.buckets (id, name, public)
 values ('media', 'media', true)
 on conflict (id) do nothing;
 
+-- مستندات الملكية خاصة تمامًا ولا تملك سياسة قراءة عامة
+insert into storage.buckets (id, name, public)
+values ('documents', 'documents', false)
+on conflict (id) do nothing;
+
 -- سياسة قراءة عامة للصور
 drop policy if exists "media public read" on storage.objects;
 create policy "media public read"
