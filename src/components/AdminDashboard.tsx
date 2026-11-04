@@ -8,6 +8,7 @@ import {
   Building2,
   ClipboardList,
   Gift,
+  Handshake,
   Home,
   Landmark,
   LayoutList,
@@ -58,9 +59,11 @@ import AdminProjectsTab from "@/components/admin/AdminProjectsTab";import AdminH
 import AdminOverviewTab from "@/components/admin/AdminOverviewTab";
 import AdminBrandTab from "@/components/admin/AdminBrandTab";
 import AdminAppTab from "@/components/admin/AdminAppTab";
+import AdminCrmTab from "@/components/admin/AdminCrmTab";
 
 type TabKey =
   | "overview"
+  | "crm"
   | "builder"
   | "listings"
   | "propertyFields"
@@ -84,6 +87,7 @@ const TABS: {
   permission?: string;
 }[] = [
   { key: "overview", label: "نظرة عامة", Icon: BarChart3 },
+  { key: "crm", label: "العملاء والفرص", Icon: Handshake, permission: "crm.view" },
   { key: "builder", label: "Builder الصفحات", Icon: LayoutTemplate, permission: "site.settings" },
   { key: "listings", label: "الإعلانات", Icon: LayoutList, permission: "listings.view" },
   {
@@ -396,6 +400,15 @@ export default function AdminDashboard() {
             logs={logs}
             permissionsCount={permissionsCount}
             goTo={goTo}
+          />
+        )}
+
+        {tab === "crm" && (
+          <AdminCrmTab
+            users={users}
+            can={can}
+            notify={notify}
+            reloadLogs={reloadLogs}
           />
         )}
 

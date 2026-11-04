@@ -14,6 +14,7 @@ import {
   cloudInsertInquiry,
   cloudPutRow,
 } from "@/lib/cloud/server";
+import { CRM_KEY, normalizeCrmLeads, propertyLead } from "@/lib/crm-types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,6 +54,7 @@ interface SubmissionBody {
   priceByAdmin?: unknown;
   negotiable?: unknown;
   sellerType?: unknown;
+  ownerName?: unknown;
   whatsapp?: unknown;
   description?: unknown;
   image?: unknown;
@@ -182,6 +184,7 @@ export async function POST(request: Request) {
   const city = text(body.city, 100);
   const districtInput = text(body.district, 150);
   const descriptionInput = text(body.description, 4000);
+  const ownerName = text(body.ownerName, 120);
   const whatsappInput = text(body.whatsapp, 30);
   const whatsapp = whatsappInput ? normalizePhone(whatsappInput) : "";
   const area = numberIn(body.area, 0, 1_000_000);
@@ -289,6 +292,7 @@ export async function POST(request: Request) {
     sellerType: SELLERS.has(String(body.sellerType))
       ? (body.sellerType as SellerType)
       : "فرد",
+    ownerName: ownerName || undefined,
     whatsapp: whatsapp || "",
     description,
     image,
@@ -305,7 +309,7 @@ export async function POST(request: Request) {
     /* inquiries هو سجل المصدر غير القابل للعرض العام */
     await cloudInsertInquiry({
       kind: "property_submission",
-      name: title,
+      name: ownerName || title,
       phone: whatsapp || undefined,
       message: description,
       payload: { property, submissionId },
@@ -322,6 +326,30 @@ export async function POST(request: Request) {
       [...existing.filter((item) => item.id !== id), property].slice(-5000),
       "public-property-form"
     );
+
+    /*
+     * إنشاء بطاقة عميل تلقائيًا حتى يجد فريق المبيعات الطلب في الـCRM
+     * بمجرد وصوله، بدون انتظار فتح اللوحة أو ضغط «استيراد».
+     */
+    try {
+      const crmRows = await cloudGetRows({ keys: [CRM_KEY] });
+      const leads = normalizeCrmLeads(crmRows[0]?.value);
+      const exists = leads.some(
+        (lead) => lead.source === "property" && lead.sourceRef === property.id
+      );
+      if (!exists) {
+        await cloudPutRow(
+          CRM_KEY,
+          {
+            items: [propertyLead(property), ...leads].slice(0, 5000),
+            updatedAt: new Date().toISOString(),
+          },
+          "public-property-form"
+        );
+      }
+    } catch {
+      /* فشل الـCRM لا يمنع حفظ طلب العقار نفسه */
+    }
 
     try {
       revalidatePath("/", "layout");

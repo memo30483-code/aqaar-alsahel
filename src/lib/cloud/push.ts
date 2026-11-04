@@ -138,6 +138,7 @@ export function applyRemoteValue(key: string, value: unknown, updatedAt: string)
     "aqaar:page-builder",
     "aqaar:professionals",
     "aqaar:professional-requests",
+    "aqaar:crm",
     "aqaar:add-property-fields",
     "aqaar:add-property-options",
   ]) {

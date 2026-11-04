@@ -40,6 +40,7 @@ export const CLOUD_KEYS: Record<string, CloudKeyMeta> = {
   "aqaar-admin-logs": { public: false, label: "سجل العمليات" },
   "aqaar-listing-actions": { public: false, label: "قرارات مراجعة الإعلانات" },
   "aqaar-professional-requests": { public: false, label: "طلبات الانضمام" },
+  "aqaar-crm-v1": { public: false, label: "العملاء والفرص (CRM)" },
 };
 
 export const CLOUD_KEY_LIST = Object.keys(CLOUD_KEYS);

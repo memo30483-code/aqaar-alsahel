@@ -242,3 +242,39 @@ export async function cloudInsertInquiry(
   const rows = (await response.json()) as { id: string; created_at: string }[];
   return rows[0];
 }
+
+export interface CloudInquiryRow {
+  id: string;
+  kind: string;
+  name: string | null;
+  phone: string | null;
+  email: string | null;
+  message: string | null;
+  payload: Record<string, unknown> | null;
+  status: string | null;
+  created_at: string | null;
+}
+
+/** قراءة الاستفسارات للأدمن — تُستخدم في صندوق الـCRM الموحّد */
+export async function cloudGetInquiries(limit = 500): Promise<CloudInquiryRow[]> {
+  if (!cloudEnabled()) return [];
+  const safeLimit = Math.min(Math.max(Math.round(limit), 1), 1000);
+  const params = new URLSearchParams();
+  params.set(
+    "select",
+    "id,kind,name,phone,email,message,payload,status,created_at"
+  );
+  params.set("order", "created_at.desc");
+  params.set("limit", String(safeLimit));
+
+  const response = await fetch(
+    `${supabaseUrl()}/rest/v1/inquiries?${params.toString()}`,
+    { headers: headers(), cache: "no-store" }
+  );
+  if (!response.ok) {
+    throw new Error(
+      `فشل قراءة الاستفسارات (${response.status}): ${await response.text()}`
+    );
+  }
+  return (await response.json()) as CloudInquiryRow[];
+}

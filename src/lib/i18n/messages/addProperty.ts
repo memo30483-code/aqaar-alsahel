@@ -88,6 +88,14 @@ export const addPropertyMessages = {
     en: "Contact details (management only)",
   },
   "addProperty.fieldSellerType": { ar: "نوع البائع *", en: "Seller type *" },
+  "addProperty.fieldOwnerName": {
+    ar: "اسم مقدم الطلب — لا يظهر للزوار",
+    en: "Applicant name — hidden from visitors",
+  },
+  "addProperty.ownerNamePlaceholder": {
+    ar: "الاسم الكامل",
+    en: "Full name",
+  },
   "addProperty.fieldWhatsapp": {
     ar: "رقم التواصل * — لا يظهر للزوار",
     en: "Contact number * — hidden from visitors",

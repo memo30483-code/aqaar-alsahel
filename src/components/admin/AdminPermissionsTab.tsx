@@ -38,6 +38,7 @@ const CATEGORY_LABEL: Record<string, string> = {
   banners: "البنرات",
   logs: "السجلات",
   professionals: "المهنيون",
+  crm: "العملاء والفرص",
   settings: "إعدادات عامة",
 };
 

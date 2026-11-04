@@ -113,6 +113,7 @@ interface FormState {
   rooms: string;
   bathrooms: string;
   sellerType: SellerType | "";
+  ownerName: string;
   whatsapp: string;
   description: string;
   type: PropertyType | "";
@@ -201,6 +202,7 @@ const initial: FormState = {
   rooms: "",
   bathrooms: "1",
   sellerType: "",
+  ownerName: "",
   whatsapp: "",
   description: "",
   type: "",
@@ -611,6 +613,7 @@ function AddPropertyContent() {
               ? form.negotiable === "yes"
               : undefined,
           sellerType: form.sellerType || "فرد",
+          ownerName: form.ownerName.trim(),
           whatsapp,
           description: form.description.trim(),
           image: imageUrl,
@@ -1077,6 +1080,20 @@ function AddPropertyContent() {
               />
 
               <div className="mt-4 grid gap-3.5 sm:grid-cols-2">
+                <label className="block sm:col-span-2">
+                  <span className={LABEL}>
+                    {t("addProperty.fieldOwnerName")}
+                  </span>
+                  <input
+                    type="text"
+                    value={form.ownerName}
+                    onChange={set("ownerName")}
+                    placeholder={t("addProperty.ownerNamePlaceholder")}
+                    maxLength={120}
+                    className={FIELD}
+                  />
+                </label>
+
                 <label className="block">
                   <span className={LABEL}>
                     {labelFor("sellerType", "addProperty.fieldSellerType")}

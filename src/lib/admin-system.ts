@@ -37,6 +37,7 @@ export interface Permission {
     | "banners"
     | "logs"
     | "professionals"
+    | "crm"
     | "settings";
 }
 
@@ -203,6 +204,7 @@ export interface AdminLog {
     | "banners"
     | "auth"
     | "professionals"
+    | "crm"
     | "settings";
   performedBy: string;
   performedByName: string;
@@ -248,6 +250,9 @@ export const ALL_PERMISSIONS: Permission[] = [
   { id: "p22", key: "settings.full", labelAr: "تحكم كامل في كل الإعدادات", labelEn: "Full Control of All Settings", category: "settings" },
   { id: "p23", key: "professionals.view", labelAr: "عرض دليل المهنيين", labelEn: "View Professionals Directory", category: "professionals" },
   { id: "p24", key: "professionals.manage", labelAr: "إدارة المهنيين والاعتماد", labelEn: "Manage Professionals & Approvals", category: "professionals" },
+  { id: "p25", key: "crm.view", labelAr: "عرض العملاء والفرص", labelEn: "View CRM Leads", category: "crm" },
+  { id: "p26", key: "crm.manage", labelAr: "إدارة العملاء والمهام", labelEn: "Manage CRM Leads & Tasks", category: "crm" },
+  { id: "p27", key: "crm.assign", labelAr: "إسناد العملاء للموظفين", labelEn: "Assign CRM Leads", category: "crm" },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {
@@ -261,6 +266,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     "site.blocks", "site.settings", "site.contact",
     "banners.manage",
     "professionals.view", "professionals.manage",
+    "crm.view", "crm.manage", "crm.assign",
     "logs.view",
     /* الأدمن يملك التحكم الكامل في الإعدادات افتراضياً (كان يُمنح عبر تجاوز الدور) */
     "settings.full",
@@ -268,9 +274,10 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   moderator: [
     "listings.view", "listings.approve", "listings.reject", "listings.edit", 
     "listings.archive", "listings.assign", "listings.feature",
-    "offers.view", "offers.manage"
+    "offers.view", "offers.manage",
+    "crm.view", "crm.manage"
   ],
-  agent: ["listings.view"],
+  agent: ["listings.view", "crm.view"],
   user: [],
 };
 

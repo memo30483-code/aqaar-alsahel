@@ -54,6 +54,8 @@ export interface Property {
   price: number;
   sellerType: SellerType;
   whatsapp: string;
+  /** اسم مقدم الطلب — بيانات إدارية لا تُعرض للزوار */
+  ownerName?: string;
   description: string;
   image: string;
   images: string[];
