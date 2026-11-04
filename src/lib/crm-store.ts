@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * مخزن نظام العملاء (CRM).
+ * عميل واجهة CRM العلاقية.
  *
- * يُحفظ محليًا مثل بقية مخازن المنصة، ويُزامَن تلقائيًا مع Supabase عبر
- * اعتراض `localStorage` في `cloud/push.ts` بعد إدراج المفتاح في `cloud/keys.ts`.
+ * مصدر الحقيقة هو PostgreSQL عبر `/api/admin/crm`. التخزين المحلي هنا كاش
+ * للعرض السريع فقط، ولا يُستخدم للحفظ ولا يُرفع إلى app_state.
  */
 
 import { useEffect, useState } from "react";
@@ -18,77 +18,125 @@ import {
   normalizeCrmLeads,
   professionalLead,
   propertyLead,
-  type CrmActivity,
   type CrmActivityKind,
   type CrmInquiryRow,
   type CrmLead,
+  type CrmPriority,
   type CrmSource,
   type CrmStage,
-  type CrmTask,
 } from "./crm-types";
 
 export const CRM_EVENT = "aqaar:crm";
+const CRM_CACHE_KEY = "aqaar-crm-cache-v2";
+const POLL_MS = 15_000;
+
+let memoryCache: CrmLead[] | null = null;
+let refreshInFlight: Promise<CrmLead[]> | null = null;
 
 function isBrowser(): boolean {
   return typeof window !== "undefined";
 }
 
-/** null يعني أن المفتاح لم يُنشأ بعد (أول استخدام) */
+export class CrmApiError extends Error {
+  status: number;
+  code?: string;
+
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = "CrmApiError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
+async function api<T>(url: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+    cache: "no-store",
+  });
+  const data = (await response.json().catch(() => ({}))) as {
+    error?: string;
+    code?: string;
+  } & T;
+  if (!response.ok) {
+    throw new CrmApiError(
+      data.error || "تعذر الاتصال بقاعدة بيانات العملاء",
+      response.status,
+      data.code
+    );
+  }
+  return data;
+}
+
+function readCache(): CrmLead[] {
+  if (memoryCache) return memoryCache;
+  if (!isBrowser()) return [];
+  try {
+    const raw = window.localStorage.getItem(CRM_CACHE_KEY);
+    memoryCache = raw ? normalizeCrmLeads(JSON.parse(raw)) : [];
+  } catch {
+    memoryCache = [];
+  }
+  return memoryCache;
+}
+
+function publish(leads: CrmLead[]): CrmLead[] {
+  memoryCache = leads;
+  if (isBrowser()) {
+    try {
+      window.localStorage.setItem(
+        CRM_CACHE_KEY,
+        JSON.stringify({ items: leads, cachedAt: new Date().toISOString() })
+      );
+    } catch {
+      // الكاش اختياري؛ فشل التخزين لا يؤثر على قاعدة البيانات.
+    }
+    window.dispatchEvent(new CustomEvent(CRM_EVENT));
+  }
+  return leads;
+}
+
+function applyLead(lead: CrmLead | null | undefined): void {
+  if (!lead) return;
+  const existing = readCache();
+  publish([lead, ...existing.filter((item) => item.id !== lead.id)]);
+}
+
+export function getCrmLeads(): CrmLead[] {
+  return readCache();
+}
+
+/** بيانات JSON القديمة للاستيراد فقط، وليست مصدر الحقيقة بعد الترقية. */
 export function readStoredCrm(): CrmLead[] | null {
   if (!isBrowser()) return null;
   try {
     const raw = window.localStorage.getItem(CRM_KEY);
-    if (raw === null) return null;
-    return normalizeCrmLeads(JSON.parse(raw));
+    return raw ? normalizeCrmLeads(JSON.parse(raw)) : null;
   } catch {
-    return [];
+    return null;
   }
 }
 
 export function hasCrmStore(): boolean {
-  if (!isBrowser()) return false;
-  return window.localStorage.getItem(CRM_KEY) !== null;
+  return readCache().length > 0;
 }
 
-export function getCrmLeads(): CrmLead[] {
-  return readStoredCrm() ?? [];
-}
-
-export function saveCrmLeads(leads: CrmLead[]): boolean {
-  if (!isBrowser()) return false;
-  try {
-    window.localStorage.setItem(
-      CRM_KEY,
-      JSON.stringify({
-        items: leads,
-        updatedAt: new Date().toISOString(),
-      })
-    );
-  } catch {
-    return false;
-  }
-  window.dispatchEvent(new CustomEvent(CRM_EVENT));
-  return true;
+export async function refreshCrmLeads(): Promise<CrmLead[]> {
+  if (refreshInFlight) return refreshInFlight;
+  refreshInFlight = api<{ leads: CrmLead[] }>("/api/admin/crm")
+    .then((result) => publish(normalizeCrmLeads(result.leads)))
+    .finally(() => {
+      refreshInFlight = null;
+    });
+  return refreshInFlight;
 }
 
 function nowIso(): string {
   return new Date().toISOString();
-}
-
-function activity(
-  kind: CrmActivityKind,
-  text: string,
-  by: string,
-  extra: Partial<CrmActivity> = {}
-): CrmActivity {
-  return {
-    id: newCrmId("act"),
-    kind,
-    at: nowIso(),
-    by,
-    text,
-    ...extra,
-  };
 }
 
 export interface CrmLeadInput {
@@ -106,10 +154,13 @@ export interface CrmLeadInput {
   tags?: string[];
   notes?: string;
   reference?: string;
+  priority?: CrmPriority;
+  dealValue?: number;
+  commission?: number;
   createdBy: string;
 }
 
-export function createCrmLead(input: CrmLeadInput): CrmLead | null {
+export async function createCrmLead(input: CrmLeadInput): Promise<CrmLead | null> {
   const name = input.name.trim();
   if (!name) return null;
   const created = nowIso();
@@ -122,191 +173,155 @@ export function createCrmLead(input: CrmLeadInput): CrmLead | null {
     sourceLabel: input.sourceLabel ?? CRM_SOURCE_LABEL[input.source ?? "manual"],
     interest: input.interest?.trim() || undefined,
     city: input.city?.trim() || undefined,
-    budget:
-      typeof input.budget === "number" && Number.isFinite(input.budget)
-        ? input.budget
-        : undefined,
+    budget: input.budget,
     stage: input.stage ?? "new",
     assignedTo: input.assignedTo || undefined,
     assignedToName: input.assignedToName || undefined,
     tags: (input.tags ?? []).map((tag) => tag.trim()).filter(Boolean),
     notes: input.notes?.trim() || undefined,
     reference: input.reference?.trim() || undefined,
+    priority: input.priority ?? "warm",
+    dealValue: input.dealValue,
+    commission: input.commission,
     activities: [
-      activity("note", "تمت إضافة العميل يدويًا.", input.createdBy),
+      {
+        id: newCrmId("act"),
+        kind: "note",
+        at: created,
+        by: input.createdBy,
+        text: "تمت إضافة العميل يدويًا.",
+      },
     ],
     tasks: [],
     createdAt: created,
     updatedAt: created,
   };
-  const saved = saveCrmLeads([lead, ...getCrmLeads()]);
-  return saved ? lead : null;
+  const result = await api<{ lead: CrmLead; duplicate?: boolean }>(
+    "/api/admin/crm",
+    { method: "POST", body: JSON.stringify({ lead }) }
+  );
+  applyLead(result.lead);
+  return result.lead;
 }
 
-export function updateCrmLead(
+export async function updateCrmLead(
   id: string,
-  patch: Partial<Omit<CrmLead, "id" | "createdAt">>
-): boolean {
-  const leads = getCrmLeads();
-  let changed = false;
-  const next = leads.map((lead) => {
-    if (lead.id !== id) return lead;
-    changed = true;
-    return { ...lead, ...patch, id: lead.id, updatedAt: nowIso() };
+  patch: Partial<
+    Pick<
+      CrmLead,
+      | "name"
+      | "phone"
+      | "email"
+      | "interest"
+      | "city"
+      | "budget"
+      | "tags"
+      | "notes"
+      | "reference"
+      | "priority"
+      | "dealValue"
+      | "commission"
+      | "archived"
+    >
+  >
+): Promise<boolean> {
+  const current = readCache().find((lead) => lead.id === id);
+  const result = await api<{ lead: CrmLead }>(`/api/admin/crm/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ patch, expectedVersion: current?.version }),
   });
-  return changed ? saveCrmLeads(next) : false;
+  applyLead(result.lead);
+  return true;
 }
 
-export function deleteCrmLead(id: string): boolean {
-  const leads = getCrmLeads();
-  const next = leads.filter((lead) => lead.id !== id);
-  if (next.length === leads.length) return false;
-  return saveCrmLeads(next);
+/** الحذف الآمن = أرشفة، ويمكن استرجاع العميل لاحقًا. */
+export async function deleteCrmLead(id: string): Promise<boolean> {
+  const result = await api<{ lead: CrmLead }>(`/api/admin/crm/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+  applyLead(result.lead);
+  return true;
 }
 
-export function addCrmActivity(
+export async function addCrmActivity(
   id: string,
   kind: CrmActivityKind,
   text: string,
   by: string
-): boolean {
-  const clean = text.trim();
-  if (!clean) return false;
-  const leads = getCrmLeads();
-  let changed = false;
-  const next = leads.map((lead) => {
-    if (lead.id !== id) return lead;
-    changed = true;
-    return {
-      ...lead,
-      activities: [activity(kind, clean, by), ...lead.activities],
-      updatedAt: nowIso(),
-    };
-  });
-  return changed ? saveCrmLeads(next) : false;
+): Promise<boolean> {
+  void by; // اسم المنفذ الموثوق يأتي من جلسة السيرفر، لا من المتصفح.
+  const result = await api<{ lead: CrmLead }>(
+    `/api/admin/crm/${encodeURIComponent(id)}/activities`,
+    { method: "POST", body: JSON.stringify({ kind, text }) }
+  );
+  applyLead(result.lead);
+  return true;
 }
 
-export function changeCrmStage(
+export async function changeCrmStage(
   id: string,
   stage: CrmStage,
   by: string
-): boolean {
-  const leads = getCrmLeads();
-  let changed = false;
-  const next = leads.map((lead) => {
-    if (lead.id !== id || lead.stage === stage) return lead;
-    changed = true;
-    return {
-      ...lead,
-      stage,
-      activities: [
-        activity("stage", "تم تغيير مرحلة العميل.", by, {
-          fromStage: lead.stage,
-          toStage: stage,
-        }),
-        ...lead.activities,
-      ],
-      updatedAt: nowIso(),
-    };
+): Promise<boolean> {
+  void by;
+  const result = await api<{ lead: CrmLead }>(`/api/admin/crm/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ action: "stage", stage }),
   });
-  return changed ? saveCrmLeads(next) : false;
+  applyLead(result.lead);
+  return true;
 }
 
-export function assignCrmLead(
+export async function assignCrmLead(
   id: string,
   assignedTo: string | undefined,
   assignedToName: string | undefined,
   by: string
-): boolean {
-  const leads = getCrmLeads();
-  let changed = false;
-  const next = leads.map((lead) => {
-    if (lead.id !== id) return lead;
-    changed = true;
-    return {
-      ...lead,
-      assignedTo,
-      assignedToName,
-      activities: [
-        activity(
-          "note",
-          assignedToName
-            ? `تم إسناد العميل إلى ${assignedToName}.`
-            : "تم إلغاء إسناد العميل.",
-          by
-        ),
-        ...lead.activities,
-      ],
-      updatedAt: nowIso(),
-    };
+): Promise<boolean> {
+  void by;
+  const result = await api<{ lead: CrmLead }>(`/api/admin/crm/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ action: "assign", assignedTo, assignedToName }),
   });
-  return changed ? saveCrmLeads(next) : false;
+  applyLead(result.lead);
+  return true;
 }
 
-export function addCrmTask(
+export async function addCrmTask(
   id: string,
   title: string,
   dueAt: string,
   by: string
-): boolean {
-  const clean = title.trim();
-  if (!clean) return false;
-  const leads = getCrmLeads();
-  let changed = false;
-  const next = leads.map((lead) => {
-    if (lead.id !== id) return lead;
-    changed = true;
-    const task: CrmTask = {
-      id: newCrmId("task"),
-      title: clean,
-      dueAt: dueAt || nowIso(),
-      done: false,
-      createdAt: nowIso(),
-      createdBy: by,
-    };
-    return {
-      ...lead,
-      tasks: [task, ...lead.tasks],
-      updatedAt: nowIso(),
-    };
-  });
-  return changed ? saveCrmLeads(next) : false;
+): Promise<boolean> {
+  void by;
+  const result = await api<{ lead: CrmLead }>(
+    `/api/admin/crm/${encodeURIComponent(id)}/tasks`,
+    { method: "POST", body: JSON.stringify({ title, dueAt }) }
+  );
+  applyLead(result.lead);
+  return true;
 }
 
-export function toggleCrmTask(
+export async function toggleCrmTask(
   id: string,
   taskId: string,
   done: boolean
-): boolean {
-  const leads = getCrmLeads();
-  let changed = false;
-  const next = leads.map((lead) => {
-    if (lead.id !== id) return lead;
-    const tasks = lead.tasks.map((task) => {
-      if (task.id !== taskId) return task;
-      changed = true;
-      return {
-        ...task,
-        done,
-        doneAt: done ? nowIso() : undefined,
-      };
-    });
-    return changed ? { ...lead, tasks, updatedAt: nowIso() } : lead;
-  });
-  return changed ? saveCrmLeads(next) : false;
+): Promise<boolean> {
+  const result = await api<{ lead: CrmLead }>(
+    `/api/admin/crm/${encodeURIComponent(id)}/tasks/${encodeURIComponent(taskId)}`,
+    { method: "PATCH", body: JSON.stringify({ done }) }
+  );
+  applyLead(result.lead);
+  return true;
 }
 
-export function deleteCrmTask(id: string, taskId: string): boolean {
-  const leads = getCrmLeads();
-  let changed = false;
-  const next = leads.map((lead) => {
-    if (lead.id !== id) return lead;
-    const tasks = lead.tasks.filter((task) => task.id !== taskId);
-    if (tasks.length === lead.tasks.length) return lead;
-    changed = true;
-    return { ...lead, tasks, updatedAt: nowIso() };
-  });
-  return changed ? saveCrmLeads(next) : false;
+export async function deleteCrmTask(id: string, taskId: string): Promise<boolean> {
+  const result = await api<{ lead: CrmLead }>(
+    `/api/admin/crm/${encodeURIComponent(id)}/tasks/${encodeURIComponent(taskId)}`,
+    { method: "DELETE" }
+  );
+  applyLead(result.lead);
+  return true;
 }
 
 function readArray(key: string): unknown[] {
@@ -329,51 +344,47 @@ function readArray(key: string): unknown[] {
   }
 }
 
-function refOf(lead: CrmLead): string {
-  return `${lead.source}:${lead.sourceRef ?? lead.id}`;
+function uniqueCandidates(candidates: CrmLead[]): CrmLead[] {
+  const seen = new Set<string>();
+  return candidates.filter((lead) => {
+    const ref = lead.sourceRef
+      ? `${lead.source}:${lead.sourceRef}`
+      : `${lead.source}:${lead.id}`;
+    if (seen.has(ref)) return false;
+    seen.add(ref);
+    return true;
+  });
 }
 
-/** دمج قائمة مرشحين مع الموجود فعليًا دون تكرار */
-export function importCrmLeads(candidates: CrmLead[]): number {
-  const existing = getCrmLeads();
-  const known = new Set(existing.map(refOf));
-  const additions: CrmLead[] = [];
-  for (const candidate of candidates) {
-    const ref = refOf(candidate);
-    if (known.has(ref)) continue;
-    known.add(ref);
-    additions.push(candidate);
-  }
-  /*
-   * لا نكتب شيئًا عند عدم وجود إضافات: الكتابة هنا كانت تحفظ مصفوفة فارغة
-   * فوق بيانات السحابة إن لم يكن المفتاح قد وصل بعد، فتضيع بطاقات العملاء.
-   */
-  if (additions.length === 0) return 0;
-  saveCrmLeads(
-    [...additions, ...existing].sort((a, b) =>
-      b.createdAt.localeCompare(a.createdAt)
-    )
+export async function importCrmLeads(candidates: CrmLead[]): Promise<number> {
+  const leads = uniqueCandidates(candidates);
+  if (!leads.length) return 0;
+  const result = await api<{ added: number; duplicates: number }>(
+    "/api/admin/crm",
+    {
+      method: "POST",
+      body: JSON.stringify({ action: "import", leads }),
+    }
   );
-  return additions.length;
+  await refreshCrmLeads();
+  return result.added;
 }
 
-/**
- * استيراد الطلبات الموجودة محليًا (طلبات العقارات وطلبات المهنيين).
- * طلبات العقارات الجديدة تُضاف تلقائيًا من السيرفر، وهذا يغطي القديمة فقط.
- */
-export function importLocalCrmLeads(): number {
+/** ترحيل نسخة JSON القديمة والطلبات المحلية مرة واحدة إلى PostgreSQL. */
+export async function importLocalCrmLeads(): Promise<number> {
   const properties = readArray("aqaar-properties") as Property[];
-  const requests = readArray("aqaar-professional-requests") as ProfessionalRequest[];
-  const candidates = [
+  const requests = readArray(
+    "aqaar-professional-requests"
+  ) as ProfessionalRequest[];
+  const legacy = readStoredCrm() ?? [];
+  return importCrmLeads([
+    ...legacy,
     ...properties.map((property) => propertyLead(property)),
     ...requests.map((request) => professionalLead(request)),
-  ];
-  if (candidates.length === 0) return 0;
-  return importCrmLeads(candidates);
+  ]);
 }
 
-/** دمج استفسارات قاعدة البيانات — تُجلب عبر API للأدمن فقط */
-export function importInquiryLeads(rows: CrmInquiryRow[]): number {
+export async function importInquiryLeads(rows: CrmInquiryRow[]): Promise<number> {
   return importCrmLeads(
     rows
       .map((row) => inquiryLead(row))
@@ -381,20 +392,32 @@ export function importInquiryLeads(rows: CrmInquiryRow[]): number {
   );
 }
 
-/** حالة تفاعلية تتحدث مع أي تعديل محلي أو قادم من السحابة */
+/** حالة تفاعلية: قاعدة البيانات أولًا، مع تحديث تلقائي بين الأجهزة كل 15 ثانية. */
 export function useCrmLeads(): CrmLead[] {
-  const [leads, setLeads] = useState<CrmLead[]>([]);
+  const [leads, setLeads] = useState<CrmLead[]>(() => readCache());
 
   useEffect(() => {
-    const sync = () => setLeads(getCrmLeads());
-    sync();
+    let active = true;
+    const sync = () => {
+      if (active) setLeads([...readCache()]);
+    };
+    const refresh = () => {
+      void refreshCrmLeads().then(sync).catch(() => sync());
+    };
+    refresh();
+    const timer = window.setInterval(refresh, POLL_MS);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
     window.addEventListener(CRM_EVENT, sync);
     window.addEventListener("storage", sync);
-    window.addEventListener("aqaar:cloud", sync);
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
+      active = false;
+      window.clearInterval(timer);
       window.removeEventListener(CRM_EVENT, sync);
       window.removeEventListener("storage", sync);
-      window.removeEventListener("aqaar:cloud", sync);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, []);
 

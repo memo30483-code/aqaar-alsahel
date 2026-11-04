@@ -50,8 +50,6 @@ import {
   getPageStyle,
 } from "@/lib/page-builder-store";
 import { USER_PROPERTIES_KEY } from "@/data/properties";
-import { CRM_KEY } from "@/lib/crm-types";
-import { getCrmLeads } from "@/lib/crm-store";
 import { CLOUD_KEYS } from "./keys";
 
 export interface CloudSnapshotEntry {
@@ -120,7 +118,6 @@ export function collectCloudSnapshot(): CloudSnapshotEntry[] {
     [PERMISSIONS_KEY, current(PERMISSIONS_KEY, [])],
     [ADMIN_LOGS_KEY, current(ADMIN_LOGS_KEY, getAdminLogs(1000))],
     [LISTING_ACTIONS_KEY, current(LISTING_ACTIONS_KEY, getListingActions())],
-    [CRM_KEY, current(CRM_KEY, { items: getCrmLeads() })],
   ]);
 
   /* المفتاح القديم يُرفع فقط إن كان موجودًا، لتسهيل ترحيل مواقع سابقة. */

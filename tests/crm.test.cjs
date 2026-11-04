@@ -29,7 +29,7 @@ const keys = loadTs("src/lib/cloud/keys.ts");
 
 const AT = "2026-11-04T10:00:00.000Z";
 
-test("crm store key is private and registered in cloud sync", () => {
+test("legacy crm backup key remains private", () => {
   assert.equal(keys.CLOUD_KEYS[crm.CRM_KEY].public, false);
 });
 
@@ -175,4 +175,51 @@ test("every crm stage has an Arabic label and a visual style", () => {
   for (const source of Object.keys(crm.CRM_SOURCE_LABEL)) {
     assert.ok(crm.CRM_SOURCE_LABEL[source]);
   }
+});
+
+test("relational crm schema enables RLS and blocks browser roles", () => {
+  const sql = fs.readFileSync(
+    path.join(
+      __dirname,
+      "..",
+      "supabase/migrations/20261104_crm_relational.sql"
+    ),
+    "utf8"
+  );
+  for (const table of [
+    "crm_leads",
+    "crm_activities",
+    "crm_tasks",
+    "crm_settings",
+    "crm_legacy_backups",
+  ]) {
+    assert.match(sql, new RegExp(`create table if not exists public\\.${table}`));
+    assert.match(sql, new RegExp(`alter table public\\.${table} enable row level security`));
+    assert.match(sql, new RegExp(`revoke all on table public\\.${table} from anon, authenticated`));
+  }
+  assert.match(sql, /keep aqaar-crm-v1 private/i);
+  assert.doesNotMatch(sql, /aqaar-crm-v1[^;]*is_public\s*=\s*true/i);
+});
+
+test("crm client writes through protected API and only caches locally", () => {
+  const source = fs.readFileSync(
+    path.join(__dirname, "..", "src/lib/crm-store.ts"),
+    "utf8"
+  );
+  assert.match(source, /\/api\/admin\/crm/);
+  assert.match(source, /aqaar-crm-cache-v2/);
+  assert.doesNotMatch(source, /setItem\(\s*CRM_KEY/);
+});
+
+test("property submissions create relational crm leads server-side", () => {
+  const source = fs.readFileSync(
+    path.join(
+      __dirname,
+      "..",
+      "src/app/api/property-submissions/route.ts"
+    ),
+    "utf8"
+  );
+  assert.match(source, /cloudCreateCrmLead\(lead, "الموقع"\)/);
+  assert.doesNotMatch(source, /cloudPutRow\(\s*CRM_KEY/);
 });

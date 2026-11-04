@@ -14,7 +14,11 @@ import {
   cloudInsertInquiry,
   cloudPutRow,
 } from "@/lib/cloud/server";
-import { CRM_KEY, normalizeCrmLeads, propertyLead } from "@/lib/crm-types";
+import { propertyLead } from "@/lib/crm-types";
+import {
+  cloudCreateCrmLead,
+  cloudGetCrmSettings,
+} from "@/lib/crm-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -332,23 +336,18 @@ export async function POST(request: Request) {
      * بمجرد وصوله، بدون انتظار فتح اللوحة أو ضغط «استيراد».
      */
     try {
-      const crmRows = await cloudGetRows({ keys: [CRM_KEY] });
-      const leads = normalizeCrmLeads(crmRows[0]?.value);
-      const exists = leads.some(
-        (lead) => lead.source === "property" && lead.sourceRef === property.id
-      );
-      if (!exists) {
-        await cloudPutRow(
-          CRM_KEY,
-          {
-            items: [propertyLead(property), ...leads].slice(0, 5000),
-            updatedAt: new Date().toISOString(),
-          },
-          "public-property-form"
-        );
+      const lead = propertyLead(property);
+      const crmSettings = await cloudGetCrmSettings();
+      if (crmSettings.autoAssign && crmSettings.defaultAssigneeId) {
+        lead.assignedTo = crmSettings.defaultAssigneeId;
+        lead.assignedToName = crmSettings.defaultAssigneeName;
       }
+      await cloudCreateCrmLead(lead, "الموقع");
     } catch {
-      /* فشل الـCRM لا يمنع حفظ طلب العقار نفسه */
+      /*
+       * فشل بطاقة CRM لا يفقد الطلب: نسخة المصدر محفوظة في inquiries وفي
+       * aqaar-properties، ويمكن استيرادها من اللوحة بعد إصلاح الاتصال.
+       */
     }
 
     try {

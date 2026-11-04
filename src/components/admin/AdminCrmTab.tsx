@@ -52,7 +52,6 @@ import {
   createCrmLead,
   deleteCrmLead,
   deleteCrmTask,
-  hasCrmStore,
   importInquiryLeads,
   importLocalCrmLeads,
   toggleCrmTask,
@@ -166,6 +165,7 @@ export default function AdminCrmTab({ users, can, notify, reloadLogs }: Props) {
   const [sourceFilter, setSourceFilter] = useState<"all" | CrmSource>("all");
   const [assigneeFilter, setAssigneeFilter] = useState("all");
   const [overdueOnly, setOverdueOnly] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [view, setView] = useState<"board" | "list">("board");
   const [createOpen, setCreateOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -184,13 +184,6 @@ export default function AdminCrmTab({ users, can, notify, reloadLogs }: Props) {
     reloadLogs();
   };
 
-  /* أول فتح فقط: نسحب الطلبات القديمة حتى لا تظهر الشاشة فارغة */
-  useEffect(() => {
-    if (!hasCrmStore()) {
-      importLocalCrmLeads();
-    }
-  }, []);
-
   const activeLead = useMemo(
     () => leads.find((lead) => lead.id === activeId) ?? null,
     [leads, activeId]
@@ -200,6 +193,7 @@ export default function AdminCrmTab({ users, can, notify, reloadLogs }: Props) {
     const needle = query.trim().toLowerCase();
     return leads
       .filter((lead) => {
+        if (showArchived ? !lead.archived : lead.archived) return false;
         if (stageFilter !== "all" && lead.stage !== stageFilter) return false;
         if (sourceFilter !== "all" && lead.source !== sourceFilter) return false;
         if (assigneeFilter !== "all") {
@@ -229,21 +223,30 @@ export default function AdminCrmTab({ users, can, notify, reloadLogs }: Props) {
           .includes(needle);
       })
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  }, [leads, query, stageFilter, sourceFilter, assigneeFilter, overdueOnly]);
+  }, [
+    leads,
+    query,
+    stageFilter,
+    sourceFilter,
+    assigneeFilter,
+    overdueOnly,
+    showArchived,
+  ]);
 
   const stats = useMemo(() => {
-    const total = leads.length;
-    const won = leads.filter((lead) => lead.stage === "won").length;
-    const active = leads.filter((lead) =>
+    const visible = leads.filter((lead) => !lead.archived);
+    const total = visible.length;
+    const won = visible.filter((lead) => lead.stage === "won").length;
+    const active = visible.filter((lead) =>
       ["contacted", "viewing", "negotiation"].includes(lead.stage)
     ).length;
-    const overdue = leads.reduce(
+    const overdue = visible.reduce(
       (count, lead) => count + lead.tasks.filter(isOverdue).length,
       0
     );
     return {
       total,
-      fresh: leads.filter((lead) => lead.stage === "new").length,
+      fresh: visible.filter((lead) => lead.stage === "new").length,
       active,
       won,
       overdue,
@@ -255,7 +258,7 @@ export default function AdminCrmTab({ users, can, notify, reloadLogs }: Props) {
     setImporting(true);
     let added = 0;
     try {
-      added += importLocalCrmLeads();
+      added += await importLocalCrmLeads();
       const response = await fetch("/api/admin/inquiries", {
         cache: "no-store",
       });
@@ -263,7 +266,7 @@ export default function AdminCrmTab({ users, can, notify, reloadLogs }: Props) {
         const data = (await response.json()) as {
           rows?: Parameters<typeof importInquiryLeads>[0];
         };
-        added += importInquiryLeads(data.rows ?? []);
+        added += await importInquiryLeads(data.rows ?? []);
       }
       notify(
         added > 0
@@ -271,8 +274,12 @@ export default function AdminCrmTab({ users, can, notify, reloadLogs }: Props) {
           : "كل الطلبات الحالية موجودة بالفعل في الـCRM"
       );
       if (added > 0) log("استيراد العملاء", `تمت إضافة ${added} عميل`);
-    } catch {
-      notify("تعذر استيراد بعض الطلبات — حاول مرة أخرى");
+    } catch (error) {
+      notify(
+        error instanceof Error
+          ? error.message
+          : "تعذر استيراد بعض الطلبات — حاول مرة أخرى"
+      );
     } finally {
       setImporting(false);
     }
@@ -337,14 +344,17 @@ export default function AdminCrmTab({ users, can, notify, reloadLogs }: Props) {
     notify(`تم تصدير ${filtered.length} عميل إلى ملف Excel/CSV`);
   };
 
-  const moveLead = (id: string, stage: CrmStage) => {
+  const moveLead = async (id: string, stage: CrmStage) => {
     if (!canManage) {
       notify("لا تملك صلاحية تعديل مرحلة العميل");
       return;
     }
-    if (changeCrmStage(id, stage, actor)) {
+    try {
+      if (!(await changeCrmStage(id, stage, actor))) return;
       notify(`تم نقل العميل إلى «${CRM_STAGE_LABEL[stage]}»`);
       log("تغيير مرحلة عميل", `المرحلة الجديدة: ${CRM_STAGE_LABEL[stage]}`);
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "تعذر تغيير المرحلة");
     }
   };
 
@@ -499,6 +509,18 @@ export default function AdminCrmTab({ users, can, notify, reloadLogs }: Props) {
             >
               <AlertTriangle className="h-3.5 w-3.5" /> متأخر فقط
             </button>
+            <button
+              type="button"
+              onClick={() => setShowArchived((value) => !value)}
+              className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[11.5px] font-bold transition ${
+                showArchived
+                  ? "border-slate-400 bg-slate-100 text-slate-800"
+                  : "border-sand-200 bg-white text-sand-700 hover:bg-sand-50"
+              }`}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              {showArchived ? "العملاء النشطون" : "الأرشيف"}
+            </button>
             <div className="ms-auto inline-flex rounded-xl border border-sand-200 bg-white p-0.5">
               <button
                 type="button"
@@ -527,7 +549,7 @@ export default function AdminCrmTab({ users, can, notify, reloadLogs }: Props) {
             </div>
           </div>
           <p className="text-[10.5px] font-semibold text-sand-500">
-            {filtered.length} من {leads.length} عميل — اسحب البطاقة بين الأعمدة
+            {filtered.length} عميل {showArchived ? "مؤرشف" : "نشط"} — اسحب البطاقة بين الأعمدة
             لتغيير المرحلة، أو افتح العميل لمتابعة التفاصيل.
           </p>
         </div>
@@ -778,8 +800,8 @@ export default function AdminCrmTab({ users, can, notify, reloadLogs }: Props) {
           onLog={log}
           onDeleted={() => {
             setActiveId(null);
-            notify("تم حذف العميل");
-            log("حذف عميل", `تم حذف العميل «${activeLead.name}»`);
+            notify("تمت أرشفة العميل ويمكن استرجاعه لاحقًا");
+            log("أرشفة عميل", `تمت أرشفة العميل «${activeLead.name}»`);
           }}
         />
       )}
@@ -953,33 +975,46 @@ function CreateLeadModal({
   const [tags, setTags] = useState("");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const submit = () => {
+  const submit = async () => {
     if (!name.trim()) {
       setError("اسم العميل مطلوب");
       return;
     }
     const assignee = users.find((user) => user.id === assignedTo);
-    const lead = createCrmLead({
-      name,
-      phone,
-      email,
-      source,
-      interest,
-      city,
-      budget: budget.trim() ? Number(budget) : undefined,
-      stage,
-      assignedTo: canAssign ? assignedTo || undefined : undefined,
-      assignedToName: canAssign ? assignee?.name : undefined,
-      tags: tags.split(/[,،]/),
-      notes,
-      createdBy: actor,
-    });
-    if (!lead) {
-      setError("تعذر حفظ العميل — تحقق من البيانات وحاول مرة أخرى");
-      return;
+    setSaving(true);
+    setError("");
+    try {
+      const lead = await createCrmLead({
+        name,
+        phone,
+        email,
+        source,
+        interest,
+        city,
+        budget: budget.trim() ? Number(budget) : undefined,
+        stage,
+        assignedTo: canAssign ? assignedTo || undefined : undefined,
+        assignedToName: canAssign ? assignee?.name : undefined,
+        tags: tags.split(/[,،]/),
+        notes,
+        createdBy: actor,
+      });
+      if (!lead) {
+        setError("تعذر حفظ العميل — تحقق من البيانات وحاول مرة أخرى");
+        return;
+      }
+      onCreated(lead);
+    } catch (saveError) {
+      setError(
+        saveError instanceof Error
+          ? saveError.message
+          : "تعذر حفظ العميل — حاول مرة أخرى"
+      );
+    } finally {
+      setSaving(false);
     }
-    onCreated(lead);
   };
 
   return (
@@ -1166,8 +1201,14 @@ function CreateLeadModal({
         >
           إلغاء
         </button>
-        <button type="button" onClick={submit} className={BTN_GOLD}>
-          <UserPlus className="h-4 w-4" /> حفظ العميل
+        <button
+          type="button"
+          onClick={submit}
+          disabled={saving}
+          className={BTN_GOLD}
+        >
+          <UserPlus className="h-4 w-4" />
+          {saving ? "جارٍ الحفظ..." : "حفظ العميل"}
         </button>
       </div>
     </ModalShell>
@@ -1218,12 +1259,13 @@ function LeadDetailModal({
   const stage = CRM_STAGE_LABEL[lead.stage];
   const digits = waNumber(lead.phone);
 
-  const saveNote = () => {
+  const saveNote = async () => {
     if (!note.trim()) {
       setError("اكتب نص الملاحظة أو سجل التواصل أولًا");
       return;
     }
-    if (addCrmActivity(lead.id, noteKind, note, actor)) {
+    try {
+      if (!(await addCrmActivity(lead.id, noteKind, note, actor))) return;
       setNote("");
       setError("");
       onNotify("تمت إضافة السجل");
@@ -1231,10 +1273,12 @@ function LeadDetailModal({
         "تسجيل تواصل",
         `${CRM_ACTIVITY_LABEL[noteKind]} مع العميل «${lead.name}»`
       );
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "تعذر حفظ السجل");
     }
   };
 
-  const saveTask = () => {
+  const saveTask = async () => {
     if (!taskTitle.trim()) {
       setError("اكتب عنوان المهمة");
       return;
@@ -1243,38 +1287,67 @@ function LeadDetailModal({
     const iso = Number.isFinite(due.getTime())
       ? due.toISOString()
       : new Date().toISOString();
-    if (addCrmTask(lead.id, taskTitle, iso, actor)) {
+    try {
+      if (!(await addCrmTask(lead.id, taskTitle, iso, actor))) return;
       setTaskTitle("");
       setTaskDue(defaultTaskDue());
       setError("");
       onNotify("تمت إضافة المهمة");
       onLog("إضافة مهمة", `مهمة متابعة للعميل «${lead.name}»`);
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "تعذر حفظ المهمة");
     }
   };
 
-  const saveTags = () => {
+  const saveTags = async () => {
     const tags = tagsText
       .split(/[,،]/)
       .map((tag) => tag.trim())
       .filter(Boolean);
-    if (updateCrmLead(lead.id, { tags })) {
+    try {
+      if (!(await updateCrmLead(lead.id, { tags }))) return;
       onNotify("تم حفظ الوسوم");
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "تعذر حفظ الوسوم");
     }
   };
 
-  const saveNotes = () => {
-    if (updateCrmLead(lead.id, { notes: notesText.trim() || undefined })) {
+  const saveNotes = async () => {
+    try {
+      if (
+        !(await updateCrmLead(lead.id, {
+          notes: notesText.trim() || undefined,
+        }))
+      )
+        return;
       onNotify("تم حفظ الملاحظات");
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "تعذر حفظ الملاحظات");
     }
   };
 
-  const removeLead = () => {
+  const removeLead = async () => {
     if (!canManage) return;
+    if (lead.archived) {
+      try {
+        await updateCrmLead(lead.id, { archived: false });
+        onNotify("تم استرجاع العميل إلى القائمة النشطة");
+        onLog("استرجاع عميل", `تم استرجاع العميل «${lead.name}»`);
+        onClose();
+      } catch (saveError) {
+        setError(saveError instanceof Error ? saveError.message : "تعذر استرجاع العميل");
+      }
+      return;
+    }
     const confirmed = window.confirm(
-      `هل أنت متأكد من حذف العميل «${lead.name}»؟ لا يمكن التراجع.`
+      `هل تريد أرشفة العميل «${lead.name}»؟ يمكن استرجاعه من الأرشيف.`
     );
     if (!confirmed) return;
-    if (deleteCrmLead(lead.id)) onDeleted();
+    try {
+      if (await deleteCrmLead(lead.id)) onDeleted();
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "تعذر أرشفة العميل");
+    }
   };
 
   const assigned = users.find((user) => user.id === lead.assignedTo);
@@ -1329,13 +1402,20 @@ function LeadDetailModal({
                   key={item.key}
                   type="button"
                   disabled={!canManage}
-                  onClick={() => {
+                  onClick={async () => {
                     if (!canManage || item.key === lead.stage) return;
-                    if (changeCrmStage(lead.id, item.key, actor)) {
+                    try {
+                      if (!(await changeCrmStage(lead.id, item.key, actor))) return;
                       onNotify(`تم نقل العميل إلى «${item.label}»`);
                       onLog(
                         "تغيير مرحلة عميل",
                         `«${lead.name}» → ${item.label}`
+                      );
+                    } catch (saveError) {
+                      setError(
+                        saveError instanceof Error
+                          ? saveError.message
+                          : "تعذر تغيير المرحلة"
                       );
                     }
                   }}
@@ -1357,17 +1437,19 @@ function LeadDetailModal({
                 </span>
                 <select
                   value={lead.assignedTo ?? ""}
-                  onChange={(event) => {
+                  onChange={async (event) => {
                     const userId = event.target.value;
                     const user = users.find((item) => item.id === userId);
-                    if (
-                      assignCrmLead(
+                    try {
+                      if (
+                        !(await assignCrmLead(
                         lead.id,
                         userId || undefined,
                         user?.name,
                         actor
+                        ))
                       )
-                    ) {
+                        return;
                       onNotify(
                         user ? `تم إسناد العميل إلى ${user.name}` : "تم إلغاء الإسناد"
                       );
@@ -1376,6 +1458,12 @@ function LeadDetailModal({
                         user
                           ? `«${lead.name}» → ${user.name}`
                           : `إلغاء إسناد «${lead.name}»`
+                      );
+                    } catch (saveError) {
+                      setError(
+                        saveError instanceof Error
+                          ? saveError.message
+                          : "تعذر إسناد العميل"
                       );
                     }
                   }}
@@ -1544,9 +1632,17 @@ function LeadDetailModal({
                     <button
                       type="button"
                       disabled={!canManage}
-                      onClick={() =>
-                        toggleCrmTask(lead.id, task.id, !task.done)
-                      }
+                      onClick={async () => {
+                        try {
+                          await toggleCrmTask(lead.id, task.id, !task.done);
+                        } catch (saveError) {
+                          setError(
+                            saveError instanceof Error
+                              ? saveError.message
+                              : "تعذر تعديل المهمة"
+                          );
+                        }
+                      }}
                       aria-label={task.done ? "إعادة فتح المهمة" : "إنجاز المهمة"}
                       className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition ${
                         task.done
@@ -1578,7 +1674,17 @@ function LeadDetailModal({
                     {canManage && (
                       <button
                         type="button"
-                        onClick={() => deleteCrmTask(lead.id, task.id)}
+                        onClick={async () => {
+                          try {
+                            await deleteCrmTask(lead.id, task.id);
+                          } catch (saveError) {
+                            setError(
+                              saveError instanceof Error
+                                ? saveError.message
+                                : "تعذر حذف المهمة"
+                            );
+                          }
+                        }}
                         aria-label="حذف المهمة"
                         className="rounded-lg p-1 text-sand-400 transition hover:bg-rose-50 hover:text-rose-600"
                       >
@@ -1737,7 +1843,8 @@ function LeadDetailModal({
               onClick={removeLead}
               className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[10.5px] font-bold text-rose-700 transition hover:bg-rose-100"
             >
-              <Trash2 className="h-3.5 w-3.5" /> حذف العميل نهائيًا
+              <Trash2 className="h-3.5 w-3.5" />
+              {lead.archived ? "استرجاع العميل" : "أرشفة العميل"}
             </button>
           )}
         </div>

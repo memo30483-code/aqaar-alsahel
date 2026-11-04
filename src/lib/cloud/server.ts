@@ -44,6 +44,55 @@ function requireCloud(): void {
   }
 }
 
+export class CloudRestError extends Error {
+  status: number;
+  body: string;
+
+  constructor(status: number, body: string) {
+    super(`Supabase REST ${status}: ${body}`);
+    this.name = "CloudRestError";
+    this.status = status;
+    this.body = body;
+  }
+}
+
+/**
+ * طلب داخلي عام إلى PostgREST. يبقى مفتاح service_role على السيرفر فقط.
+ * يُستخدم للجداول العلاقية التي لا تمر عبر app_state، مثل جداول CRM.
+ */
+export async function cloudRest<T>(
+  resource: string,
+  options: {
+    method?: "GET" | "POST" | "PATCH" | "DELETE";
+    body?: unknown;
+    prefer?: string;
+  } = {}
+): Promise<T> {
+  requireCloud();
+  const safeResource = resource.replace(/^\/+/, "");
+  if (!safeResource || safeResource.includes("..")) {
+    throw new Error("مسار Supabase غير صالح");
+  }
+
+  const response = await fetch(`${supabaseUrl()}/rest/v1/${safeResource}`, {
+    method: options.method ?? "GET",
+    headers: headers(
+      options.prefer ? { Prefer: options.prefer } : {}
+    ),
+    ...(options.body === undefined
+      ? {}
+      : { body: JSON.stringify(options.body) }),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new CloudRestError(response.status, await response.text());
+  }
+  if (response.status === 204) return undefined as T;
+  const text = await response.text();
+  return (text ? JSON.parse(text) : undefined) as T;
+}
+
 /**
  * قراءة صفوف الحالة من قاعدة البيانات.
  * `publicOnly` يحصر النتيجة في ما يُسمح بعرضه للزوار.

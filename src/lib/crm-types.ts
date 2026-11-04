@@ -25,6 +25,8 @@ export type CrmSource =
   | "manual"
   | "app";
 
+export type CrmPriority = "hot" | "warm" | "cold";
+
 export type CrmActivityKind =
   | "note"
   | "call"
@@ -72,6 +74,15 @@ export interface CrmLead {
   tags: string[];
   notes?: string;
   reference?: string;
+  archived?: boolean;
+  priority?: CrmPriority;
+  /** قيمة الفرصة أو الصفقة بالجنيه */
+  dealValue?: number;
+  /** العمولة المتوقعة أو المحققة بالجنيه */
+  commission?: number;
+  wonAt?: string;
+  /** رقم نسخة الصف لمنع الكتابة فوق تعديل أحدث من جهاز آخر */
+  version?: number;
   activities: CrmActivity[];
   tasks: CrmTask[];
   createdAt: string;
@@ -139,6 +150,18 @@ export const CRM_SOURCE_LABEL: Record<CrmSource, string> = {
   professional: "طلب مهني",
   manual: "إضافة يدوية",
   app: "اهتمام بالتطبيق",
+};
+
+export const CRM_PRIORITY_LABEL: Record<CrmPriority, string> = {
+  hot: "ساخن",
+  warm: "دافئ",
+  cold: "بارد",
+};
+
+export const CRM_PRIORITY_STYLE: Record<CrmPriority, string> = {
+  hot: "border-rose-200 bg-rose-50 text-rose-700",
+  warm: "border-amber-200 bg-amber-50 text-amber-700",
+  cold: "border-slate-200 bg-slate-50 text-slate-600",
 };
 
 export const CRM_ACTIVITY_LABEL: Record<CrmActivityKind, string> = {
@@ -276,6 +299,26 @@ export function normalizeCrmLead(raw: unknown): CrmLead | null {
       : [],
     notes: asString(item.notes) || undefined,
     reference: asString(item.reference) || undefined,
+    archived: item.archived === true || undefined,
+    priority:
+      item.priority === "hot" ||
+      item.priority === "warm" ||
+      item.priority === "cold"
+        ? item.priority
+        : "warm",
+    dealValue:
+      typeof item.dealValue === "number" && Number.isFinite(item.dealValue)
+        ? item.dealValue
+        : undefined,
+    commission:
+      typeof item.commission === "number" && Number.isFinite(item.commission)
+        ? item.commission
+        : undefined,
+    wonAt: asString(item.wonAt) || undefined,
+    version:
+      typeof item.version === "number" && Number.isFinite(item.version)
+        ? item.version
+        : undefined,
     activities,
     tasks,
     createdAt: created,
