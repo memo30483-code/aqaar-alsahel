@@ -8,6 +8,7 @@ import {
   isPublicCloudKey,
 } from "@/lib/cloud/keys";
 import { cloudEnabled, cloudGetRows, cloudPutRow } from "@/lib/cloud/server";
+import { sanitizePublicCloudRows } from "@/lib/cloud/privacy";
 
 /**
  * بوابة الحالة المشتركة.
@@ -71,10 +72,13 @@ export async function GET(request: Request) {
     }
 
     const includePrivate = Boolean(session) && (wantsAll || Boolean(requested));
-    const rows = await cloudGetRows({
+    const storedRows = await cloudGetRows({
       keys,
       publicOnly: !includePrivate,
     });
+    const rows = includePrivate
+      ? storedRows
+      : sanitizePublicCloudRows(storedRows);
 
     const mapped: Record<string, { value: unknown; updated_at: string }> = {};
     for (const row of rows) {

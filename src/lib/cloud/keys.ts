@@ -21,16 +21,18 @@ export const CLOUD_KEYS: Record<string, CloudKeyMeta> = {
   "aqaar-site-settings": { public: true, label: "إعدادات الموقع والهوية" },
   "aqaar-cities": { public: true, label: "المدن" },
   "aqaar-company-info": { public: true, label: "بيانات الشركة" },
-  "aqaar-admin-developers-v2": { public: true, label: "المطورون" },
+  "aqaar-admin-developers-v2": { public: false, label: "بيانات المطورين الإدارية" },
   "aqaar-offers": { public: true, label: "العروض" },
   "aqaar-offers-settings": { public: true, label: "إعدادات العروض" },
   "aqaar-marquee-items": { public: true, label: "الشريط المتحرك" },
+  /* تُعرض للعامة بعد تنقية المستندات ورمز الملكية داخل cloud/privacy.ts */
   "aqaar-professionals": { public: true, label: "المحامون والمهندسون" },
   "aqaar-page-builder-v1": { public: true, label: "محتوى الصفحات" },
   "aqaar-home-builder": { public: true, label: "محتوى الرئيسية (قديم)" },
   "aqaar-admin-listing-overrides-v2": { public: true, label: "حالة نشر الإعلانات" },
   "aqaar-add-property-fields": { public: true, label: "حقول إضافة العقار" },
   "aqaar-add-property-options": { public: true, label: "خيارات إضافة العقار" },
+  /* تُعرض للعامة بعد حذف بيانات المالك والمستندات وقصرها على المعتمد */
   "aqaar-properties": { public: true, label: "العقارات" },
 
   "aqaar-admin-users-v2": { public: false, label: "حسابات الإدارة" },

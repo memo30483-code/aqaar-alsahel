@@ -71,11 +71,14 @@ export default async function RootLayout({
           suppressHydrationWarning: السكربت يضيف data-season-theme/style على <html>
           قبل الـhydration — وهو السلوك المقصود لمنع الومضة.
         */}
+        {/*
+          حالة السحابة أولاً، ثم يقرأ منها سكربتا الموسم والهوية في نفس الرسم.
+          هذا يمنع ومضة الألوان/الشعار الافتراضي عند أول زيارة من جهاز جديد.
+        */}
+        <script dangerouslySetInnerHTML={{ __html: cloudBootScript(cloud) }} />
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
         {/* حقن الهوية (الخطوط/الأحجام/ألوان العلامة/الفافيكون) قبل أول رسم */}
         <script dangerouslySetInnerHTML={{ __html: BRANDING_BOOT_SCRIPT }} />
-        {/* حقن آخر حالة من قاعدة البيانات — يجعل تعديلات الأدمن عامة */}
-        <script dangerouslySetInnerHTML={{ __html: cloudBootScript(cloud) }} />
       </head>
       <body
         className={`${cairo.variable} ${tajawal.variable} ${amiri.variable} ${readex.variable} font-sans antialiased min-h-screen flex flex-col`}

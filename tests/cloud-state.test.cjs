@@ -22,9 +22,11 @@ function loadTs(relativeFile, deps = {}) {
 }
 
 const keys = loadTs("src/lib/cloud/keys.ts");
+const privacy = loadTs("src/lib/cloud/privacy.ts", { "./keys": keys });
 const boot = loadTs("src/lib/cloud/boot.ts", {
   "./server": { cloudEnabled: () => false, cloudGetRows: async () => [] },
   "./keys": keys,
+  "./privacy": privacy,
 });
 
 /** تنفيذ سكربت الحقن داخل بيئة متصفح مصغّرة */
@@ -146,4 +148,94 @@ test("boot marks the cloud as disabled when Supabase is not configured", () => {
   assert.equal(window.__AQAAR_CLOUD__.enabled, false);
   assert.deepEqual(window.__AQAAR_CLOUD__.omitted, ["aqaar-properties"]);
   assert.equal(store.size, 0);
+});
+
+test("public cloud state never exposes owner contact or property documents", () => {
+  const rows = privacy.sanitizePublicCloudRows([
+    {
+      key: "aqaar-admin-listing-overrides-v2",
+      value: {
+        approved: {
+          status: "approved",
+          assignedTo: "admin-secret",
+          assignedToName: "Internal Admin",
+        },
+        pending: { status: "pending" },
+      },
+      is_public: true,
+      updated_at: AT,
+    },
+    {
+      key: "aqaar-properties",
+      value: [
+        {
+          id: "approved",
+          title: "Visible",
+          whatsapp: "201000000000",
+          documents: [{ name: "owner-deed.pdf" }],
+          images: [],
+        },
+        {
+          id: "pending",
+          title: "Hidden",
+          whatsapp: "201111111111",
+          documents: [{ name: "private.pdf" }],
+        },
+      ],
+      is_public: true,
+      updated_at: AT,
+    },
+  ]);
+
+  const properties = rows.find((row) => row.key === "aqaar-properties").value;
+  assert.equal(properties.length, 1);
+  assert.equal(properties[0].id, "approved");
+  assert.equal(properties[0].whatsapp, "");
+  assert.equal("documents" in properties[0], false);
+
+  const overrides = rows.find(
+    (row) => row.key === "aqaar-admin-listing-overrides-v2"
+  ).value;
+  assert.equal("assignedTo" in overrides.approved, false);
+  assert.equal("assignedToName" in overrides.approved, false);
+});
+
+test("public professionals contain approved profiles only and no ownership secrets", () => {
+  const rows = privacy.sanitizePublicCloudRows([
+    {
+      key: "aqaar-professionals",
+      value: [
+        {
+          id: "pro-1",
+          status: "approved",
+          nameAr: "مهني معتمد",
+          ownerToken: "secret-owner-token",
+          reviewNote: "internal note",
+          documents: [{ url: "private-document" }],
+          projects: [
+            { id: "ok", status: "approved", history: [{ note: "private" }] },
+            { id: "wait", status: "pending" },
+          ],
+        },
+        { id: "pro-2", status: "pending", ownerToken: "secret" },
+      ],
+      is_public: true,
+      updated_at: AT,
+    },
+    {
+      key: "aqaar-admin-users-v2",
+      value: [{ email: "private@example.com" }],
+      is_public: false,
+      updated_at: AT,
+    },
+  ]);
+
+  assert.equal(rows.some((row) => row.key === "aqaar-admin-users-v2"), false);
+  const professionals = rows[0].value;
+  assert.equal(professionals.length, 1);
+  assert.equal("ownerToken" in professionals[0], false);
+  assert.equal("documents" in professionals[0], false);
+  assert.equal("reviewNote" in professionals[0], false);
+  assert.equal(professionals[0].projects.length, 1);
+  assert.equal("history" in professionals[0].projects[0], false);
 });

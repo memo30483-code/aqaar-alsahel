@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Cloud, CloudOff, Download, RefreshCw, Upload } from "lucide-react";
-import { CLOUD_KEYS } from "@/lib/cloud/keys";
+import { collectCloudSnapshot } from "@/lib/cloud/snapshot";
 import { BTN_PRIMARY, Panel } from "@/components/admin/shared";
 
 interface Props {
@@ -39,16 +39,7 @@ export default function AdminCloudPanel({ notify }: Props) {
   const pushAll = async () => {
     setBusy("push");
     try {
-      const entries: { key: string; value: unknown }[] = [];
-      for (const key of Object.keys(CLOUD_KEYS)) {
-        const raw = localStorage.getItem(key);
-        if (!raw) continue;
-        try {
-          entries.push({ key, value: JSON.parse(raw) });
-        } catch {
-          /* قيمة تالفة — نتجاهلها */
-        }
-      }
+      const entries = collectCloudSnapshot();
 
       if (!entries.length) {
         notify("لا يوجد محتوى محلي لرفعه بعد");

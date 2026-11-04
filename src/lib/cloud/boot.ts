@@ -9,6 +9,7 @@
  */
 
 import { cloudEnabled, cloudGetRows } from "./server";
+import { sanitizePublicCloudRows } from "./privacy";
 
 export interface CloudBootEntry {
   value: unknown;
@@ -33,7 +34,8 @@ export async function loadCloudBoot(): Promise<CloudBootResult> {
   }
 
   try {
-    const rows = await cloudGetRows({ publicOnly: true, revalidate: 60 });
+    const storedRows = await cloudGetRows({ publicOnly: true, revalidate: 60 });
+    const rows = sanitizePublicCloudRows(storedRows);
     const payload: CloudBootPayload = {};
     const omitted: string[] = [];
 
