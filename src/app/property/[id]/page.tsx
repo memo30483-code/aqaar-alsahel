@@ -10,7 +10,7 @@ interface PageProps {
 }
 
 /** معرّف إعلان أضافه مستخدم — يُحلّ على العميل من التخزين المحلي */
-const USER_PROPERTY_ID = /^user-\d+$/;
+const USER_PROPERTY_ID = /^user-[0-9a-z]+(?:-[0-9a-z]+)*$/i;
 
 export function generateStaticParams() {
   return mockProperties.map((p) => ({ id: p.id }));

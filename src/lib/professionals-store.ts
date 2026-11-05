@@ -1997,6 +1997,33 @@ export function addProfessionalRequest(input: {
       error: "تعذّر إرسال الطلب — مساحة التخزين في المتصفح ممتلئة أو غير متاحة",
     };
   }
+  /*
+   * نسخة السيرفر: تُحفظ في inquiries وتُنشئ بطاقة CRM تلقائيًا، حتى لا
+   * يعتمد وصول الطلب للإدارة على متصفح الزائر أو على الاستيراد اليدوي.
+   */
+  try {
+    void fetch("/api/requests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({
+        kind: "professional_request",
+        name: input.name.trim(),
+        phone: input.phone.trim(),
+        email: input.email?.trim() || undefined,
+        message: input.message.trim(),
+        payload: {
+          professionalId: input.professionalId,
+          professionalName: input.professionalName,
+          requestKind: input.kind,
+        },
+      }),
+    }).catch(() => {
+      /* الطلب محفوظ محليًا ويمكن استيراده لاحقًا */
+    });
+  } catch {
+    /* لا نُفشل إرسال الطلب بسبب الشبكة */
+  }
   return { ok: true };
 }
 

@@ -166,6 +166,57 @@ test("public inquiries import while property inquiries are skipped as duplicates
   assert.equal(lead.stage, "new");
 });
 
+test("professional and app requests map to automatic crm leads", () => {
+  const professional = crm.inquiryLead({
+    id: "inq-3",
+    kind: "professional_request",
+    name: "سارة",
+    phone: "201111111111",
+    message: "محتاجة مراجعة عقد",
+    payload: { professionalName: "أ. محمود" },
+    created_at: AT,
+  });
+  assert.equal(professional.sourceRef, "inquiry:inq-3");
+  assert.deepEqual(professional.tags, ["طلب مهني", "أ. محمود"]);
+  assert.equal(professional.notes, "محتاجة مراجعة عقد");
+
+  const app = crm.inquiryLead({
+    id: "inq-4",
+    kind: "app_interest",
+    name: "sara@example.com",
+    email: "sara@example.com",
+    created_at: AT,
+  });
+  assert.equal(app.sourceRef, "inquiry:inq-4");
+  assert.deepEqual(app.tags, ["تطبيق"]);
+  assert.equal(app.email, "sara@example.com");
+});
+
+test("public request api stores the inquiry then creates a crm lead", () => {
+  const source = fs.readFileSync(
+    path.join(__dirname, "..", "src/app/api/requests/route.ts"),
+    "utf8"
+  );
+  assert.match(source, /sameOrigin\(request\)/);
+  assert.match(source, /cloudInsertInquiry\(/);
+  assert.match(source, /cloudCreateCrmLead\(lead, "الموقع"\)/);
+  assert.match(source, /MAX_REQUESTS/);
+});
+
+test("user property identifiers with uuid suffixes are accepted", () => {
+  const source = fs.readFileSync(
+    path.join(__dirname, "..", "src/app/property/[id]/page.tsx"),
+    "utf8"
+  );
+  const literal = source.match(/const USER_PROPERTY_ID = \/(.+)\/i;/);
+  assert.ok(literal, "USER_PROPERTY_ID regular expression not found");
+  const pattern = new RegExp(literal[1], "i");
+  assert.ok(pattern.test("user-1793813712442-1817a610"));
+  assert.ok(pattern.test("user-1"));
+  assert.ok(!pattern.test("admin"));
+  assert.ok(!pattern.test("../../etc/passwd"));
+});
+
 test("every crm stage has an Arabic label and a visual style", () => {
   for (const stage of crm.CRM_STAGES) {
     assert.ok(crm.CRM_STAGE_LABEL[stage.key]);

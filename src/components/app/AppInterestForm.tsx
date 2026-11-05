@@ -24,8 +24,22 @@ export default function AppInterestForm({
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!email.trim() || !target) return;
+    const value = email.trim();
+    /* حفظ الطلب في قاعدة البيانات وإنشاء بطاقة CRM تلقائيًا */
+    void fetch("/api/requests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({
+        kind: "app_interest",
+        email: value,
+        message: "تسجيل اهتمام بتطبيق عقار FAMILY",
+      }),
+    }).catch(() => {
+      /* البريد الاحتياطي يظل متاحًا حتى لو تعذر الاتصال */
+    });
     const subject = "تسجيل اهتمام بتطبيق عقار FAMILY";
-    const body = `مرحبًا،\nأرغب في تحميل تطبيق عقار FAMILY فور نزوله.\nبريدي: ${email.trim()}\n`;
+    const body = `مرحبًا،\nأرغب في تحميل تطبيق عقار FAMILY فور نزوله.\nبريدي: ${value}\n`;
     window.location.href = `mailto:${target}?subject=${encodeURIComponent(
       subject
     )}&body=${encodeURIComponent(body)}`;

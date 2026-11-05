@@ -434,6 +434,22 @@ export function inquiryLead(row: CrmInquiryRow): CrmLead | null {
     (row.email || "").trim() ||
     (row.phone || "").trim() ||
     "استفسار جديد";
+  const professionalName =
+    typeof row.payload?.professionalName === "string"
+      ? row.payload.professionalName.trim()
+      : "";
+  const kindLabel =
+    row.kind === "professional_request"
+      ? "طلب تواصل مهني"
+      : row.kind === "app_interest"
+        ? "اهتمام بتطبيق عقار FAMILY"
+        : "استفسار من الموقع";
+  const tags =
+    row.kind === "professional_request"
+      ? ["طلب مهني", ...(professionalName ? [professionalName] : [])]
+      : row.kind === "app_interest"
+        ? ["تطبيق"]
+        : ["استفسار"];
   return {
     id: newCrmId("lead"),
     name,
@@ -442,12 +458,12 @@ export function inquiryLead(row: CrmInquiryRow): CrmLead | null {
     source: "inquiry",
     sourceLabel: CRM_SOURCE_LABEL.inquiry,
     sourceRef: `inquiry:${row.id}`,
-    interest: (row.message || "").trim().slice(0, 160) || "استفسار من الموقع",
+    interest: (row.message || "").trim().slice(0, 160) || kindLabel,
     stage: "new",
-    tags: ["استفسار"],
+    tags,
     notes: row.message || undefined,
     activities: [
-      baseActivity("تم استلام استفسار من الموقع.", created, "الموقع"),
+      baseActivity(`تم استلام ${kindLabel} من الموقع.`, created, "الموقع"),
     ],
     tasks: [],
     createdAt: created,
