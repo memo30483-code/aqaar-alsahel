@@ -36,6 +36,7 @@ import {
   type ProfessionalRecord,
 } from "@/lib/professionals-store";
 import ReelGallery from "@/components/professionals/ReelGallery";
+import ReviewsSection from "@/components/reviews/ReviewsSection";
 
 interface Props {
   kind: ProfessionalKind;
@@ -428,6 +429,12 @@ function ProfileContent({
               <ReelGallery reels={record.reels} />
             )}
           </section>
+
+          <ReviewsSection
+            entityType={kind === "developer" ? "developer" : "professional"}
+            entityId={record.id}
+            entityName={displayName}
+          />
         </main>
 
         <aside className="space-y-4">

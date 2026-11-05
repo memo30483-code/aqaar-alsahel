@@ -27,6 +27,7 @@ import { useSiteSettings } from "@/lib/site-settings";
 import ImageSlider from "./ImageSlider";
 import InstallmentCard from "./InstallmentCard";
 import PropertyDetailMapDynamic from "./PropertyDetailMapDynamic";
+import ReviewsSection from "@/components/reviews/ReviewsSection";
 
 interface Props {
   property: Property;
@@ -422,6 +423,12 @@ export default function PropertyDetail({ property }: Props) {
                 <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
               </Link>
             </section>
+
+            <ReviewsSection
+              entityType="property"
+              entityId={property.id}
+              entityName={property.title}
+            />
           </div>
         </div>
       </div>

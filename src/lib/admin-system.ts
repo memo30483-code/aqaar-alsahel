@@ -38,6 +38,7 @@ export interface Permission {
     | "logs"
     | "professionals"
     | "crm"
+    | "reviews"
     | "settings";
 }
 
@@ -205,6 +206,7 @@ export interface AdminLog {
     | "auth"
     | "professionals"
     | "crm"
+    | "reviews"
     | "settings";
   performedBy: string;
   performedByName: string;
@@ -253,6 +255,8 @@ export const ALL_PERMISSIONS: Permission[] = [
   { id: "p25", key: "crm.view", labelAr: "عرض العملاء والفرص", labelEn: "View CRM Leads", category: "crm" },
   { id: "p26", key: "crm.manage", labelAr: "إدارة العملاء والمهام", labelEn: "Manage CRM Leads & Tasks", category: "crm" },
   { id: "p27", key: "crm.assign", labelAr: "إسناد العملاء للموظفين", labelEn: "Assign CRM Leads", category: "crm" },
+  { id: "p28", key: "reviews.view", labelAr: "عرض التقييمات", labelEn: "View Reviews", category: "reviews" },
+  { id: "p29", key: "reviews.manage", labelAr: "إدارة التقييمات والردود", labelEn: "Manage Reviews & Replies", category: "reviews" },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {
@@ -267,6 +271,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     "banners.manage",
     "professionals.view", "professionals.manage",
     "crm.view", "crm.manage", "crm.assign",
+    "reviews.view", "reviews.manage",
     "logs.view",
     /* الأدمن يملك التحكم الكامل في الإعدادات افتراضياً (كان يُمنح عبر تجاوز الدور) */
     "settings.full",
@@ -275,7 +280,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     "listings.view", "listings.approve", "listings.reject", "listings.edit", 
     "listings.archive", "listings.assign", "listings.feature",
     "offers.view", "offers.manage",
-    "crm.view", "crm.manage"
+    "crm.view", "crm.manage",
+    "reviews.view", "reviews.manage"
   ],
   agent: ["listings.view", "crm.view"],
   user: [],
