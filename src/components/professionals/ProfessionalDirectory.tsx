@@ -28,6 +28,7 @@ import {
   type ProfessionalKind,
   type ProfessionalRecord,
 } from "@/lib/professionals-store";
+import RatingBadge from "@/components/reviews/RatingBadge";
 
 interface Props {
   kind: ProfessionalKind;
@@ -405,6 +406,16 @@ export default function ProfessionalDirectory({ kind, hideIntro = false }: Props
                   {record.nameAr}
                   {record.titleAr ? ` · ${record.titleAr}` : ""}
                 </p>
+
+                <div className="mt-2 min-h-[18px]">
+                  <RatingBadge
+                    entityType={
+                      kind === "developer" ? "developer" : "professional"
+                    }
+                    entityId={record.id}
+                    href={`${PROFESSIONAL_KIND_META[kind].path}/${record.id}#reviews`}
+                  />
+                </div>
 
                 <p className="mt-2.5 line-clamp-3 text-[11.5px] leading-6 text-sand-700">
                   {record.bioAr || record.titleAr || ""}

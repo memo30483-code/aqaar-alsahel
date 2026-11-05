@@ -7,6 +7,7 @@ import { useI18n } from "@/lib/i18n";
 import { cityLabel } from "@/lib/i18n/cities";
 import { propertyTypeLabel } from "@/lib/i18n/taxonomy";
 import { useCurrency } from "@/lib/currency";
+import RatingBadge from "@/components/reviews/RatingBadge";
 
 interface Props {
   property: Property;
@@ -90,6 +91,14 @@ export default function PropertyCard({ property, compact = false }: Props) {
             {cityLabel(property.city, t, locale)} · {property.district}
           </span>
         </p>
+
+        <div className="mt-1.5 min-h-[18px]">
+          <RatingBadge
+            entityType="property"
+            entityId={property.id}
+            href={`/property/${property.id}#reviews`}
+          />
+        </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
           {property.rooms > 0 && (

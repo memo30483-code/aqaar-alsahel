@@ -248,7 +248,10 @@ export default function ReviewsSection({
   if (!payload?.ok) return null;
 
   return (
-    <section className="rounded-3xl border border-sand-200 bg-white p-5 shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)]">
+    <section
+      id="reviews"
+      className="scroll-mt-24 rounded-3xl border border-sand-200 bg-white p-5 shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)]"
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-[14px] font-black text-ocean-900">

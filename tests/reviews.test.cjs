@@ -166,3 +166,46 @@ test("admin dashboard exposes the reviews tab with its permission", () => {
   assert.match(dashboard, /permission: "reviews\.view"/);
   assert.match(system, /"reviews\.view", "reviews\.manage"/);
 });
+
+test("summary api validates the entity and caps the number of ids", () => {
+  const source = fs.readFileSync(
+    path.join(__dirname, "..", "src/app/api/reviews/summary/route.ts"),
+    "utf8"
+  );
+  assert.match(source, /ENTITIES/);
+  assert.match(source, /ID_PATTERN/);
+  assert.match(source, /ids\.length > 60/);
+  assert.match(source, /cloudGetRatingSummaries/);
+  assert.match(source, /s-maxage=30/);
+});
+
+test("summary aggregation counts only approved ratings and rounds averages", () => {
+  const source = fs.readFileSync(
+    path.join(__dirname, "..", "src/lib/reviews-server.ts"),
+    "utf8"
+  );
+  assert.match(source, /cloudGetRatingSummaries/);
+  assert.match(source, /status: "eq\.approved"/);
+  assert.match(source, /entity_id: `in\.\(/);
+  assert.match(source, /Math\.round\(\(entry\.total \/ entry\.count\) \* 10\) \/ 10/);
+});
+
+test("property and professional cards show a rating badge linking to reviews", () => {
+  const card = fs.readFileSync(
+    path.join(__dirname, "..", "src/components/PropertyCard.tsx"),
+    "utf8"
+  );
+  const directory = fs.readFileSync(
+    path.join(__dirname, "..", "src/components/professionals/ProfessionalDirectory.tsx"),
+    "utf8"
+  );
+  const section = fs.readFileSync(
+    path.join(__dirname, "..", "src/components/reviews/ReviewsSection.tsx"),
+    "utf8"
+  );
+  assert.match(card, /<RatingBadge[\s\S]*entityType="property"/);
+  assert.match(card, /#reviews/);
+  assert.match(directory, /<RatingBadge[\s\S]*kind === "developer" \? "developer" : "professional"/);
+  assert.match(section, /id="reviews"/);
+});
+

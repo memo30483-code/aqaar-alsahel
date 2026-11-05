@@ -199,6 +199,47 @@ export async function cloudCheckVerified(
   return rows.length > 0;
 }
 
+/** متوسطات التقييم لمجموعة عناصر — لبطاقات القوائم */
+export async function cloudGetRatingSummaries(
+  entityType: ReviewEntity,
+  ids: string[]
+): Promise<Record<string, { average: number; count: number }>> {
+  const safeIds = Array.from(new Set(ids)).filter((id) =>
+    /^[\w\-.:]{1,180}$/.test(id)
+  );
+  if (!safeIds.length) return {};
+
+  const params: Record<string, string> = {
+    select: "entity_id,rating",
+    entity_type: `eq.${entityType}`,
+    entity_id: `in.(${safeIds.map((id) => `"${id}"`).join(",")})`,
+    status: "eq.approved",
+    limit: "5000",
+  };
+  const rows = await cloudRest<{ entity_id: string; rating: number | string }[]>(
+    query("reviews", params)
+  );
+
+  const totals = new Map<string, { total: number; count: number }>();
+  for (const row of rows) {
+    const rating = clampRating(row.rating);
+    if (!rating) continue;
+    const entry = totals.get(row.entity_id) ?? { total: 0, count: 0 };
+    entry.total += rating;
+    entry.count += 1;
+    totals.set(row.entity_id, entry);
+  }
+
+  const summaries: Record<string, { average: number; count: number }> = {};
+  totals.forEach((entry, id) => {
+    summaries[id] = {
+      average: Math.round((entry.total / entry.count) * 10) / 10,
+      count: entry.count,
+    };
+  });
+  return summaries;
+}
+
 export interface AdminReviewFilters {
   status?: ReviewStatus | "all";
   entityType?: ReviewEntity | "all";
