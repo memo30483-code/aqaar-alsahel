@@ -100,7 +100,9 @@ h6 {
   will-change: transform;
 }
 
-.marquee-track:hover {
+.marquee-track:hover,
+.marquee-shell:hover .marquee-track,
+.marquee-shell:focus-within .marquee-track {
   animation-play-state: paused;
 }
 

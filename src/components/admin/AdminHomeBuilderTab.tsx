@@ -83,6 +83,8 @@ interface EditorState {
   kind: "developer" | "marketer" | "lawyer" | "engineer";
   componentId: "market_guide" | "company" | "projects_index";
   showIntro: boolean;
+  showSearch: boolean;
+  showHeader: boolean;
   items: HomeBlockItem[];
   style: HomeBlockStyle;
 }
@@ -111,6 +113,8 @@ function toEditor(block: HomeBlock): EditorState {
     kind: block.kind ?? "developer",
     componentId: block.componentId ?? "market_guide",
     showIntro: block.showIntro !== false,
+    showSearch: block.showSearch === true,
+    showHeader: block.showHeader === true,
     items: (block.items ?? []).map((item) => ({ ...item })),
     style: { ...(block.style ?? {}) },
   };
@@ -120,7 +124,8 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
   const [pageId, setPageId] = useState<PageId>("home");
   const blocks = usePageBlocks(pageId);
   const pageMeta = PAGE_REGISTRY.find((page) => page.id === pageId) ?? PAGE_REGISTRY[0];
-  const blocksEnabled = pageMeta.blocksEnabled !== false;
+  /* كل الصفحات تقبل الآن أقساماً إضافية من نفس مكتبة مكوّنات الرئيسية. */
+  const blocksEnabled = true;
   /** القوالب الديناميكية تُعاين من صفحة الفهرس لأن مسارها يحتاج معرّفاً */
   const previewHref = pageMeta.path.includes("[")
     ? pageMeta.path.split("/[")[0]
@@ -234,6 +239,8 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
       kind: editor.kind,
       componentId: editor.componentId,
       showIntro: editor.showIntro,
+      showSearch: editor.showSearch,
+      showHeader: editor.showHeader,
       items: editor.items,
       style: sanitizeBlockStyle(editor.style),
     });
@@ -1018,20 +1025,64 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
                       )}
 
                       {editor.type === "embed_section" && (
-                        <Field
-                          label="المحتوى المدمج"
-                          hint="محتوى جاهز من المنصة — لا يمكن تغييره"
-                        >
-                          <select
-                            value={editor.componentId}
-                            disabled
-                            className={INPUT}
+                        <>
+                          <Field
+                            label="المحتوى المدمج"
+                            hint="اختر المكوّن الجاهز، ويمكن حذفه وإضافته مرة أخرى"
                           >
-                            <option value="market_guide">البوصلة العقارية</option>
-                            <option value="company">بيانات الشركة</option>
-                            <option value="projects_index">فهرس المشاريع</option>
-                          </select>
-                        </Field>
+                            <select
+                              value={editor.componentId}
+                              onChange={(event) =>
+                                setEditor({
+                                  ...editor,
+                                  componentId: event.target.value as EditorState["componentId"],
+                                })
+                              }
+                              className={INPUT}
+                            >
+                              <option value="market_guide">البوصلة العقارية</option>
+                              <option value="company">بيانات الشركة</option>
+                              <option value="projects_index">فهرس المشاريع</option>
+                            </select>
+                          </Field>
+                          {editor.componentId === "projects_index" && (
+                            <>
+                              <Field label="مقدمة فهرس المشاريع">
+                                <select
+                                  value={editor.showHeader ? "show" : "hide"}
+                                  onChange={(event) =>
+                                    setEditor({
+                                      ...editor,
+                                      showHeader: event.target.value === "show",
+                                    })
+                                  }
+                                  className={INPUT}
+                                >
+                                  <option value="show">إظهار</option>
+                                  <option value="hide">إخفاء</option>
+                                </select>
+                              </Field>
+                              <Field
+                                label="شريط البحث والفلاتر"
+                                hint="مخفي حالياً، ويمكن إرجاعه في أي وقت"
+                              >
+                                <select
+                                  value={editor.showSearch ? "show" : "hide"}
+                                  onChange={(event) =>
+                                    setEditor({
+                                      ...editor,
+                                      showSearch: event.target.value === "show",
+                                    })
+                                  }
+                                  className={INPUT}
+                                >
+                                  <option value="hide">إخفاء</option>
+                                  <option value="show">إظهار</option>
+                                </select>
+                              </Field>
+                            </>
+                          )}
+                        </>
                       )}
                     </div>
 

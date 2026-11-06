@@ -20,6 +20,7 @@ import {
   useDragScroll,
 } from "@/lib/use-drag-scroll";
 import type { HomeBlock } from "@/lib/home-builder-store";
+import { resolveMedia } from "@/lib/home-block-style";
 
 interface Project {
   name: string;
@@ -318,11 +319,30 @@ export function AdBand({ block }: { block?: HomeBlock }) {
     (locale === "ar"
       ? block?.linkLabelAr
       : block?.linkLabelEn || block?.linkLabelAr) || t("home.adband.cta");
+  const media = resolveMedia(block?.videoUrl) || resolveMedia(block?.imageUrl);
 
   return (
     <section className="bg-sand-50 pb-2 pt-8">
       <div className="mx-auto w-full max-w-[1240px] px-4 sm:px-6">
         <div className="relative flex flex-wrap items-center gap-4 overflow-hidden rounded-2xl border border-gold-200 bg-gradient-to-l from-white to-gold-50 px-5 py-4">
+          {media?.kind === "image" && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={media.src}
+              alt=""
+              className="hb-media pointer-events-none absolute inset-0 h-full w-full object-cover opacity-10"
+            />
+          )}
+          {media?.kind === "video" && (
+            <video
+              src={media.src}
+              className="hb-media pointer-events-none absolute inset-0 h-full w-full object-cover opacity-10"
+              autoPlay
+              muted
+              loop
+              playsInline
+            />
+          )}
           <span
             aria-hidden
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10px_10px,rgba(201,146,42,0.10)_1.2px,transparent_1.3px)] bg-[length:20px_20px]"

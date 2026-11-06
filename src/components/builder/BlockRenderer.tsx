@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   BadgeCheck,
-  Building2,
   CheckCircle2,
   Lock,
   MapPin,
@@ -17,10 +17,20 @@ import ProfessionalDirectory from "@/components/professionals/ProfessionalDirect
 import MarqueeStrip from "@/components/MarqueeStrip";
 import AdSlider from "@/components/AdSlider";
 import { AdBand } from "@/components/ProjectsSlider";
+import { FeaturedAdSlot } from "@/components/FeaturedAds";
+import FeaturedProjects from "@/components/projects/FeaturedProjects";
+import PropertyCard from "@/components/PropertyCard";
 import MarketGuideContent from "@/app/market-guide/MarketGuideContent";
 import CompanyContent from "@/components/CompanyContent";
 import ProjectsIndex from "@/components/projects/ProjectsIndex";
 import type { PageBlock } from "@/lib/page-builder-store";
+import { mockProperties, USER_PROPERTIES_KEY } from "@/data/properties";
+import type { Property } from "@/types/property";
+import {
+  LISTING_OVERRIDE_KEY,
+  getApprovedListingIds,
+  getDefaultApprovedIds,
+} from "@/lib/admin-system";
 
 const CONTAINER = "mx-auto w-full max-w-[1180px] px-4 sm:px-6";
 
@@ -492,6 +502,112 @@ function HeroBlock({ block }: { block: PageBlock }) {
   );
 }
 
+/** نسخة قابلة لإعادة الاستخدام من شبكة العقارات لأي صفحة داخل البلدر. */
+function FeaturedListingsBlock({ block }: { block: PageBlock }) {
+  const { locale } = useI18n();
+  const [userProperties, setUserProperties] = useState<Property[]>([]);
+  const [approvedIds, setApprovedIds] = useState<string[]>(() =>
+    getDefaultApprovedIds()
+  );
+
+  const sync = useCallback(() => {
+    try {
+      const stored = localStorage.getItem(USER_PROPERTIES_KEY);
+      const parsed = stored ? JSON.parse(stored) : [];
+      setUserProperties(Array.isArray(parsed) ? parsed : []);
+    } catch {
+      setUserProperties([]);
+    }
+    setApprovedIds(getApprovedListingIds());
+  }, []);
+
+  useEffect(() => {
+    sync();
+    const onStorage = (event: StorageEvent) => {
+      if (
+        event.key === null ||
+        event.key === USER_PROPERTIES_KEY ||
+        event.key === LISTING_OVERRIDE_KEY
+      ) {
+        sync();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [sync]);
+
+  const properties = useMemo(() => {
+    const approved = new Set(approvedIds);
+    return [...userProperties, ...mockProperties]
+      .filter((property) => approved.has(property.id))
+      .slice(0, 6)
+      .map((property) => ({ ...property, whatsapp: "" }));
+  }, [approvedIds, userProperties]);
+
+  const title = pick(block.titleAr, block.titleEn, locale) ?? "عقارات مميزة";
+  const subtitle = pick(block.subtitleAr, block.subtitleEn, locale);
+
+  return (
+    <SectionShell tone="sand">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <BlockTitle
+          eyebrow={pick(block.eyebrowAr, block.eyebrowEn, locale)}
+          title={title}
+          subtitle={subtitle}
+        />
+        <Link
+          href="/#properties"
+          className="inline-flex items-center gap-1.5 text-[11.5px] font-black text-ocean-700 hover:text-gold-700"
+        >
+          عرض كل العقارات
+          <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
+        </Link>
+      </div>
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {properties.map((property) => (
+          <PropertyCard key={property.id} property={property} compact />
+        ))}
+      </div>
+    </SectionShell>
+  );
+}
+
+/** قسم قصة/ثقة عام يحافظ على روح قسم الرئيسية ويمكن إضافته لأي صفحة. */
+function StoryDossierBlock({ block }: { block: PageBlock }) {
+  const { locale } = useI18n();
+  return (
+    <SectionShell tone={toneOf(block)}>
+      <div className="grid gap-5 lg:grid-cols-[1fr_360px] lg:items-center">
+        <div>
+          <BlockTitle
+            eyebrow={pick(block.eyebrowAr, block.eyebrowEn, locale)}
+            title={pick(block.titleAr, block.titleEn, locale)}
+            subtitle={pick(block.subtitleAr, block.subtitleEn, locale)}
+          />
+          {pick(block.bodyAr, block.bodyEn, locale) && (
+            <p className="hb-body mt-3 whitespace-pre-line text-[12px] leading-8 text-sand-700">
+              {pick(block.bodyAr, block.bodyEn, locale)}
+            </p>
+          )}
+        </div>
+        <div className="rounded-3xl border border-gold-200 bg-gold-50/50 p-5">
+          {["توثيق المستندات", "فحص مستقل", "تواصل عبر الإدارة"].map(
+            (item) => (
+              <p
+                key={item}
+                className="flex items-center gap-2 border-b border-gold-200/60 py-2.5 text-[11.5px] font-black text-ocean-900 last:border-0"
+              >
+                <ShieldCheck className="h-4 w-4 text-gold-600" />
+                {item}
+              </p>
+            )
+          )}
+        </div>
+      </div>
+    </SectionShell>
+  );
+}
+
 export default function BlockRenderer({ block }: { block: PageBlock }) {
   switch (block.type) {
     case "page_header":
@@ -525,7 +641,14 @@ export default function BlockRenderer({ block }: { block: PageBlock }) {
       );
     case "embed_section":
       if (block.componentId === "company") return <CompanyContent />;
-      if (block.componentId === "projects_index") return <ProjectsIndex />;
+      if (block.componentId === "projects_index") {
+        return (
+          <ProjectsIndex
+            showSearch={block.showSearch === true}
+            showHeader={block.showHeader === true}
+          />
+        );
+      }
       return <MarketGuideContent />;
     case "marquee":
       return <MarqueeStrip block={block as never} />;
@@ -533,24 +656,18 @@ export default function BlockRenderer({ block }: { block: PageBlock }) {
       return <AdSlider block={block as never} />;
     case "ad_band":
       return <AdBand block={block as never} />;
-    case "featured_listings":
+    case "projects_slider":
+      return <FeaturedProjects block={block as never} />;
+    case "inline_ad":
       return (
         <SectionShell tone="sand">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <Building2 className="h-6 w-6 text-gold-600" />
-            <p className="text-[13px] font-black text-ocean-900">
-              شبكة العقارات متاحة في الصفحة الرئيسية
-            </p>
-            <Link
-              href="/#properties"
-              className="inline-flex items-center gap-2 rounded-full bg-ocean-950 px-4 py-2 text-[11px] font-black text-white"
-            >
-              تصفح العقارات
-              <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
-            </Link>
-          </div>
+          <FeaturedAdSlot block={block as never} />
         </SectionShell>
       );
+    case "story_dossier":
+      return <StoryDossierBlock block={block} />;
+    case "featured_listings":
+      return <FeaturedListingsBlock block={block} />;
     case "manage_note":
       return (
         <SectionShell tone="white" className="border-t border-sand-200">

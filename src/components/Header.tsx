@@ -294,19 +294,6 @@ export default function Header() {
                     </span>
                   </span>
                 </Link>
-                <Link href="/engineers" className={MENU_ITEM} onClick={close}>
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-ocean-50 text-ocean-600">
-                    <HardHat className="h-4 w-4" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block font-bold text-gray-900">
-                      {t("companies.engineers")}
-                    </span>
-                    <span className="block text-xs text-gray-500">
-                      {t("companies.engineersDesc")}
-                    </span>
-                  </span>
-                </Link>
                 <Link href="/login?redirect=%2Fjoin" className={MENU_ITEM} onClick={close}>
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gold-50 text-gold-600">
                     <BadgeCheck className="h-4 w-4" />
@@ -338,7 +325,7 @@ export default function Header() {
           </Link>
           <Link
             href="/engineering-consultational"
-            className={`${NAV_LINK} max-[1799px]:hidden`}
+            className={NAV_LINK}
           >
             <HardHat className="h-4 w-4 text-ocean-500" />
             {t("nav.engineering")}
@@ -585,10 +572,6 @@ export default function Header() {
             <Link href="/lawyers" className={NAV_LINK} onClick={closeMobile}>
               <Scale className="h-4 w-4 text-ocean-500" />
               {t("companies.lawyers")}
-            </Link>
-            <Link href="/engineers" className={NAV_LINK} onClick={closeMobile}>
-              <HardHat className="h-4 w-4 text-ocean-500" />
-              {t("companies.engineers")}
             </Link>
             <Link
               href="/login?redirect=%2Fjoin"

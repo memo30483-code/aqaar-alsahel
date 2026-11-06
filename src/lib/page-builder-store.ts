@@ -85,6 +85,10 @@ export interface PageBlock {
   kind?: "developer" | "marketer" | "lawyer" | "engineer";
   /** دليل المهنيين: إظهار الهيرو الداخلي أم لا */
   showIntro?: boolean;
+  /** فهرس المشاريع: إظهار شريط البحث والفلاتر */
+  showSearch?: boolean;
+  /** فهرس المشاريع: إظهار مقدمته الداخلية */
+  showHeader?: boolean;
 }
 
 export type EmbedComponentId = "market_guide" | "company" | "projects_index";
@@ -271,6 +275,8 @@ export const PAGE_REGISTRY: PageMeta[] = [
         visible: true,
         order: 2,
         componentId: "projects_index",
+        showSearch: false,
+        showHeader: false,
       },
     ],
   },
@@ -668,13 +674,12 @@ export const BLOCK_TYPE_META: Record<PageBlockType, BlockTypeMeta> = {
     description: "بانرات إعلانية منزلقة",
   },
   inline_ad: {
-    label: "إعلان داخل شبكة العقارات",
-    description: "بطاقة إعلانية تظهر وسط نتائج العقارات — الترتيب غير مؤثر",
-    locked: true,
+    label: "الإعلان المميز داخل العقارات (رقم 1)",
+    description: "الإعلان الكبير بعد بطاقات العقارات — إضافة وحذف وتعديل كامل",
   },
   ad_band: {
-    label: "شريط الإعلانات العريض",
-    description: "شريط دعوة لإعلانات المطورين",
+    label: "الإعلان الأفقي أسفل العقارات (رقم 2)",
+    description: "الشريط الإعلاني الرفيع — تحكم في المحتوى والصورة والرابط",
   },
   story_dossier: {
     label: "قصة المنصة + ملف التحقق",
@@ -727,7 +732,6 @@ export const BLOCK_TYPE_META: Record<PageBlockType, BlockTypeMeta> = {
     label: "قسم مدمج",
     description: "محتوى جاهز من المنصة (البوصلة، الشركة، فهرس المشاريع)",
     contentOnly: true,
-    locked: true,
   },
   contact_block: {
     label: "تواصل مع الإدارة",
@@ -768,26 +772,10 @@ export const ADDABLE_BLOCK_TYPES: PageBlockType[] = [
   ...CUSTOM_BLOCK_TYPES,
 ];
 
-/** الأقسام المتاحة لصفحة معيّنة — الرئيسية تحتفظ بكل القوالب، وغيرها بالأقسام العامة. */
-export function addableTypesFor(pageId: PageId): PageBlockType[] {
-  if (pageId === "home") return ADDABLE_BLOCK_TYPES;
-  const contentShared: PageBlockType[] = [
-    "page_header",
-    "text",
-    "banner",
-    "stats",
-    "steps",
-    "faq",
-    "cta",
-    "cities",
-    "verify_strip",
-    "professionals_directory",
-    "embed_section",
-    "contact_block",
-    "ad_slider",
-    "marquee",
-  ];
-  return ADDABLE_BLOCK_TYPES.filter((type) => contentShared.includes(type));
+/** كل مكوّنات البلدر متاحة في كل صفحة — بما فيها مكوّنات الرئيسية. */
+export function addableTypesFor(pageId?: PageId): PageBlockType[] {
+  void pageId;
+  return ADDABLE_BLOCK_TYPES;
 }
 
 export function isCoreBlockType(type: PageBlockType): boolean {
@@ -899,6 +887,8 @@ function normalizeBlock(raw: Partial<PageBlock>, index: number): PageBlock | nul
     componentId,
     kind,
     showIntro: raw.showIntro !== false,
+    showSearch: raw.showSearch === true,
+    showHeader: raw.showHeader === true,
   };
 }
 
@@ -990,6 +980,8 @@ export function getPageBlocks(pageId: PageId): PageBlock[] {
     .map((block, index) => normalizeBlock(block, index))
     .filter((block): block is PageBlock => block !== null);
 
+  /* الصفيف الفارغ اختيار صحيح: يعني أن الأدمن حذف كل مكوّنات الصفحة. */
+  if (Array.isArray(stored.items) && stored.items.length === 0) return [];
   return normalized.length > 0 ? sortBlocks(normalized) : defaultBlocksFor(pageId);
 }
 
@@ -1004,7 +996,12 @@ export function savePageBlocks(pageId: PageId, blocks: PageBlock[]): void {
     ...state,
     pages: {
       ...state.pages,
-      [pageId]: { items: normalized, updatedAt: new Date().toISOString() },
+      /* نحافظ على تنسيق الصفحة العام عند حفظ أقسامها */
+      [pageId]: {
+        ...state.pages[pageId],
+        items: normalized,
+        updatedAt: new Date().toISOString(),
+      },
     },
   });
 }
@@ -1019,7 +1016,10 @@ function makeId(type: PageBlockType, existing: PageBlock[]): string {
   return candidate;
 }
 
-function defaultContent(type: PageBlockType): Partial<PageBlock> {
+function defaultContent(
+  type: PageBlockType,
+  pageId?: PageId
+): Partial<PageBlock> {
   switch (type) {
     case "hero":
       return {
@@ -1157,7 +1157,16 @@ function defaultContent(type: PageBlockType): Partial<PageBlock> {
     case "professionals_directory":
       return { kind: "developer", showIntro: true };
     case "embed_section":
-      return { componentId: "market_guide" };
+      return {
+        componentId:
+          pageId === "projects"
+            ? "projects_index"
+            : pageId === "company"
+              ? "company"
+              : "market_guide",
+        showSearch: false,
+        showHeader: false,
+      };
     case "contact_block":
       return {
         titleAr: "تواصل مع إدارة المنصة",
@@ -1182,7 +1191,7 @@ export function addPageBlock(
     type,
     visible: true,
     order: blocks.length + 1,
-    ...defaultContent(type),
+    ...defaultContent(type, pageId),
   };
   savePageBlocks(pageId, [...blocks, block]);
   return block;

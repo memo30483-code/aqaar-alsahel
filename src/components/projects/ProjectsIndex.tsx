@@ -24,7 +24,13 @@ const PURPOSES: { value: NonNullable<ProfessionalProject["purpose"]>; key: "prof
   { value: "project", key: "prof.profile.purpose.project" },
 ];
 
-export default function ProjectsIndex() {
+export default function ProjectsIndex({
+  showSearch = false,
+  showHeader = false,
+}: {
+  showSearch?: boolean;
+  showHeader?: boolean;
+}) {
   const { t, locale } = useI18n();
   const { records, ready } = useProfessionalsState();
   const cities = useActiveCities();
@@ -69,7 +75,7 @@ export default function ProjectsIndex() {
   return (
     <div className="bg-sand-50 pb-16">
       {/* ===== ترويسة ===== */}
-      <section className="relative overflow-hidden bg-ocean-950">
+      {showHeader && <section className="relative overflow-hidden bg-ocean-950">
         <div className="absolute inset-0 theme-hero opacity-90" />
         <div className="relative mx-auto w-full max-w-[1120px] px-4 py-12 sm:px-6 sm:py-16">
           <p className="flex items-center gap-2.5 text-[10.5px] font-black uppercase tracking-[0.2em] text-gold-300">
@@ -83,10 +89,10 @@ export default function ProjectsIndex() {
             {t("prof.projectsIndex.desc")}
           </p>
         </div>
-      </section>
+      </section>}
 
       {/* ===== الفلاتر ===== */}
-      <div className="mx-auto w-full max-w-[1120px] px-4 sm:px-6">
+      {showSearch && <div className="mx-auto w-full max-w-[1120px] px-4 sm:px-6">
         <div className="-mt-6 rounded-3xl border border-sand-200 bg-white p-3.5 shadow-soft sm:p-4">
           <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
             <div className="relative flex-1">
@@ -173,10 +179,12 @@ export default function ProjectsIndex() {
             )}
           </p>
         </div>
-      </div>
+      </div>}
 
       {/* ===== الشبكة ===== */}
-      <div className="mx-auto mt-6 w-full max-w-[1120px] px-4 sm:px-6">
+      <div className={`mx-auto w-full max-w-[1120px] px-4 sm:px-6 ${
+        showSearch ? "mt-6" : "pt-8"
+      }`}>
         {!ready ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[0, 1, 2].map((item) => (

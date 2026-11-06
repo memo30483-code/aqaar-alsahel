@@ -8,6 +8,7 @@ import SiteWidgets from "@/components/SiteWidgets";
 import MobileAppBanner from "@/components/MobileAppBanner";
 import SeasonRibbon from "@/components/SeasonRibbon";
 import CloudBridge from "@/components/CloudBridge";
+import PageAddonBlocks from "@/components/builder/PageAddonBlocks";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme-season";
 import { BRANDING_BOOT_SCRIPT } from "@/lib/branding";
 import { cloudBootScript, loadCloudBoot } from "@/lib/cloud/boot";
@@ -88,7 +89,10 @@ export default async function RootLayout({
           <Header />
           {/* شريط الزخارف الموسمي — يظهر في الصفحات الداخلية فقط */}
           <SeasonRibbon />
-          <main className="flex-1 min-h-0 flex flex-col">{children}</main>
+          <main className="flex-1 min-h-0 flex flex-col">
+            {children}
+            <PageAddonBlocks />
+          </main>
           <Footer />
           <MobileAppBanner />
           <SiteWidgets />

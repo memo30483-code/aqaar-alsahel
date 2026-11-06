@@ -82,7 +82,7 @@ export default function MarqueeStrip({ block }: { block?: HomeBlock }) {
   return (
     <section
       aria-label={t("home.marquee.title")}
-      className="relative overflow-hidden border-y border-sand-200 bg-white"
+      className="marquee-shell relative overflow-hidden border-y border-sand-200 bg-white"
     >
       {/* تلاشٍ على الحافة اليسرى */}
       <span
