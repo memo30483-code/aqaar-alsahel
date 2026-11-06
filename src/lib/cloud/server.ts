@@ -38,6 +38,26 @@ function headers(extra: Record<string, string> = {}): Record<string, string> {
   };
 }
 
+/**
+ * مهلة قصوى لأي طلب Supabase — لا يجوز أن يعلّق توليد الصفحة أو أي API
+ * إذا تأخّر أو تعطّل الاتصال. عند انتهاء المهلة يُلغى الطلب ويُعامل كخطأ
+ * عادي، فتظهر النسخة المحلية/الافتراضية بدل أن تبقى الصفحة معلّقة.
+ */
+function timeoutSignal(ms: number): AbortSignal | undefined {
+  try {
+    if (
+      typeof AbortSignal !== "undefined" &&
+      typeof AbortSignal.timeout === "function"
+    ) {
+      return AbortSignal.timeout(ms);
+    }
+  } catch {
+    /* بيئة قديمة — نكمل بدون مهلة */
+  }
+  return undefined;
+}
+
+
 function requireCloud(): void {
   if (!cloudEnabled()) {
     throw new Error("Supabase غير مضبوط: تأكد من SUPABASE_URL و SUPABASE_SERVICE_ROLE_KEY");
@@ -66,6 +86,8 @@ export async function cloudRest<T>(
     method?: "GET" | "POST" | "PATCH" | "DELETE";
     body?: unknown;
     prefer?: string;
+    /** مهلة الطلب بالمللي ثانية — الافتراضي 10 ثوانٍ */
+    timeoutMs?: number;
   } = {}
 ): Promise<T> {
   requireCloud();
@@ -83,6 +105,7 @@ export async function cloudRest<T>(
       ? {}
       : { body: JSON.stringify(options.body) }),
     cache: "no-store",
+    signal: timeoutSignal(options.timeoutMs ?? 10_000),
   });
 
   if (!response.ok) {
@@ -102,6 +125,8 @@ export async function cloudGetRows(options: {
   keys?: string[];
   /** مدة كاش Next.js بالثواني — تُستخدم أثناء توليد الصفحات */
   revalidate?: number;
+  /** مهلة الطلب بالمللي ثانية — الافتراضي 6 ثوانٍ */
+  timeoutMs?: number;
 } = {}): Promise<CloudRow[]> {
   if (!cloudEnabled()) return [];
 
@@ -124,6 +149,7 @@ export async function cloudGetRows(options: {
       ...(typeof options.revalidate === "number"
         ? { next: { revalidate: options.revalidate } }
         : { cache: "no-store" as RequestCache }),
+      signal: timeoutSignal(options.timeoutMs ?? 6_000),
     }
   );
 
@@ -163,6 +189,7 @@ export async function cloudPutRow(
         },
       ]),
       cache: "no-store",
+      signal: timeoutSignal(12_000),
     }
   );
 
@@ -318,7 +345,7 @@ export async function cloudGetInquiries(limit = 500): Promise<CloudInquiryRow[]>
 
   const response = await fetch(
     `${supabaseUrl()}/rest/v1/inquiries?${params.toString()}`,
-    { headers: headers(), cache: "no-store" }
+    { headers: headers(), cache: "no-store", signal: timeoutSignal(8_000) }
   );
   if (!response.ok) {
     throw new Error(

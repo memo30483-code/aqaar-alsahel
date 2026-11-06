@@ -144,9 +144,32 @@ export default function AdminDashboard() {
   useEffect(() => {
     let cancelled = false;
 
+    /** مهلة قصوى لأي طلب — لا نترك اللوحة معلّقة على شبكة بطيئة */
+    const timeoutSignal = (ms: number) => {
+      const controller = new AbortController();
+      setTimeout(() => controller.abort(), ms);
+      return controller.signal;
+    };
+
+    const readStores = () => {
+      const userList = getUsers();
+      setUsers(userList);
+      setListings(getListings());
+      setOffers(getOffers());
+      setOffersSettings(getOffersSettings());
+      setSiteSettings(getSiteSettings());
+      setMarquee(getMarqueeItems());
+      setLogs(getAdminLogs(200));
+      setPermissionsCount(
+        userList.reduce(
+          (total, user) => total + getAdminPermissions(user.id).length,
+          0
+        )
+      );
+    };
+
     const load = async () => {
-      /* التحقق من كوكي الأدمن الموقّع على السيرفر — لا نثق بدور محفوظ
-         في localStorage لأنه قابل للتعديل من أدوات المتصفح. */
+      /* 1) تأكيد كوكي الأدمن الموقّع على السيرفر — سريع ومحدود بمهلة */
       let verified = false;
       let serverAdmin: {
         email: string;
@@ -157,6 +180,7 @@ export default function AdminDashboard() {
       try {
         const response = await fetch("/api/admin/session", {
           cache: "no-store",
+          signal: timeoutSignal(6_000),
         });
         if (response.ok) {
           const data = (await response.json()) as {
@@ -181,32 +205,6 @@ export default function AdminDashboard() {
       if (cancelled) return;
       setAdminVerified(verified);
 
-      /*
-       * الأدمن يحتاج النسخة الكاملة (ومنها الطلبات والمستندات الخاصة)،
-       * بينما الزائر يستلم نسخة منقّاة فقط. نجلبها بعد التحقق من الكوكي
-       * وقبل قراءة مخازن اللوحة حتى تظهر الطلبات الجديدة فورًا.
-       */
-      if (verified) {
-        try {
-          const cloudResponse = await fetch("/api/state?all=1", {
-            cache: "no-store",
-          });
-          if (cloudResponse.ok) {
-            const cloudData = (await cloudResponse.json()) as {
-              rows?: Record<
-                string,
-                { value: unknown; updated_at: string }
-              >;
-            };
-            for (const [key, row] of Object.entries(cloudData.rows ?? {})) {
-              applyRemoteValue(key, row.value, row.updated_at);
-            }
-          }
-        } catch {
-          /* انقطاع مؤقت: اللوحة تستمر بالنسخة المحلية ولا تتعطّل */
-        }
-      }
-
       const stored = getSession();
       const current: Session | null =
         verified && serverAdmin
@@ -223,23 +221,29 @@ export default function AdminDashboard() {
       if (verified && current) saveSession(current);
       setSession(current);
 
-      if (current) {
-        const userList = getUsers();
-        setUsers(userList);
-        setListings(getListings());
-        setOffers(getOffers());
-        setOffersSettings(getOffersSettings());
-        setSiteSettings(getSiteSettings());
-        setMarquee(getMarqueeItems());
-        setLogs(getAdminLogs(200));
-        setPermissionsCount(
-          userList.reduce(
-            (total, user) => total + getAdminPermissions(user.id).length,
-            0
-          )
-        );
-      }
+      /* 2) نعرض اللوحة فورًا بالنسخة المحلية بدل الانتظار لشبكة السحابة */
+      if (current) readStores();
       setReady(true);
+
+      /* 3) ثم نحدّث النسخة الكاملة (ومنها الطلبات والمستندات) في الخلفية */
+      if (!verified) return;
+      try {
+        const cloudResponse = await fetch("/api/state?all=1", {
+          cache: "no-store",
+          signal: timeoutSignal(9_000),
+        });
+        if (cloudResponse.ok) {
+          const cloudData = (await cloudResponse.json()) as {
+            rows?: Record<string, { value: unknown; updated_at: string }>;
+          };
+          for (const [key, row] of Object.entries(cloudData.rows ?? {})) {
+            applyRemoteValue(key, row.value, row.updated_at);
+          }
+          if (!cancelled) readStores();
+        }
+      } catch {
+        /* انقطاع مؤقت: اللوحة تستمر بالنسخة المحلية ولا تتعطّل */
+      }
     };
 
     void load();

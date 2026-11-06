@@ -14,11 +14,23 @@ export default function CloudBridge() {
   useEffect(() => {
     installCloudPush();
 
-    const omitted = window.__AQAAR_CLOUD__?.omitted ?? [];
-    if (!omitted.length) return;
+    const boot = window.__AQAAR_CLOUD__;
+    const omitted = boot?.omitted ?? [];
+    /* لو فشل حقن الحالة على السيرفر (مهلة/انقطاع) نحاول تحميل النسخة
+       العامة من العميل حتى لا يبقى الزائر على القيم الافتراضية. */
+    const recovered = omitted.length === 0 && boot?.enabled === false;
+    if (!omitted.length && !recovered) return;
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8_000);
 
     let alive = true;
-    void fetch(`/api/state?key=${encodeURIComponent(omitted.join(","))}`)
+    void fetch(
+      omitted.length
+        ? `/api/state?key=${encodeURIComponent(omitted.join(","))}`
+        : "/api/state",
+      { signal: controller.signal, cache: "no-store" }
+    )
       .then((response) => (response.ok ? response.json() : null))
       .then((data: { rows?: Record<string, { value: unknown; updated_at: string }> } | null) => {
         if (!alive || !data?.rows) return;
@@ -28,10 +40,13 @@ export default function CloudBridge() {
       })
       .catch(() => {
         /* لا اتصال — نكمل بالنسخة المحلية */
-      });
+      })
+      .finally(() => clearTimeout(timer));
 
     return () => {
       alive = false;
+      clearTimeout(timer);
+      controller.abort();
     };
   }, []);
 

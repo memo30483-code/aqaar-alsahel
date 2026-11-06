@@ -159,7 +159,11 @@ export default function Footer() {
             <ul className="flex flex-col gap-3 text-xs font-medium text-[#aab2c7]">
               {QUICK_LINKS.map(({ key, href }) => (
                 <li key={key}>
-                  <Link href={href} className="transition hover:text-gold-200">
+                  <Link
+                    href={href}
+                    prefetch={false}
+                    className="transition hover:text-gold-200"
+                  >
                     {t(key)}
                   </Link>
                 </li>
@@ -177,6 +181,7 @@ export default function Footer() {
                 <li key={city.id}>
                   <Link
                     href="/#properties"
+                    prefetch={false}
                     className="inline-flex items-center gap-1.5 transition hover:text-gold-200"
                   >
                     <MapPin className="h-3 w-3 text-gold-500/70" />
@@ -294,19 +299,19 @@ export default function Footer() {
         <div className="flex flex-col items-center justify-between gap-3 border-t border-white/[0.08] py-5 text-[10.5px] text-[#7d879f] sm:flex-row">
           <span>{t("footer.rights", { year: new Date().getFullYear() })}</span>
           <div className="flex flex-wrap items-center gap-4">
-            <Link href="/company" className="transition hover:text-gold-200">
+            <Link href="/company" prefetch={false} className="transition hover:text-gold-200">
               {t("footer.links.company")}
             </Link>
-            <Link href="/privacy" className="transition hover:text-gold-200">
+            <Link href="/privacy" prefetch={false} className="transition hover:text-gold-200">
               {t("footer.links.privacy")}
             </Link>
-            <Link href="/terms" className="transition hover:text-gold-200">
+            <Link href="/terms" prefetch={false} className="transition hover:text-gold-200">
               {t("footer.links.terms")}
             </Link>
-            <Link href="/add-property" className="transition hover:text-gold-200">
+            <Link href="/add-property" prefetch={false} className="transition hover:text-gold-200">
               {t("footer.links.advertise")}
             </Link>
-            <Link href="/sitemap" className="inline-flex items-center gap-1 transition hover:text-gold-200">
+            <Link href="/sitemap" prefetch={false} className="inline-flex items-center gap-1 transition hover:text-gold-200">
               <Send className="h-3 w-3 text-gold-500" />
               {t("footer.links.sitemap")}
             </Link>

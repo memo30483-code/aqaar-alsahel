@@ -34,7 +34,13 @@ export async function loadCloudBoot(): Promise<CloudBootResult> {
   }
 
   try {
-    const storedRows = await cloudGetRows({ publicOnly: true, revalidate: 60 });
+    /* مهلة قصيرة: حقن الحالة يجب ألّا يؤخّر ظهور الصفحة. لو تأخّرت
+       Supabase نكمل فورًا بالنسخة الافتراضية ويُحدّثها CloudBridge لاحقًا. */
+    const storedRows = await cloudGetRows({
+      publicOnly: true,
+      revalidate: 60,
+      timeoutMs: 2_500,
+    });
     const rows = sanitizePublicCloudRows(storedRows);
     const payload: CloudBootPayload = {};
     const omitted: string[] = [];

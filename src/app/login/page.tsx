@@ -72,11 +72,14 @@ function LoginContent() {
 
     /* 1) دخول الأدمن: التحقق على السيرفر فقط، والنجاح يُثبّت كوكي موقّعًا
        لا يستطيع المتصفح قراءته أو تعديله. */
+    const controller = new AbortController();
+    const abortTimer = setTimeout(() => controller.abort(), 15_000);
     try {
       const response = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: trimmedEmail, password }),
+        signal: controller.signal,
       });
 
       if (response.ok) {
@@ -93,13 +96,31 @@ function LoginContent() {
           verifiedAt: new Date().toISOString(),
           role: data.role === "admin" ? "admin" : "super_admin",
         });
-        /* المدير يذهب للوحة التحكم دائماً */
-        router.push("/admin");
-        router.refresh();
+        /* تنقّل كامل: يضمن إرسال الكوكي الجديد ولا يعلّق على كاش الراوتر */
+        window.location.replace("/admin");
         return;
       }
-    } catch {
-      /* تعذّر الوصول للسيرفر — نكمل كحساب عادي */
+
+      if (response.status === 429) {
+        setError("محاولات كثيرة. استنى دقايق وحاول تاني.");
+        setLoading(false);
+        return;
+      }
+
+      if (response.status === 503) {
+        setError("خدمة الدخول غير مهيأة على السيرفر. تواصل مع الدعم.");
+        setLoading(false);
+        return;
+      }
+    } catch (error) {
+      /* مهلة/انقطاع: لا نترك الزر معلّقًا */
+      if (error instanceof DOMException && error.name === "AbortError") {
+        setError("السيرفر بطيء في الرد. حاول تاني بعد لحظات.");
+        setLoading(false);
+        return;
+      }
+    } finally {
+      clearTimeout(abortTimer);
     }
 
     /* 2) أي حساب آخر: جلسة محلية تجريبية حتى ربط المصادقة الكاملة */
