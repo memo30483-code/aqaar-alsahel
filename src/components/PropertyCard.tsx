@@ -5,7 +5,7 @@ import { ArrowLeft, Headset, MapPin, ShieldCheck } from "lucide-react";
 import { Property } from "@/types/property";
 import { useI18n } from "@/lib/i18n";
 import { cityLabel } from "@/lib/i18n/cities";
-import { propertyTypeLabel } from "@/lib/i18n/taxonomy";
+import { propertyTypeLabel, finishLabel } from "@/lib/i18n/taxonomy";
 import { useCurrency } from "@/lib/currency";
 import RatingBadge from "@/components/reviews/RatingBadge";
 
@@ -112,6 +112,11 @@ export default function PropertyCard({ property, compact = false }: Props) {
           <span className="rounded-md bg-ocean-50 px-2 py-1 text-[10.5px] font-bold text-ocean-700">
             {propertyTypeLabel(property.type, t)}
           </span>
+          {property.finish && (
+            <span className="rounded-md bg-gold-50 px-2 py-1 text-[10.5px] font-bold text-gold-800">
+              {finishLabel(property.finish, t)}
+            </span>
+          )}
           {!property.priceByAdmin && property.negotiable !== undefined && (
             <span
               className={`rounded-md px-2 py-1 text-[10.5px] font-bold ${

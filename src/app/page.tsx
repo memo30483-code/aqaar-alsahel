@@ -36,6 +36,7 @@ import {
 } from "@/data/properties";
 import {
   defaultPropertyFilters,
+  FINISH_STATES,
   PRICE_FILTER_MAX,
   PRICE_FILTER_MIN,
   Property,
@@ -43,7 +44,7 @@ import {
 } from "@/types/property";
 import { useI18n, type MessageKey } from "@/lib/i18n";
 import { cityLabel } from "@/lib/i18n/cities";
-import { propertyTypeLabel } from "@/lib/i18n/taxonomy";
+import { finishLabel, propertyTypeLabel } from "@/lib/i18n/taxonomy";
 import { useCurrency } from "@/lib/currency";
 import {
   isCustomBlockType,
@@ -224,13 +225,16 @@ export default function HomePage() {
       ? typed.filter((property) => (property.purpose ?? "بيع") === filters.purpose)
       : typed;
 
+    const finished = filters.finish
+      ? purposed.filter((property) => property.finish === filters.finish)
+      : purposed;
     if (sort === "priceDesc") {
-      return [...purposed].sort((a, b) => b.price - a.price);
+      return [...finished].sort((a, b) => b.price - a.price);
     }
     if (sort === "priceAsc") {
-      return [...purposed].sort((a, b) => a.price - b.price);
+      return [...finished].sort((a, b) => a.price - b.price);
     }
-    return purposed;
+    return finished;
   }, [allProperties, filters, search, selectedCity, sort]);
 
   const cityTitle = filters.city ? cityLabel(filters.city, t, locale) : t("city.all");
@@ -264,6 +268,13 @@ export default function HomePage() {
         key: "rooms",
         label: `${t("filters.rooms")}: ${filters.rooms}`,
         onRemove: () => setFilters((current) => ({ ...current, rooms: "" })),
+      });
+    }
+    if (filters.finish) {
+      tags.push({
+        key: "finish",
+        label: finishLabel(filters.finish, t),
+        onRemove: () => setFilters((current) => ({ ...current, finish: "" })),
       });
     }
     if (filters.priceActive) {
@@ -530,7 +541,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid gap-3 pt-3.5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_0.85fr_auto] lg:items-end">
+          <div className="grid gap-3 pt-3.5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_0.85fr_auto] lg:items-end">
             <label className="block">
               <span className="mb-1.5 block text-[11px] font-extrabold text-ocean-600">
                 {t("home.search.city")}
@@ -582,6 +593,32 @@ export default function HomePage() {
                       </option>
                     )
                   )}
+                </select>
+                <ChevronDown className="pointer-events-none absolute end-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-sand-600" />
+              </span>
+            </label>
+
+            <label className="block">
+              <span className="mb-1.5 block text-[11px] font-extrabold text-ocean-600">
+                {t("filters.finish")}
+              </span>
+              <span className="relative block">
+                <select
+                  value={filters.finish}
+                  onChange={(event) =>
+                    setFilters((current) => ({
+                      ...current,
+                      finish: event.target.value as PropertyFilters["finish"],
+                    }))
+                  }
+                  className="h-12 w-full appearance-none rounded-xl border border-sand-300 bg-sand-50 px-3 pe-8 text-[13px] font-bold text-ocean-800 outline-none transition focus:border-ocean-500 focus:bg-white"
+                >
+                  <option value="">{t("filters.anyFinish")}</option>
+                  {FINISH_STATES.map((finish) => (
+                    <option key={finish} value={finish}>
+                      {finishLabel(finish, t)}
+                    </option>
+                  ))}
                 </select>
                 <ChevronDown className="pointer-events-none absolute end-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-sand-600" />
               </span>

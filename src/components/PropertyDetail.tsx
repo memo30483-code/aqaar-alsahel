@@ -12,6 +12,7 @@ import {
   Home,
   Lock,
   MapPin,
+  Paintbrush,
   Ruler,
   ScanLine,
   ShieldCheck,
@@ -21,7 +22,7 @@ import { Property } from "@/types/property";
 import { useI18n } from "@/lib/i18n";
 import { cityLabel, cityMatches } from "@/lib/i18n/cities";
 import { useActiveCities } from "@/lib/cities-store";
-import { propertyTypeLabel, sellerTypeLabel } from "@/lib/i18n/taxonomy";
+import { finishLabel, propertyTypeLabel, sellerTypeLabel } from "@/lib/i18n/taxonomy";
 import { useCurrency } from "@/lib/currency";
 import { useSiteSettings } from "@/lib/site-settings";
 import ImageSlider from "./ImageSlider";
@@ -89,6 +90,15 @@ export default function PropertyDetail({ property }: Props) {
       label: t("property.type"),
       value: propertyTypeLabel(property.type, t),
     },
+    ...(property.finish
+      ? [
+          {
+            Icon: Paintbrush,
+            label: t("filters.finish"),
+            value: finishLabel(property.finish, t),
+          },
+        ]
+      : []),
     {
       Icon: MapPin,
       label: t("property.district"),

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { USER_PROPERTIES_KEY } from "@/data/properties";
 import type { Property, PropertyDocument, PropertyType, Purpose, SellerType } from "@/types/property";
+import { FINISH_STATES, isBuildingType, type FinishState } from "@/types/property";
 import {
   ADD_PROPERTY_FIELDS_KEY,
   DEFAULT_ADD_PROPERTY_FIELD_SETTINGS,
@@ -39,6 +40,7 @@ const PROPERTY_TYPES = new Set([
 ]);
 const PURPOSES = new Set(["بيع", "إيجار"]);
 const SELLERS = new Set(["فرد", "مطور", "مسوق"]);
+const FINISHES = new Set<string>(FINISH_STATES);
 
 interface UploadedDocument extends PropertyDocument {
   storagePath: string;
@@ -51,6 +53,7 @@ interface SubmissionBody {
   city?: unknown;
   district?: unknown;
   type?: unknown;
+  finish?: unknown;
   area?: unknown;
   rooms?: unknown;
   bathrooms?: unknown;
@@ -194,6 +197,8 @@ export async function POST(request: Request) {
   const area = numberIn(body.area, 0, 1_000_000);
   const rooms = numberIn(body.rooms, 0, 100);
   const bathrooms = numberIn(body.bathrooms, 0, 100);
+  const finishInput = text(body.finish, 40);
+  const finish = FINISHES.has(finishInput) ? (finishInput as FinishState) : "";
   const lat = numberIn(body.lat, -90, 90);
   const lng = numberIn(body.lng, -180, 180);
   const priceByAdmin = body.priceByAdmin === true;
@@ -236,6 +241,15 @@ export async function POST(request: Request) {
   }
   if (!PROPERTY_TYPES.has(String(body.type)) || !PURPOSES.has(String(body.purpose))) {
     return NextResponse.json({ ok: false, error: "نوع العقار أو العرض غير صالح" }, { status: 400 });
+  }
+  if (finishInput && !finish) {
+    return NextResponse.json({ ok: false, error: "حالة التشطيب غير صالحة" }, { status: 400 });
+  }
+  if (needs("finish") && isBuildingType(String(body.type)) && !finish) {
+    return NextResponse.json(
+      { ok: false, error: "حالة الوحدة أو العقار مطلوبة" },
+      { status: 400 }
+    );
   }
   if (needs("sellerType") && !SELLERS.has(String(body.sellerType))) {
     return NextResponse.json({ ok: false, error: "صفة مقدم الطلب غير صالحة" }, { status: 400 });
@@ -284,6 +298,10 @@ export async function POST(request: Request) {
     city,
     district,
     type: body.type as PropertyType,
+    finish:
+      isBuildingType(String(body.type)) && finish
+        ? (finish as FinishState)
+        : undefined,
     area,
     rooms,
     bathrooms,

@@ -21,15 +21,19 @@ import {
 import { sellerTypes } from "@/data/properties";
 import {
   City,
+  FINISH_STATES,
+  isBuildingType,
   PropertyDocument,
   PropertyType,
   Purpose,
   SellerType,
+  type FinishState,
 } from "@/types/property";
 import { useI18n, type MessageKey } from "@/lib/i18n";
 import { cityCenter, cityLabel } from "@/lib/i18n/cities";
 import { useActiveCities } from "@/lib/cities-store";
 import {
+  finishLabel,
   PROPERTY_TYPES,
   propertyTypeLabel,
   sellerTypeLabel,
@@ -117,6 +121,8 @@ interface FormState {
   whatsapp: string;
   description: string;
   type: PropertyType | "";
+  /** حالة تشطيب الوحدة/العقار — تظهر للأنواع المبنية فقط */
+  finish: FinishState | "";
   lat: number;
   lng: number;
   imageName: string;
@@ -206,6 +212,7 @@ const initial: FormState = {
   whatsapp: "",
   description: "",
   type: "",
+  finish: "",
   lat: START_CENTER.lat,
   lng: START_CENTER.lng,
   imageName: "",
@@ -347,6 +354,8 @@ function AddPropertyContent() {
   /** خيار «السعر تحدده المنصة» لا يُطبَّق إلا إذا سمح به الأدمن */
   const priceByAdmin = form.priceByAdmin && options.platformPriceEnabled;
   const negotiableEnabled = options.negotiableEnabled;
+  /** حالة التشطيب تظهر للأنواع المبنية فقط (كل الأنواع عدا الأرض) */
+  const showFinish = isBuildingType(form.type);
 
   /** اختيار «السعر تحدده المنصة» يُغلق السعر وقائمة التفاوض ويفرّغهما */
   const togglePriceByAdmin = (checked: boolean) => {
@@ -470,6 +479,9 @@ function AddPropertyContent() {
     }
     if (needs("type") && !form.type) {
       missing.push(labelFor("type", "addProperty.fieldType"));
+    }
+    if (showFinish && needs("finish") && !form.finish) {
+      missing.push(labelFor("finish", "addProperty.fieldFinish"));
     }
     if (needs("sellerType") && !form.sellerType) {
       missing.push(labelFor("sellerType", "addProperty.fieldSellerType"));
@@ -603,6 +615,7 @@ function AddPropertyContent() {
           city: form.city,
           district: form.district.trim(),
           type: form.type,
+          finish: showFinish && form.finish ? form.finish : undefined,
           area: Number(form.area) || 0,
           rooms: Number(form.rooms) || 0,
           bathrooms: Number(form.bathrooms) || 0,
@@ -902,7 +915,15 @@ function AddPropertyContent() {
                     </span>
                     <select
                       value={form.type}
-                      onChange={set("type")}
+                      onChange={(event) => {
+                        const nextType = event.target.value as PropertyType | "";
+                        setForm((prev) => ({
+                          ...prev,
+                          type: nextType,
+                          /* الأرض ليست مبنى: نُفرّغ حالة التشطيب عند اختيارها */
+                          finish: isBuildingType(nextType) ? prev.finish : "",
+                        }));
+                      }}
                       className={FIELD}
                     >
                       <option value="">{t("addProperty.select")}</option>
@@ -913,6 +934,31 @@ function AddPropertyContent() {
                       ))}
                     </select>
                   </label>
+
+                  {showFinish && (
+                    <label className="block">
+                      <span className={LABEL}>
+                        {labelFor("finish", "addProperty.fieldFinish")}
+                      </span>
+                      <select
+                        value={form.finish}
+                        onChange={(event) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            finish: event.target.value as FinishState | "",
+                          }))
+                        }
+                        className={FIELD}
+                      >
+                        <option value="">{t("addProperty.select")}</option>
+                        {FINISH_STATES.map((finish) => (
+                          <option key={finish} value={finish}>
+                            {finishLabel(finish, t)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
 
                   <label className="block">
                     <span className={LABEL}>

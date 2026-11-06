@@ -11,6 +11,7 @@ export type AddPropertyFieldKey =
   | "city"
   | "district"
   | "type"
+  | "finish"
   | "area"
   | "price"
   | "negotiable"
@@ -112,6 +113,13 @@ export const ADD_PROPERTY_FIELDS: AddPropertyFieldDef[] = [
     group: "details",
     defaultRequired: true,
     locked: true,
+  },
+  {
+    key: "finish",
+    label: "حالة الوحدة أو العقار",
+    labelKey: "addProperty.fieldFinish",
+    group: "details",
+    defaultRequired: true,
   },
   {
     key: "area",

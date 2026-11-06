@@ -32,6 +32,14 @@ const SELLER_TYPE_KEYS: Record<string, MessageKey> = {
   مسوق: "seller.marketer",
 };
 
+/** ربط حالة التشطيب بمفتاح الترجمة */
+const FINISH_KEYS: Record<string, MessageKey> = {
+  "كامل التشطيب": "finish.full",
+  "نصف تشطيب": "finish.half",
+  "بدون تشطيب": "finish.none",
+  "تحت الإنشاء": "finish.underConstruction",
+};
+
 /** ربط مستوى الطلب السوقي بمفتاح الترجمة */
 const DEMAND_KEYS: Record<string, MessageKey> = {
   مرتفع: "demand.high",
@@ -55,6 +63,9 @@ export const propertyTypeLabel = (value: string, t: Translate) =>
 
 export const sellerTypeLabel = (value: string, t: Translate) =>
   resolve(SELLER_TYPE_KEYS, value, t);
+
+export const finishLabel = (value: string, t: Translate) =>
+  resolve(FINISH_KEYS, value, t);
 
 export const demandLabel = (value: string, t: Translate) =>
   resolve(DEMAND_KEYS, value, t);

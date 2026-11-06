@@ -16,6 +16,28 @@ export type PropertyType =
 
 export type SellerType = "فرد" | "مطور" | "مسوق";
 
+/**
+ * حالة تشطيب الوحدة أو العقار.
+ * تُستخدم في البحث وفي نموذج «أضف عقارك» للأنواع المبنية (كل الأنواع عدا الأرض).
+ */
+export type FinishState =
+  | "كامل التشطيب"
+  | "نصف تشطيب"
+  | "بدون تشطيب"
+  | "تحت الإنشاء";
+
+export const FINISH_STATES: FinishState[] = [
+  "كامل التشطيب",
+  "نصف تشطيب",
+  "بدون تشطيب",
+  "تحت الإنشاء",
+];
+
+/** الأنواع التي تُعتبر مبنى/منشأة ويظهر لها اختيار حالة التشطيب */
+export function isBuildingType(type: string): boolean {
+  return Boolean(type) && type !== "أرض";
+}
+
 /** حالة الإعلان — لا يُنشر أي إعلان قبل موافقة إدارة المنصة */
 export type PropertyStatus =
   | "pending"
@@ -41,6 +63,7 @@ export type Purpose = "بيع" | "إيجار";
 export type RoomsFilter = "" | "1" | "2" | "3" | "4+";
 export type PropertyTypeFilter = PropertyType | "";
 export type PurposeFilter = Purpose | "";
+export type FinishFilter = FinishState | "";
 
 export interface Property {
   id: string;
@@ -63,6 +86,8 @@ export interface Property {
   lng: number;
   /** نوع العرض — غياب القيمة يعني "بيع" للإعلانات القديمة */
   purpose?: Purpose;
+  /** حالة التشطيب — اختيارية للإعلانات القديمة، وتظهر للأنواع المبنية */
+  finish?: FinishState;
   /** حالة النشر — غياب القيمة في إعلانات المستخدمين يعني "قيد المراجعة" */
   status?: PropertyStatus;
   /** المستندات المرفوعة مع الطلب (وصفية — التخزين الآمن يُربط لاحقاً) */
@@ -84,6 +109,8 @@ export interface PropertyFilters {
   priceMin: number;
   priceMax: number;
   rooms: RoomsFilter;
+  /** حالة التشطيب المطلوبة */
+  finish: FinishFilter;
   /** هل عدّل المستخدم نطاق السعر؟ إن لم يعدّله لا يُطبَّق أي حد سعري */
   priceActive: boolean;
 }
@@ -99,5 +126,6 @@ export const defaultPropertyFilters: PropertyFilters = {
   priceMin: PRICE_FILTER_MIN,
   priceMax: PRICE_FILTER_MAX,
   rooms: "",
+  finish: "",
   priceActive: false,
 };

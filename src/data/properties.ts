@@ -64,6 +64,7 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     price: 2850000,
     purpose: "بيع",
+    finish: "كامل التشطيب",
     sellerType: "مطور",
     whatsapp: "201012345678",
     description:
@@ -84,6 +85,7 @@ export const mockProperties: Property[] = [
     bathrooms: 4,
     price: 4800000,
     purpose: "بيع",
+    finish: "كامل التشطيب",
     sellerType: "فرد",
     whatsapp: "201098765432",
     description:
@@ -104,6 +106,7 @@ export const mockProperties: Property[] = [
     bathrooms: 1,
     price: 1200000,
     purpose: "بيع",
+    finish: "كامل التشطيب",
     sellerType: "مسوق",
     whatsapp: "201055512345",
     description: "محل واجهة زجاجية، مناسب لكافيه أو محل ملابس، رخصة جاهزة.",
@@ -123,6 +126,7 @@ export const mockProperties: Property[] = [
     bathrooms: 1,
     price: 12000,
     purpose: "إيجار",
+    finish: "كامل التشطيب",
     sellerType: "مطور",
     whatsapp: "201077788899",
     description: "وحدة مفروشة جاهزة للإيجار الشهري، عائد استثماري جذاب.",
@@ -144,6 +148,7 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     price: 3500000,
     purpose: "بيع",
+    finish: "كامل التشطيب",
     sellerType: "فرد",
     whatsapp: "201033344455",
     description: "شاليه بإطلالة مباشرة على البحر، حديقة ومسبح صغير.",
@@ -163,6 +168,7 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     price: 1950000,
     purpose: "بيع",
+    finish: "كامل التشطيب",
     sellerType: "مسوق",
     whatsapp: "201066677788",
     description: "شقة قريبة من الكورنيش والخدمات، تشطيب كامل.",
@@ -182,6 +188,7 @@ export const mockProperties: Property[] = [
     bathrooms: 3,
     price: 4200000,
     purpose: "بيع",
+    finish: "تحت الإنشاء",
     sellerType: "مطور",
     whatsapp: "201011122233",
     description: "فيلا 4 غرف بحوض سباحة خاص، مناسبة للعائلات الكبيرة.",
@@ -222,6 +229,7 @@ export const mockProperties: Property[] = [
     bathrooms: 1,
     price: 980000,
     purpose: "بيع",
+    finish: "نصف تشطيب",
     sellerType: "فرد",
     whatsapp: "201088899900",
     description: "شقة في موقع مركزي قريب من الأسواق والمساجد التاريخية.",
@@ -241,6 +249,7 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     price: 15000,
     purpose: "إيجار",
+    finish: "كامل التشطيب",
     sellerType: "مسوق",
     whatsapp: "201022233344",
     description: "شقة بإطلالة نيلية جزئية، 3 غرف وتشطيب حديث.",
@@ -260,6 +269,7 @@ export const mockProperties: Property[] = [
     bathrooms: 1,
     price: 750000,
     purpose: "بيع",
+    finish: "بدون تشطيب",
     sellerType: "فرد",
     whatsapp: "201099900011",
     description: "محل في قلب السوق، مناسب للملابس أو الأثاث.",
@@ -279,6 +289,7 @@ export const mockProperties: Property[] = [
     bathrooms: 3,
     price: 3100000,
     purpose: "بيع",
+    finish: "كامل التشطيب",
     sellerType: "مطور",
     whatsapp: "201055566677",
     description: "فيلا تراثية تم تجديدها بالكامل مع الحفاظ على الطابع الدمياطي.",
@@ -300,6 +311,7 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     price: 1350000,
     purpose: "بيع",
+    finish: "كامل التشطيب",
     sellerType: "فرد",
     whatsapp: "201012340001",
     description:
@@ -320,6 +332,7 @@ export const mockProperties: Property[] = [
     bathrooms: 3,
     price: 2400000,
     purpose: "بيع",
+    finish: "تحت الإنشاء",
     sellerType: "مطور",
     whatsapp: "201012340002",
     description: "فيلا دورين بحديقة أمامية وجراج، في حي هادئ قريب من النيل.",
@@ -360,6 +373,7 @@ export const mockProperties: Property[] = [
     bathrooms: 2,
     price: 2100000,
     purpose: "بيع",
+    finish: "كامل التشطيب",
     sellerType: "مطور",
     whatsapp: "201011122233",
     description:
@@ -380,6 +394,7 @@ export const mockProperties: Property[] = [
     bathrooms: 3,
     price: 2900000,
     purpose: "بيع",
+    finish: "كامل التشطيب",
     sellerType: "مطور",
     whatsapp: "201011122234",
     description: "شقة واسعة بتشطيب سوبر لوكس وحديقة مشتركة، تقسيط حتى 7 سنوات.",
@@ -401,6 +416,7 @@ export const mockProperties: Property[] = [
     bathrooms: 1,
     price: 1450000,
     purpose: "بيع",
+    finish: "كامل التشطيب",
     sellerType: "فرد",
     whatsapp: "201044455566",
     description:
@@ -421,6 +437,7 @@ export const mockProperties: Property[] = [
     bathrooms: 1,
     price: 9000,
     purpose: "إيجار",
+    finish: "كامل التشطيب",
     sellerType: "مسوق",
     whatsapp: "201044455567",
     description: "شاليه مفروش بالكامل بإطلالة جانبية على البحر، إيجار أسبوعي.",
@@ -442,6 +459,7 @@ export function filterProperties(
     priceMin: number;
     priceMax: number;
     rooms: "" | "1" | "2" | "3" | "4+";
+    finish?: Property["finish"] | "";
     query: string;
   }
 ): Property[] {
@@ -462,6 +480,8 @@ export function filterProperties(
     } else if (filters.rooms) {
       if (p.rooms !== Number(filters.rooms)) return false;
     }
+
+    if (filters.finish && p.finish !== filters.finish) return false;
 
     if (q) {
       const hay = `${p.district} ${p.city} ${p.title} ${p.type}`.toLowerCase();

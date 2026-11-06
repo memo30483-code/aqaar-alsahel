@@ -16,4 +16,6 @@ export const filtersMessages = {
   "filters.priceFrom": { ar: "السعر من", en: "Price from" },
   "filters.priceTo": { ar: "السعر إلى", en: "Price to" },
   "filters.allTypes": { ar: "جميع الأنواع", en: "All types" },
+  "filters.finish": { ar: "حالة التشطيب", en: "Finishing status" },
+  "filters.anyFinish": { ar: "أي حالة تشطيب", en: "Any finishing" },
 };

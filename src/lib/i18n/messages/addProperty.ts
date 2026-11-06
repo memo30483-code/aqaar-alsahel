@@ -33,6 +33,14 @@ export const addPropertyMessages = {
   /* ---------- تفاصيل العقار ---------- */
   "addProperty.sectionDetails": { ar: "تفاصيل العقار", en: "Property details" },
   "addProperty.fieldType": { ar: "نوع العقار *", en: "Property type *" },
+  "addProperty.fieldFinish": {
+    ar: "حالة الوحدة أو العقار",
+    en: "Unit / property finishing status",
+  },
+  "addProperty.finishHint": {
+    ar: "تظهر هذه القائمة للأنواع المبنية (شقة، فيلا، منزل، محل…)، ولا تظهر للأراضي.",
+    en: "This list appears for built property types (apartment, villa, house, shop…), not for land.",
+  },
   "addProperty.select": { ar: "اختر", en: "Select" },
   "addProperty.fieldArea": { ar: "المساحة (م²) *", en: "Area (m²) *" },
   "addProperty.fieldPrice": { ar: "سعر البيع (ج.م) *", en: "Sale price (EGP) *" },

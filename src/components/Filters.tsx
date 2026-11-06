@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Search, SlidersHorizontal } from "lucide-react";
 import {
   defaultPropertyFilters,
+  FINISH_STATES,
   PRICE_FILTER_MAX,
   PRICE_FILTER_MIN,
   PropertyFilters,
@@ -13,7 +14,7 @@ import {
 import { useI18n } from "@/lib/i18n";
 import { cityLabel, cityMatches } from "@/lib/i18n/cities";
 import { DEFAULT_CITIES, useActiveCities, type CityRecord } from "@/lib/cities-store";
-import { PROPERTY_TYPES, propertyTypeLabel } from "@/lib/i18n/taxonomy";
+import { finishLabel, PROPERTY_TYPES, propertyTypeLabel } from "@/lib/i18n/taxonomy";
 import { useCurrency } from "@/lib/currency";
 
 export interface CityOption {
@@ -173,6 +174,7 @@ export default function Filters({
     applied.type,
     applied.purpose,
     applied.rooms,
+    applied.finish,
     applied.priceActive,
   ].filter(Boolean).length;
 
@@ -338,6 +340,27 @@ export default function Filters({
                   </select>
                 </label>
               </div>
+
+              {/* حالة التشطيب */}
+              <label className="block">
+                <span className={LABEL_CLASS}>{t("filters.finish")}</span>
+                <select
+                  value={draft.finish}
+                  onChange={(event) =>
+                    update({
+                      finish: event.target.value as PropertyFilters["finish"],
+                    })
+                  }
+                  className={SELECT_CLASS}
+                >
+                  <option value="">{t("filters.anyFinish")}</option>
+                  {FINISH_STATES.map((finish) => (
+                    <option key={finish} value={finish}>
+                      {finishLabel(finish, t)}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
               {/* نطاق السعر */}
               <div>
