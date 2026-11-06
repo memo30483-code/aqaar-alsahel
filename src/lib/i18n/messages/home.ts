@@ -67,6 +67,8 @@ export const homeMessages = {
     en: "Every property is listed after a legal document review",
   },
   "home.search.allPurposes": { ar: "الكل", en: "All" },
+  "home.search.keyword": { ar: "ابحث بالاسم أو المنطقة", en: "Search by name or area" },
+  "home.search.applied": { ar: "الفلاتر المطبّقة:", en: "Applied filters:" },
   "home.search.city": { ar: "المدينة أو المنطقة", en: "City or area" },
   "home.search.type": { ar: "نوع العقار", en: "Property type" },
   "home.search.budget": { ar: "الميزانية حتى", en: "Budget up to" },

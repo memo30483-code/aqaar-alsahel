@@ -102,7 +102,6 @@ export default function HomePage() {
   const { formatWithSymbol } = useCurrency();
   const cityOptions = useCityOptions();
   const [search, setSearch] = useState("");
-  const [draftSearch, setDraftSearch] = useState("");
   const [filters, setFilters] = useState<PropertyFilters>(defaultPropertyFilters);
   const [sort, setSort] = useState<SortKey>("newest");
   const [showAll, setShowAll] = useState(false);
@@ -296,10 +295,7 @@ export default function HomePage() {
       tags.push({
         key: "search",
         label: search,
-        onRemove: () => {
-          setSearch("");
-          setDraftSearch("");
-        },
+        onRemove: () => setSearch(""),
       });
     }
 
@@ -309,7 +305,6 @@ export default function HomePage() {
   const handleClear = () => {
     setFilters(defaultPropertyFilters);
     setSearch("");
-    setDraftSearch("");
     setShowAll(false);
   };
 
@@ -505,6 +500,7 @@ export default function HomePage() {
       <div className="relative z-20 mx-auto -mt-28 w-full max-w-[1240px] px-4 sm:px-6 lg:-mt-24">
         <div className="rounded-[22px] border border-sand-200 bg-white p-4 shadow-[0_24px_60px_-18px_rgba(20,26,51,0.28)] sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-sand-200 pb-3.5">
+            <div className="flex flex-wrap items-center gap-2">
             <div className="flex gap-1 rounded-xl bg-sand-100 p-1">
               {[
                 { key: "all", label: "home.search.allPurposes", value: "" },
@@ -535,14 +531,46 @@ export default function HomePage() {
               })}
             </div>
 
+              {activeTags.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  className="inline-flex items-center gap-1 rounded-full border border-gold-200 bg-gold-50 px-2.5 py-1 text-[10.5px] font-bold text-gold-800 transition hover:bg-gold-100"
+                >
+                  <X className="h-3 w-3" />
+                  {t("home.filters.clearAll")}
+                  <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-gold-200 px-1 text-[9px] font-black text-gold-900">
+                    {activeTags.length}
+                  </span>
+                </button>
+              )}
+            </div>
+
             <p className="hidden items-center gap-1.5 text-[11px] font-bold text-sand-700 sm:flex">
               <ShieldCheck className="h-4 w-4 text-gold-600" />
               {t("home.search.verified")}
             </p>
           </div>
 
-          <div className="grid gap-3 pt-3.5 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_0.85fr_auto] lg:items-end">
-            <label className="block">
+          <div className="grid gap-3 pt-4 sm:grid-cols-2 lg:grid-cols-12 lg:items-end">
+            <label className="block sm:col-span-2 lg:col-span-5">
+              <span className="mb-1.5 block text-[11px] font-extrabold text-ocean-600">
+                {t("home.search.keyword")}
+              </span>
+              <span className="relative block">
+                <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gold-600" />
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder={t("home.search.placeholder")}
+                  aria-label={t("home.search.label")}
+                  className="h-12 w-full rounded-xl border border-sand-300 bg-sand-50 ps-10 pe-3 text-[13px] font-bold text-ocean-800 outline-none transition placeholder:font-medium placeholder:text-sand-500 focus:border-ocean-500 focus:bg-white"
+                />
+              </span>
+            </label>
+
+            <label className="block lg:col-span-3">
               <span className="mb-1.5 block text-[11px] font-extrabold text-ocean-600">
                 {t("home.search.city")}
               </span>
@@ -570,7 +598,7 @@ export default function HomePage() {
               </span>
             </label>
 
-            <label className="block">
+            <label className="block lg:col-span-4">
               <span className="mb-1.5 block text-[11px] font-extrabold text-ocean-600">
                 {t("home.search.type")}
               </span>
@@ -598,7 +626,30 @@ export default function HomePage() {
               </span>
             </label>
 
-            <label className="block">
+            <label className="block lg:col-span-3">
+              <span className="mb-1.5 block text-[11px] font-extrabold text-ocean-600">
+                {t("home.search.budget")}
+              </span>
+              <span className="relative block">
+                <select
+                  value={filters.priceActive ? filters.priceMax : PRICE_FILTER_MAX}
+                  onChange={(event) => applyBudget(Number(event.target.value))}
+                  className="h-12 w-full appearance-none rounded-xl border border-sand-300 bg-sand-50 px-3 pe-8 text-[13px] font-bold text-ocean-800 outline-none transition focus:border-ocean-500 focus:bg-white"
+                >
+                  {BUDGETS.map((budget) => (
+                    <option key={budget} value={budget}>
+                      {t("home.search.upTo", { price: formatWithSymbol(budget) })}
+                    </option>
+                  ))}
+                  <option value={PRICE_FILTER_MAX}>
+                    {t("home.search.unlimitedBudget")}
+                  </option>
+                </select>
+                <ChevronDown className="pointer-events-none absolute end-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-sand-600" />
+              </span>
+            </label>
+
+            <label className="block lg:col-span-3">
               <span className="mb-1.5 block text-[11px] font-extrabold text-ocean-600">
                 {t("filters.finish")}
               </span>
@@ -624,30 +675,7 @@ export default function HomePage() {
               </span>
             </label>
 
-            <label className="block">
-              <span className="mb-1.5 block text-[11px] font-extrabold text-ocean-600">
-                {t("home.search.budget")}
-              </span>
-              <span className="relative block">
-                <select
-                  value={filters.priceActive ? filters.priceMax : PRICE_FILTER_MAX}
-                  onChange={(event) => applyBudget(Number(event.target.value))}
-                  className="h-12 w-full appearance-none rounded-xl border border-sand-300 bg-sand-50 px-3 pe-8 text-[13px] font-bold text-ocean-800 outline-none transition focus:border-ocean-500 focus:bg-white"
-                >
-                  {BUDGETS.map((budget) => (
-                    <option key={budget} value={budget}>
-                      {t("home.search.upTo", { price: formatWithSymbol(budget) })}
-                    </option>
-                  ))}
-                  <option value={PRICE_FILTER_MAX}>
-                    {t("home.search.unlimitedBudget")}
-                  </option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute end-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-sand-600" />
-              </span>
-            </label>
-
-            <label className="block">
+            <label className="block lg:col-span-3">
               <span className="mb-1.5 block text-[11px] font-extrabold text-ocean-600">
                 {t("home.search.rooms")}
               </span>
@@ -675,7 +703,7 @@ export default function HomePage() {
 
             <a
               href="#properties"
-              className={`flex h-12 items-center justify-center gap-2 rounded-xl px-6 text-sm font-extrabold shadow-[0_12px_24px_-12px_rgba(20,26,51,0.75)] transition ${
+              className={`flex h-12 items-center justify-center gap-2 rounded-xl px-6 text-sm font-extrabold shadow-[0_12px_24px_-12px_rgba(20,26,51,0.75)] transition sm:col-span-2 lg:col-span-3 ${
                 seasonTheme.active
                   ? "theme-accent-bg hover:brightness-110"
                   : "bg-gradient-to-br from-ocean-700 to-ocean-950 text-white hover:from-ocean-800 hover:to-black"
@@ -899,37 +927,22 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="mt-5 flex flex-wrap items-center gap-2">
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                setSearch(draftSearch.trim());
-              }}
-              className="relative w-full max-w-[280px]"
-            >
-              <Search className="pointer-events-none absolute end-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gold-600" />
-              <input
-                type="search"
-                value={draftSearch}
-                onChange={(event) => setDraftSearch(event.target.value)}
-                placeholder={t("home.search.label")}
-                aria-label={t("home.search.label")}
-                className="h-9 w-full rounded-xl border border-sand-300 bg-white pe-8 ps-3 text-[11.5px] font-semibold text-ocean-900 outline-none transition placeholder:font-normal placeholder:text-sand-600 focus:border-ocean-500"
-              />
-            </form>
-
-            {activeTags.map((tag) => (
-              <button
-                key={tag.key}
-                type="button"
-                onClick={tag.onRemove}
-                className="inline-flex items-center gap-1 rounded-full border border-gold-200 bg-gold-50 px-3 py-1.5 text-[10.5px] font-bold text-gold-800 transition hover:bg-gold-100"
-              >
-                {tag.label}
-                <X className="h-3 w-3" />
-              </button>
-            ))}
-            {activeTags.length > 0 && (
+          {activeTags.length > 0 && (
+            <div className="mt-5 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-bold text-sand-600">
+                {t("home.search.applied")}
+              </span>
+              {activeTags.map((tag) => (
+                <button
+                  key={tag.key}
+                  type="button"
+                  onClick={tag.onRemove}
+                  className="inline-flex items-center gap-1 rounded-full border border-gold-200 bg-gold-50 px-3 py-1.5 text-[10.5px] font-bold text-gold-800 transition hover:bg-gold-100"
+                >
+                  {tag.label}
+                  <X className="h-3 w-3" />
+                </button>
+              ))}
               <button
                 type="button"
                 onClick={handleClear}
@@ -937,8 +950,8 @@ export default function HomePage() {
               >
                 {t("home.filters.clearAll")}
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           {visible.length === 0 ? (
             <div className="mt-7 rounded-3xl border border-sand-300 bg-white p-10 text-center">

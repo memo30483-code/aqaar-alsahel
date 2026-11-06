@@ -484,7 +484,8 @@ export function filterProperties(
     if (filters.finish && p.finish !== filters.finish) return false;
 
     if (q) {
-      const hay = `${p.district} ${p.city} ${p.title} ${p.type}`.toLowerCase();
+      const hay =
+        `${p.district} ${p.city} ${p.title} ${p.type} ${p.finish ?? ""} ${p.description}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
 
