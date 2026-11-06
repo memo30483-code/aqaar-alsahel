@@ -37,6 +37,8 @@ export const CLOUD_KEYS: Record<string, CloudKeyMeta> = {
   /* تُعرض للعامة بعد حذف بيانات المالك والمستندات وقصرها على المعتمد */
   "aqaar-properties": { public: true, label: "العقارات" },
 
+  /* حسابات المستخدمين: تُقرأ على السيرفر فقط، ولا تُحقن في المتصفح أبدًا */
+  "aqaar-accounts": { public: false, label: "حسابات المستخدمين" },
   "aqaar-admin-users-v2": { public: false, label: "حسابات الإدارة" },
   "aqaar-admin-permissions": { public: false, label: "صلاحيات الإدارة" },
   "aqaar-admin-logs": { public: false, label: "سجل العمليات" },

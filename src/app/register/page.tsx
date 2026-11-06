@@ -18,6 +18,7 @@ import { useT, type MessageKey } from "@/lib/i18n";
 import { readCompressedImage } from "@/lib/image-upload";
 import {
   addProfessional,
+  getProfessionalByEmail,
   type ProfessionalDocument,
   type ProfessionalKind,
 } from "@/lib/professionals-store";
@@ -676,6 +677,7 @@ function RegisterContent() {
   >({});
 
   const [sending, setSending] = useState(false);
+  const [registering, setRegistering] = useState(false);
   const [otp, setOtp] = useState("");
   const [code, setCode] = useState("");
   const [otpError, setOtpError] = useState("");
@@ -802,8 +804,9 @@ function RegisterContent() {
     }, 900);
   };
 
-  const onSubmitOtp = (e: FormEvent) => {
+  const onSubmitOtp = async (e: FormEvent) => {
     e.preventDefault();
+    if (registering) return;
     if (otp.length !== 6) {
       setOtpError(t("register.otp.error.length"));
       return;
@@ -814,11 +817,27 @@ function RegisterContent() {
     }
     setOtpError("");
 
-    /* رمز الملكية يُنشأ مرة واحدة ويُربط بالجلسة والسجل المهني معاً */
-    const ownerToken = newOwnerToken();
+    const trimmedEmail = details.email.trim();
+    /* سجل مهني عام (ظاهر في الدليل) لا يحمل رمز ملكية: لا نسلّم ملكيته */
+    const existingProfessional = getProfessionalByEmail(trimmedEmail);
+    if (existingProfessional && !existingProfessional.ownerToken) {
+      setOtpError(
+        "هذا البريد مسجّل بالفعل. سجّل الدخول بكلمة المرور، أو تواصل مع الإدارة لاستعادة الحساب."
+      );
+      return;
+    }
+
+    setRegistering(true);
+
+    /* رمز الملكية يُنشأ مرة واحدة ويُربط بالجلسة والسجل المهني معاً.
+       إن كان السجل موجودًا على هذا المتصفح برمز ملكية (تسجيل سابق) نستخدمه
+       بدل إنشاء سجل مكرر. */
+    const ownerToken = existingProfessional?.ownerToken ?? newOwnerToken();
+    const displayName =
+      details.fullName || details.companyName || details.fullTripleName || trimmedEmail;
 
     /* إنشاء سجل مهني بحالة «قيد المراجعة» — لا يظهر للزوار قبل موافقة الإدارة */
-    if (accountType !== "individual") {
+    if (accountType !== "individual" && !existingProfessional) {
       const kind: ProfessionalKind = accountType;
       const documentList: ProfessionalDocument[] = fileFields
         .filter((field) => documents[field.name])
@@ -839,7 +858,7 @@ function RegisterContent() {
             : details.legalOfficerName || details.companyName,
         companyAr: accountType === "lawyer" ? "" : details.companyName,
         phone: details.phone,
-        email: details.email,
+        email: trimmedEmail,
         documents: documentList,
         status: "pending",
         verified: false,
@@ -849,25 +868,86 @@ function RegisterContent() {
       /* لا نُكمل بجلسة ناجحة إذا لم يُحفظ السجل فعلاً (تخزين ممتلئ مثلاً) */
       if (!result.ok) {
         setOtpError(result.error);
+        setRegistering(false);
         return;
       }
     }
 
-    const nextSession: Session = {
-      name: details.fullName || details.companyName || details.fullTripleName,
-      email: details.email,
-      phone: details.phone,
-      accountType,
-      verifiedAt: new Date().toISOString(),
-      /* المطوّر والمسوق يُمنحان دور «مسوق»، والمحامي مستخدم عادي حتى الاعتماد */
-      role:
-        accountType === "developer" || accountType === "marketer"
-          ? "agent"
-          : "user",
-      ownerToken,
-    };
-    saveSession(nextSession);
-    setVerified(true);
+    /* إنشاء الحساب على السيرفر — كلمة المرور تُجزّأ هناك ولا تُخزَّن كنص.
+       بدون نجاح هذه الخطوة لا تُنشأ جلسة ولا يُعتبر المستخدم مسجّلًا. */
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: displayName,
+          email: trimmedEmail,
+          password: details.password,
+          phone: details.phone,
+          accountType,
+          ownerToken,
+        }),
+      });
+
+      if (response.status === 409) {
+        setOtpError(
+          "هذا البريد مسجّل بالفعل. سجّل الدخول بكلمة المرور، أو تواصل مع الإدارة لاستعادة الحساب."
+        );
+        setRegistering(false);
+        return;
+      }
+
+      if (response.status === 429) {
+        setOtpError("محاولات تسجيل كثيرة. استنى شوية وحاول تاني.");
+        setRegistering(false);
+        return;
+      }
+
+      if (response.status === 503) {
+        setOtpError("خدمة إنشاء الحسابات غير متاحة حاليًا. تواصل مع الدعم.");
+        setRegistering(false);
+        return;
+      }
+
+      if (!response.ok) {
+        setOtpError("تعذّر إنشاء الحساب. حاول تاني بعد لحظات.");
+        setRegistering(false);
+        return;
+      }
+
+      const data = (await response.json()) as {
+        account?: {
+          name?: string;
+          email?: string;
+          phone?: string;
+          accountType?: string;
+          role?: Session["role"];
+          ownerToken?: string;
+        };
+      };
+      const account = data.account;
+      if (!account) {
+        setOtpError("تعذّر إنشاء الحساب. حاول تاني بعد لحظات.");
+        setRegistering(false);
+        return;
+      }
+
+      const nextSession: Session = {
+        name: account.name || displayName,
+        email: account.email || trimmedEmail,
+        phone: account.phone || details.phone,
+        accountType: account.accountType || accountType,
+        verifiedAt: new Date().toISOString(),
+        role: account.role === "agent" ? "agent" : "user",
+        ...(account.ownerToken ? { ownerToken: account.ownerToken } : {}),
+      };
+      saveSession(nextSession);
+      setVerified(true);
+      setRegistering(false);
+    } catch {
+      setOtpError("تعذّر الاتصال بالسيرفر. تأكد من الإنترنت وحاول تاني.");
+      setRegistering(false);
+    }
   };
 
   const uploadedCount = Object.values(documents).filter(Boolean).length;
@@ -1234,14 +1314,14 @@ function RegisterContent() {
 
                 <button
                   type="submit"
-                  disabled={otp.length !== 6}
+                  disabled={otp.length !== 6 || registering}
                   className={`w-full rounded-2xl px-6 py-4 text-sm font-black transition ${
-                    otp.length === 6
+                    otp.length === 6 && !registering
                       ? "bg-gradient-to-l from-gold-500 to-gold-400 text-ocean-950 shadow-[0_18px_38px_-24px_rgba(201,146,42,0.95)] hover:-translate-y-0.5"
                       : "cursor-not-allowed bg-sand-200 text-sand-500"
                   }`}
                 >
-                  {t("register.otp.confirm")}
+                  {registering ? "جارٍ إنشاء الحساب…" : t("register.otp.confirm")}
                 </button>
 
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-sand-200 pt-4">

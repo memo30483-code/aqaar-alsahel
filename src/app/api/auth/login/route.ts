@@ -1,0 +1,105 @@
+import { NextResponse } from "next/server";
+import {
+  burnPasswordCheck,
+  normalizeEmail,
+  readAccounts,
+  toPublicAccount,
+  verifyPassword,
+} from "@/lib/auth/accounts";
+import {
+  clearAttempts,
+  clientKey,
+  isRateLimited,
+  recordAttempt,
+} from "@/lib/auth/rate-limit";
+
+/**
+ * تسجيل دخول المستخدمين — التحقق من البريد وكلمة المرور على السيرفر فقط.
+ *
+ * لا تُنشأ أي جلسة إن لم يوجد حساب مطابق بكلمة مرور صحيحة.
+ */
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const RATE = { scope: "login", max: 10, windowMs: 10 * 60 * 1000 };
+
+interface LoginBody {
+  email?: unknown;
+  password?: unknown;
+}
+
+export async function POST(request: Request) {
+  const key = clientKey(request);
+  if (isRateLimited(key, RATE)) {
+    return NextResponse.json(
+      { ok: false, error: "rate_limited" },
+      { status: 429 }
+    );
+  }
+
+  let body: LoginBody;
+  try {
+    body = (await request.json()) as LoginBody;
+  } catch {
+    return NextResponse.json({ ok: false, error: "bad_request" }, { status: 400 });
+  }
+
+  const email = typeof body.email === "string" ? body.email.trim() : "";
+  const password = typeof body.password === "string" ? body.password : "";
+
+  if (!email || !password) {
+    return NextResponse.json(
+      { ok: false, error: "invalid_credentials" },
+      { status: 401 }
+    );
+  }
+
+  try {
+    const store = await readAccounts();
+    if (!store.enabled) {
+      return NextResponse.json(
+        { ok: false, error: "accounts_unavailable" },
+        { status: 503 }
+      );
+    }
+
+    const account = store.file.accounts.find(
+      (item) => item.emailNormalized === normalizeEmail(email)
+    );
+
+    /* نفس زمن الحساب في الحالتين حتى لا يُستدل على وجود البريد */
+    if (!account) {
+      await burnPasswordCheck(password);
+      recordAttempt(key, RATE);
+      return NextResponse.json(
+        { ok: false, error: "invalid_credentials" },
+        { status: 401 }
+      );
+    }
+
+    const valid = await verifyPassword(password, account.salt, account.hash);
+    if (!valid) {
+      recordAttempt(key, RATE);
+      return NextResponse.json(
+        { ok: false, error: "invalid_credentials" },
+        { status: 401 }
+      );
+    }
+
+    clearAttempts(key, RATE);
+    return NextResponse.json({
+      ok: true,
+      account: toPublicAccount(account),
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "server_error",
+        message: error instanceof Error ? error.message : "خطأ غير معروف",
+      },
+      { status: 500 }
+    );
+  }
+}

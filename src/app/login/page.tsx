@@ -15,8 +15,7 @@ import {
   Sparkles,
   UserPlus,
 } from "lucide-react";
-import { saveSession } from "@/lib/session";
-import { getProfessionalByEmail } from "@/lib/professionals-store";
+import { saveSession, type Session } from "@/lib/session";
 import { useT } from "@/lib/i18n";
 
 export default function LoginPage() {
@@ -123,20 +122,74 @@ function LoginContent() {
       clearTimeout(abortTimer);
     }
 
-    /* 2) أي حساب آخر: جلسة محلية تجريبية حتى ربط المصادقة الكاملة */
-    const ownedProfessional = getProfessionalByEmail(trimmedEmail);
-    saveSession({
-      name: ownedProfessional?.nameAr || trimmedEmail,
-      email: trimmedEmail,
-      phone: ownedProfessional?.phone ?? "",
-      accountType: "individual",
-      verifiedAt: new Date().toISOString(),
-      /* جسر مؤقت حتى ربط المصادقة الحقيقية: السجل المحفوظ على هذا الجهاز
-         يحمل رمز الملكية فيُفتح لصاحبه. لا يغني عن مصادقة على السيرفر. */
-      ownerToken: ownedProfessional?.ownerToken,
-    });
-    /* لا نوجّه المستخدم العادي إلى لوحة الإدارة */
-    router.push(safeTarget === "/admin" ? "/add-property" : safeTarget);
+    /* 2) أي حساب آخر: التحقق من الحساب المسجّل على السيرفر.
+       لا تُنشأ أي جلسة إن لم يوجد بريد مسجّل بكلمة المرور الصحيحة. */
+    const userController = new AbortController();
+    const userTimer = setTimeout(() => userController.abort(), 15_000);
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: trimmedEmail, password }),
+        signal: userController.signal,
+      });
+
+      if (response.ok) {
+        const data = (await response.json()) as {
+          account?: {
+            name?: string;
+            email?: string;
+            phone?: string;
+            accountType?: string;
+            role?: Session["role"];
+            ownerToken?: string;
+          };
+        };
+        const account = data.account;
+        if (!account) {
+          setError(t("login.error.invalid"));
+          setLoading(false);
+          return;
+        }
+        saveSession({
+          name: account.name || trimmedEmail,
+          email: account.email || trimmedEmail,
+          phone: account.phone || "",
+          accountType: account.accountType || "individual",
+          verifiedAt: new Date().toISOString(),
+          role: account.role === "agent" ? "agent" : "user",
+          ...(account.ownerToken ? { ownerToken: account.ownerToken } : {}),
+        });
+        /* لا نوجّه المستخدم العادي إلى لوحة الإدارة */
+        router.push(safeTarget === "/admin" ? "/add-property" : safeTarget);
+        return;
+      }
+
+      if (response.status === 429) {
+        setError("محاولات كثيرة. استنى دقايق وحاول تاني.");
+        setLoading(false);
+        return;
+      }
+
+      if (response.status === 503) {
+        setError("خدمة الحسابات غير متاحة حاليًا. تواصل مع الدعم.");
+        setLoading(false);
+        return;
+      }
+
+      /* 401 أو أي رفض آخر: بيانات دخول غير صحيحة */
+      setError(t("login.error.invalid"));
+      setLoading(false);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        setError("السيرفر بطيء في الرد. حاول تاني بعد لحظات.");
+      } else {
+        setError(t("login.error.invalid"));
+      }
+      setLoading(false);
+    } finally {
+      clearTimeout(userTimer);
+    }
   };
 
   return (
