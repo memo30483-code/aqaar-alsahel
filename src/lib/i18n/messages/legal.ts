@@ -37,8 +37,8 @@ export const legalMessages = {
     en: "Why legal review before buying?",
   },
   "legal.why.subtitle": {
-    ar: "أغلب مشاكل العقارات في الساحل لا تظهر في الصور، بل في الأوراق: عقد غير مسجل، وارث لم يوقّع، أو حجز على الوحدة. المراجعة القانونية تكشف هذا قبل ما تتحرك فلوسك.",
-    en: "Most coastal property problems don't show up in the photos but in the paperwork: an unregistered contract, an heir who didn't sign, or a lien on the unit. A legal review uncovers this before your money moves.",
+    ar: "أغلب مشاكل العقارات لا تظهر في الصور، بل في الأوراق: عقد غير مسجل، وارث لم يوقّع، أو حجز على الوحدة. المراجعة القانونية تكشف هذا قبل ما تتحرك فلوسك.",
+    en: "Most property problems don't show up in the photos but in the paperwork: an unregistered contract, an heir who didn't sign, or a lien on the unit. A legal review uncovers this before your money moves.",
   },
 
   /* ---------- نقاط المراجعة ---------- */
@@ -169,8 +169,8 @@ export const legalMessages = {
   "legal.lawyers.title": { ar: "المحامون المعتمدون", en: "Licensed lawyers" },
   "legal.lawyers.eyebrow": { ar: "الفريق القانوني", en: "Legal team" },
   "legal.lawyers.subtitle": {
-    ar: "محامون مرخصون يغطون مدن الدلتا — التنسيق والمواعيد كلها عبر إدارة الموقع.",
-    en: "Licensed lawyers covering the Delta cities — all scheduling goes through site management.",
+    ar: "محامون مرخصون لفحص الملكية وصياغة العقود — التنسيق والمواعيد كلها عبر إدارة الموقع.",
+    en: "Licensed lawyers for title checks and contract drafting — all scheduling goes through site management.",
   },
   "legal.lawyers.badge": { ar: "محامي معتمد", en: "Licensed lawyer" },
   "legal.lawyers.license": { ar: "رقم الكارنيه", en: "License no." },

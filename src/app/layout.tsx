@@ -8,6 +8,7 @@ import SiteWidgets from "@/components/SiteWidgets";
 import MobileAppBanner from "@/components/MobileAppBanner";
 import SeasonRibbon from "@/components/SeasonRibbon";
 import CloudBridge from "@/components/CloudBridge";
+import TextStyleInjector from "@/components/TextStyleInjector";
 import PageAddonBlocks from "@/components/builder/PageAddonBlocks";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme-season";
 import { BRANDING_BOOT_SCRIPT } from "@/lib/branding";
@@ -97,6 +98,7 @@ export default async function RootLayout({
           <MobileAppBanner />
           <SiteWidgets />
           <CloudBridge />
+          <TextStyleInjector />
           </ThemeProvider>
         </AppProviders>
       </body>

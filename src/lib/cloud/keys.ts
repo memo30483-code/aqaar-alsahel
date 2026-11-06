@@ -28,6 +28,8 @@ export const CLOUD_KEYS: Record<string, CloudKeyMeta> = {
   /* تُعرض للعامة بعد تنقية المستندات ورمز الملكية داخل cloud/privacy.ts */
   "aqaar-professionals": { public: true, label: "المحامون والمهندسون" },
   "aqaar-page-builder-v1": { public: true, label: "محتوى الصفحات" },
+  "aqaar-text-overrides": { public: true, label: "نصوص الموقع القابلة للتعديل" },
+  "aqaar-text-styles": { public: true, label: "تنسيق النصوص (خط/لون/حجم)" },
   "aqaar-home-builder": { public: true, label: "محتوى الرئيسية (قديم)" },
   "aqaar-admin-listing-overrides-v2": { public: true, label: "حالة نشر الإعلانات" },
   "aqaar-add-property-fields": { public: true, label: "حقول إضافة العقار" },

@@ -87,7 +87,12 @@ export default function Footer() {
   const [subscribed, setSubscribed] = useState(false);
 
   const ar = locale === "ar";
+  /* أولوية النص: ما كتبه الأدمن في «إعدادات الموقع» ثم بيانات الشركة ثم الافتراضي */
+  const footerSetting = ar
+    ? site.footerTextAr
+    : site.footerTextEn || site.footerTextAr;
   const about =
+    (footerSetting && footerSetting.trim() ? footerSetting : "") ||
     (ar ? company?.aboutAr : company?.aboutEn || company?.aboutAr) ||
     t("footer.about");
   const legalName = company

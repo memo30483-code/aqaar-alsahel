@@ -729,7 +729,6 @@ export function saveListingOverride(id: string, patch: ListingOverride): boolean
 const SEED_USERS: AdminUser[] = [
   { id: "u-1", name: "مدير النظام العام", email: "admin@aqaar.com", phone: "201012345678", role: "super_admin", active: true, joinedAt: "2026-01-12" },
   { id: "u-2", name: "هبة محمد - مشرف إعلانات", email: "heba.moderator@aqarfamily.com", phone: "201098765432", role: "moderator", active: true, joinedAt: "2026-02-03" },
-  { id: "u-3", name: "شركة دلتا للتطوير العقاري", email: "sales@delta-dev.com", phone: "201155667788", role: "agent", active: true, joinedAt: "2026-02-19" },
 ];
 
 export function getUsers(): AdminUser[] {

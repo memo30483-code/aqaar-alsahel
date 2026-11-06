@@ -267,7 +267,6 @@ export function SponsoredSidebarAd({ className = "" }: { className?: string }) {
 
 /** مطورون برعاية — كروت عرض مميزة أعلى شبكة العقارات */
 const FEATURED_DEVELOPERS: { name: MessageKey; project: MessageKey; city: MessageKey }[] = [
-  { name: "ads.dev.0.name", project: "ads.dev.0.project", city: "ads.dev.0.city" },
   { name: "ads.dev.1.name", project: "ads.dev.1.project", city: "ads.dev.1.city" },
   { name: "ads.dev.2.name", project: "ads.dev.2.project", city: "ads.dev.2.city" },
 ];
@@ -296,7 +295,7 @@ export function FeaturedDevelopers() {
         </span>
       </div>
 
-      <div className="relative mt-4 grid gap-3 sm:grid-cols-3">
+      <div className="relative mt-4 grid gap-3 sm:grid-cols-2">
         {FEATURED_DEVELOPERS.map(({ name, project, city }) => (
           <Link
             key={name}

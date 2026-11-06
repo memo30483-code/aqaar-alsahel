@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   Smartphone,
   Star,
+  Type,
   Users,
 } from "lucide-react";
 import { getSession, saveSession, type Session } from "@/lib/session";
@@ -56,7 +57,9 @@ import AdminLogsTab from "@/components/admin/AdminLogsTab";
 import AdminProfessionalsTab from "@/components/admin/AdminProfessionalsTab";
 import AdminCitiesTab from "@/components/admin/AdminCitiesTab";
 import AdminCompanyTab from "@/components/admin/AdminCompanyTab";
-import AdminProjectsTab from "@/components/admin/AdminProjectsTab";import AdminHomeBuilderTab from "@/components/admin/AdminHomeBuilderTab";
+import AdminProjectsTab from "@/components/admin/AdminProjectsTab";
+import AdminHomeBuilderTab from "@/components/admin/AdminHomeBuilderTab";
+import AdminTextStudioTab from "@/components/admin/AdminTextStudioTab";
 import AdminOverviewTab from "@/components/admin/AdminOverviewTab";
 import AdminBrandTab from "@/components/admin/AdminBrandTab";
 import AdminAppTab from "@/components/admin/AdminAppTab";
@@ -68,6 +71,7 @@ type TabKey =
   | "crm"
   | "reviews"
   | "builder"
+  | "texts"
   | "listings"
   | "propertyFields"
   | "offers"
@@ -93,6 +97,7 @@ const TABS: {
   { key: "crm", label: "العملاء والفرص", Icon: Handshake, permission: "crm.view" },
   { key: "reviews", label: "التقييمات", Icon: Star, permission: "reviews.view" },
   { key: "builder", label: "Builder الصفحات", Icon: LayoutTemplate, permission: "site.settings" },
+  { key: "texts", label: "النصوص والتنسيق", Icon: Type, permission: "site.settings" },
   { key: "listings", label: "الإعلانات", Icon: LayoutList, permission: "listings.view" },
   {
     key: "propertyFields",
@@ -430,6 +435,14 @@ export default function AdminDashboard() {
 
         {tab === "builder" && (
           <AdminHomeBuilderTab
+            can={can}
+            notify={notify}
+            reloadLogs={reloadLogs}
+          />
+        )}
+
+        {tab === "texts" && (
+          <AdminTextStudioTab
             can={can}
             notify={notify}
             reloadLogs={reloadLogs}

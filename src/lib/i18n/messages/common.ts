@@ -6,8 +6,8 @@ export const commonMessages = {
   /* ---------- الهوية ---------- */
   "brand.name": { ar: "عقار FAMILY", en: "Aqaar FAMILY" },
   "brand.tagline": {
-    ar: "عقار أحلامك · مدن الدلتا",
-    en: "Your dream home · Delta cities",
+    ar: "عقار أحلامك · بضمان قانوني وهندسي",
+    en: "Your dream home · legally & technically assured",
   },
 
   /* ---------- التنقّل ---------- */
@@ -60,16 +60,16 @@ export const commonMessages = {
 
   /* ---------- قائمة الشركات العقارية ---------- */
   "companies.heading": {
-    ar: "الشركات العقارية في الدلتا",
-    en: "Real-estate companies in the Delta",
+    ar: "الشركات العقارية المعتمدة",
+    en: "Approved real-estate companies",
   },
   "companies.developers": {
     ar: "المطورون العقاريون",
     en: "Real-estate developers",
   },
   "companies.developersDesc": {
-    ar: "شركات التطوير ومشاريعها في مدن الدلتا",
-    en: "Development companies and their projects across the Delta cities",
+    ar: "شركات تطوير ومشروعات بعد التحقق من المستندات",
+    en: "Development companies and projects after document verification",
   },
   "companies.brokers": {
     ar: "المسوقون والوسطاء العقاريون",
@@ -137,8 +137,8 @@ export const commonMessages = {
 
   /* ---------- الفوتر ---------- */
   "footer.tagline": {
-    ar: "سوق عقاري موثّق في مدن الدلتا",
-    en: "A documented real-estate market across the Delta cities",
+    ar: "سوق عقاري بضمان قانوني وهندسي",
+    en: "A real-estate market with legal and technical assurance",
   },
   "footer.home": { ar: "الرئيسية", en: "Home" },
   "footer.about": {
@@ -219,8 +219,8 @@ export const commonMessages = {
     en: "Ad space for companies & developers",
   },
   "ads.sidebar.body": {
-    ar: "اعرض مشروعك أو وحداتك أمام الباحثين عن عقار في مدن الساحل.",
-    en: "Showcase your project or units to property seekers across the coastal cities.",
+    ar: "اعرض مشروعك أو وحداتك أمام الباحثين عن عقار في المدن المعتمدة.",
+    en: "Showcase your project or units to property seekers across the approved cities.",
   },
   "ads.sidebar.point1": {
     ar: "ظهور دائم في الصفحة الرئيسية",
@@ -257,16 +257,10 @@ export const commonMessages = {
     en: "Sponsored developers",
   },
   "ads.featuredDevelopersDesc": {
-    ar: "شركات تطوير معتمدة تعرض مشاريعها في مدن الساحل",
-    en: "Verified developers showcasing their projects across the coastal cities",
+    ar: "شركات تطوير معتمدة تعرض مشاريعها في المدن المعتمدة",
+    en: "Verified developers showcasing their projects across the approved cities",
   },
   "ads.devBadge": { ar: "مطور مميز", en: "Premium developer" },
-  "ads.dev.0.name": {
-    ar: "شركة الدلتا للتطوير العقاري",
-    en: "Delta Real Estate Development",
-  },
-  "ads.dev.0.project": { ar: "كمبوند شاطئ النخيل", en: "Palm Beach Compound" },
-  "ads.dev.0.city": { ar: "دمياط الجديدة", en: "New Damietta" },
   "ads.dev.1.name": {
     ar: "مجموعة الساحل للاستثمار",
     en: "Coast Investment Group",

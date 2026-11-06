@@ -10,6 +10,13 @@ import {
   type ReactNode,
 } from "react";
 import { messages, type MessageKey } from "./messages";
+import {
+  TEXT_OVERRIDES_EVENT,
+  TEXT_STYLES_EVENT,
+  getTextOverrides,
+  resolveText,
+  type TextOverrides,
+} from "@/lib/text-overrides";
 
 export type Locale = "ar" | "en";
 
@@ -40,6 +47,22 @@ function interpolate(text: string, vars?: Vars): string {
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
+  const [overrides, setOverrides] = useState<TextOverrides>({});
+
+  /* نصوص عدّلها الأدمن من «استوديو النصوص» */
+  useEffect(() => {
+    const sync = () => setOverrides(getTextOverrides());
+    sync();
+
+    window.addEventListener(TEXT_OVERRIDES_EVENT, sync);
+    window.addEventListener(TEXT_STYLES_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(TEXT_OVERRIDES_EVENT, sync);
+      window.removeEventListener(TEXT_STYLES_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
 
   /* استرجاع تفضيل اللغة المحفوظ */
   useEffect(() => {
@@ -74,10 +97,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const t = useCallback(
     (key: MessageKey, vars?: Vars) => {
-      const entry = messages[key];
-      return interpolate(entry ? entry[locale] : key, vars);
+      const text = resolveText(key, locale, overrides);
+      return interpolate(text || key, vars);
     },
-    [locale]
+    [locale, overrides]
   );
 
   const value = useMemo<I18nValue>(

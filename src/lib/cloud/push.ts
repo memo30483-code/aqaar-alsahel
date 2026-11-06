@@ -136,6 +136,8 @@ export function applyRemoteValue(key: string, value: unknown, updatedAt: string)
     "aqaar:cities",
     "aqaar:company-info",
     "aqaar:page-builder",
+    "aqaar:text-overrides",
+    "aqaar:text-styles",
     "aqaar:professionals",
     "aqaar:professional-requests",
     "aqaar:crm",

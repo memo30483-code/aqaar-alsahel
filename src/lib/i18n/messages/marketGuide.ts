@@ -8,8 +8,8 @@ export const marketGuideMessages = {
     en: "The economic & real-estate guide",
   },
   "marketGuide.hero.description": {
-    ar: "كل ما تحتاجه لاتخاذ قرار شراء أو استثمار في مدن الساحل والدلتا: مؤشرات أسعار المتر، تحليل الطلب، تقييم المشروعات، والاستشارات القانونية — في مكان واحد.",
-    en: "Everything you need to make a buying or investment decision in the coastal and Delta cities: price-per-meter indicators, demand analysis, project reviews, and legal consultations — all in one place.",
+    ar: "كل ما تحتاجه لاتخاذ قرار شراء أو استثمار في المدن المعتمدة: مؤشرات أسعار المتر، تحليل الطلب، تقييم المشروعات، والاستشارات القانونية — في مكان واحد.",
+    en: "Everything you need to make a buying or investment decision across the approved cities: price-per-meter indicators, demand analysis, project reviews, and legal consultations — all in one place.",
   },
   "marketGuide.stat.approvedCities": {
     ar: "المدن المعتمدة",
@@ -57,8 +57,8 @@ export const marketGuideMessages = {
     en: "Real-estate prices & the meter index",
   },
   "marketGuide.card.meters.description": {
-    ar: "متوسط سعر المتر للشقق والفيلات في مدن الدلتا المعتمدة، محسوباً من إعلانات المنصة المعروضة حالياً.",
-    en: "The average price per meter for apartments and villas across the approved coastal and Delta cities, calculated from the listings currently shown on the platform.",
+    ar: "متوسط سعر المتر للشقق والفيلات في المدن المعتمدة، محسوباً من إعلانات المنصة المعروضة حالياً.",
+    en: "The average price per meter for apartments and villas across the approved cities, calculated from the listings currently shown on the platform.",
   },
   "marketGuide.card.meters.badge": { ar: "المدن المعتمدة", en: "Approved cities" },
 
@@ -93,8 +93,8 @@ export const marketGuideMessages = {
     en: "Ask the locals",
   },
   "marketGuide.card.askLocals.description": {
-    ar: "استفسارات سكان الساحل والدلتا عن الخدمات والمواصلات والمدارس وتجربة السكن الفعلية في كل حي.",
-    en: "Questions from coastal and Delta residents about services, transport, schools, and the actual living experience in each neighbourhood.",
+    ar: "استفسارات السكان في المدن المعتمدة عن الخدمات والمواصلات والمدارس وتجربة السكن الفعلية في كل حي.",
+    en: "Questions from residents across the approved cities about services, transport, schools, and the actual living experience in each neighbourhood.",
   },
   "marketGuide.card.askLocals.badge": { ar: "قريباً", en: "Coming soon" },
 

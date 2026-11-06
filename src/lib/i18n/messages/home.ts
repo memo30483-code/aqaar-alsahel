@@ -41,8 +41,8 @@ export const homeMessages = {
 
   /* ---------- الواجهة الرئيسية (التصميم الجديد) ---------- */
   "home.hero.eyebrow": {
-    ar: "أول سوق عقاري موثّق في الدلتا",
-    en: "The Delta's first documented real-estate market",
+    ar: "سوق عقاري يضمن عقارك قانونياً وهندسياً",
+    en: "A real-estate market that protects your property legally and structurally",
   },
   "home.hero.titleGold": { ar: "عقار أحلامك", en: "Your dream home" },
   "home.hero.titleRest": { ar: "بثقة موثّقة", en: "with documented trust" },
@@ -51,7 +51,7 @@ export const homeMessages = {
     en: "Apartments, villas, chalets and shops in Ras El Bar, Damietta, New Damietta, Faraskur, Gamasa and New Mansoura — every listing is published only after its documents and legal safety are verified.",
   },
   "home.hero.stat.listings": { ar: "عقار متاح الآن", en: "properties available now" },
-  "home.hero.stat.cities": { ar: "مدن في الدلتا", en: "Delta cities" },
+  "home.hero.stat.cities": { ar: "مدن معتمدة الآن", en: "approved cities today" },
   "home.hero.stat.steps": { ar: "خطوات توثيق إلزامية", en: "mandatory verification steps" },
   "home.hero.stat.management": {
     ar: "تواصل عبر إدارة الموقع",
@@ -106,7 +106,6 @@ export const homeMessages = {
     ar: "أسماء وأخبار تتغيّر شهرياً",
     en: "Names and news updated monthly",
   },
-  "home.marquee.partner1": { ar: "الدلتا للتطوير", en: "Delta Development" },
   "home.marquee.partner2": { ar: "الساحل للاستثمار", en: "Coast Investment" },
   "home.marquee.partner3": { ar: "حدائق المنصورة", en: "Mansoura Gardens" },
   "home.marquee.partner4": { ar: "أبراج رأس البر", en: "Ras El Bar Towers" },
@@ -288,8 +287,8 @@ export const homeMessages = {
   },
 
   "home.story.eyebrow": { ar: "ليه عقار FAMILY؟", en: "Why Aqaar FAMILY?" },
-  "home.story.title1": { ar: "مش مجرد شاطئ…", en: "More than a beach…" },
-  "home.story.title2": { ar: "ده سوق كامل في مدن الدلتا.", en: "it's a full market across the Delta cities." },
+  "home.story.title1": { ar: "مش مجرد إعلان…", en: "More than a listing…" },
+  "home.story.title2": { ar: "ده ضمان لعقار آمن قانونياً وهندسياً.", en: "it's assurance of a legally and structurally safe property." },
   "home.story.lead": {
     ar: "رأس البر ودمياط ودمياط الجديدة وفارسكور وجمصة والمنصورة الجديدة مش سوق واحد — دي أسواق مختلفة في طبيعتها وأسعارها. عشان كده بنتحقق من كل عرض مستندياً وميدانياً، وكل تواصل بيتم عبر إدارة الموقع من غير أرقام ملاك أو وسطاء متداولة.",
     en: "Ras El Bar, Damietta, New Damietta, Faraskur, Gamasa and New Mansoura are not one market — they differ in nature and pricing. That's why every listing is verified on paper and on the ground, and all contact goes through site management with no owner numbers or brokers circulating.",

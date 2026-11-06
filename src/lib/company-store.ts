@@ -80,9 +80,9 @@ export const DEFAULT_COMPANIES: CompanyRecord[] = [
     workingHoursAr: "السبت – الخميس · 9 ص إلى 6 م",
     workingHoursEn: "Sat – Thu · 9 AM to 6 PM",
     aboutAr:
-      "الشركة المالكة والمشغّلة لمنصة عقار FAMILY — منصة تنظيمية وتوثيقية للعروض العقارية في مدن الدلتا، تعمل على التحقق من الملكية وسلامة المستندات قبل نشر أي إعلان.",
+      "الشركة المالكة والمشغّلة لمنصة عقار FAMILY — منصة عقارية تضمن للمشتري والبائع عقاراً آمناً من الناحية القانونية والهندسية، عبر التحقق من الملكية والمستندات وفحص العقار قبل نشر أي إعلان.",
     aboutEn:
-      "The owner and operator of Aqaar FAMILY — an organizing and verification platform for property listings across the Delta cities, verifying ownership and documents before any listing is published.",
+      "The owner and operator of Aqaar FAMILY — a real-estate platform that gives buyers and sellers a legally and structurally safe property by verifying ownership and documents and inspecting the property before any listing is published.",
     logoUrl: "",
     facebook: "",
     instagram: "",
