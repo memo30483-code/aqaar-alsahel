@@ -44,7 +44,12 @@ import {
 } from "@/types/property";
 import { useI18n, type MessageKey } from "@/lib/i18n";
 import { cityLabel } from "@/lib/i18n/cities";
-import { finishLabel, propertyTypeLabel } from "@/lib/i18n/taxonomy";
+import {
+  finishLabel,
+  propertyTypeLabel,
+  purposeLabel,
+  saleReasonLabel,
+} from "@/lib/i18n/taxonomy";
 import { useCurrency } from "@/lib/currency";
 import {
   isCustomBlockType,
@@ -80,14 +85,19 @@ const TYPE_PILLS: {
   key: string;
   labelKey: MessageKey;
   type?: Property["type"];
-  purpose?: "بيع" | "إيجار";
+  purpose?: Property["purpose"];
+  saleReason?: Property["saleReason"];
 }[] = [
   { key: "all", labelKey: "home.listings.filter.all" },
   { key: "apartments", labelKey: "home.listings.filter.apartments", type: "شقة" },
   { key: "villas", labelKey: "home.listings.filter.villas", type: "فيلا" },
   { key: "shops", labelKey: "home.listings.filter.shops", type: "محل" },
   { key: "lands", labelKey: "home.listings.filter.lands", type: "أرض" },
-  { key: "rent", labelKey: "home.listings.filter.rent", purpose: "إيجار" },
+  {
+    key: "installments",
+    labelKey: "home.listings.filter.installments",
+    saleReason: "استكمال أقساط",
+  },
 ];
 
 /** الصورة العقارية المعتمدة لواجهة المنصة — مرفقة من المالك. */
@@ -224,9 +234,15 @@ export default function HomePage() {
       ? typed.filter((property) => (property.purpose ?? "بيع") === filters.purpose)
       : typed;
 
-    const finished = filters.finish
-      ? purposed.filter((property) => property.finish === filters.finish)
+    const reasoned = filters.saleReason
+      ? purposed.filter(
+          (property) => (property.saleReason ?? "بيع عادي") === filters.saleReason
+        )
       : purposed;
+
+    const finished = filters.finish
+      ? reasoned.filter((property) => property.finish === filters.finish)
+      : reasoned;
     if (sort === "priceDesc") {
       return [...finished].sort((a, b) => b.price - a.price);
     }
@@ -258,8 +274,16 @@ export default function HomePage() {
     if (filters.purpose) {
       tags.push({
         key: "purpose",
-        label: t(filters.purpose === "بيع" ? "purpose.buy" : "purpose.rent"),
+        label: purposeLabel(filters.purpose, t),
         onRemove: () => setFilters((current) => ({ ...current, purpose: "" })),
+      });
+    }
+    if (filters.saleReason) {
+      tags.push({
+        key: "saleReason",
+        label: saleReasonLabel(filters.saleReason, t),
+        onRemove: () =>
+          setFilters((current) => ({ ...current, saleReason: "" })),
       });
     }
     if (filters.rooms) {
@@ -335,9 +359,11 @@ export default function HomePage() {
           : filters.type === "أرض"
             ? "lands"
             : ""
-    : filters.purpose === "إيجار"
-      ? "rent"
-      : "all";
+    : filters.saleReason === "استكمال أقساط"
+      ? "installments"
+      : filters.purpose === "إيجار"
+        ? "rent"
+        : "all";
 
   const openAi = () => window.dispatchEvent(new Event(OPEN_AI_EVENT));
   const shown = showAll ? visible : visible.slice(0, 6);
@@ -503,11 +529,28 @@ export default function HomePage() {
             <div className="flex flex-wrap items-center gap-2">
             <div className="flex gap-1 rounded-xl bg-sand-100 p-1">
               {[
-                { key: "all", label: "home.search.allPurposes", value: "" },
-                { key: "buy", label: "purpose.buy", value: "بيع" },
-                { key: "rent", label: "purpose.rent", value: "إيجار" },
+                {
+                  key: "all",
+                  label: "home.search.allPurposes",
+                  purpose: "",
+                  saleReason: "",
+                },
+                {
+                  key: "buy",
+                  label: "purpose.buy",
+                  purpose: "بيع",
+                  saleReason: "",
+                },
+                {
+                  key: "installments",
+                  label: "home.listings.filter.installments",
+                  purpose: "",
+                  saleReason: "استكمال أقساط",
+                },
               ].map((item) => {
-                const active = (filters.purpose || "") === item.value;
+                const active =
+                  (filters.purpose || "") === item.purpose &&
+                  (filters.saleReason || "") === item.saleReason;
                 return (
                   <button
                     key={item.key}
@@ -516,7 +559,9 @@ export default function HomePage() {
                     onClick={() =>
                       setFilters((current) => ({
                         ...current,
-                        purpose: item.value as PropertyFilters["purpose"],
+                        purpose: item.purpose as PropertyFilters["purpose"],
+                        saleReason:
+                          item.saleReason as PropertyFilters["saleReason"],
                       }))
                     }
                     className={`rounded-lg px-4 py-1.5 text-xs font-bold transition sm:px-5 ${
@@ -890,6 +935,7 @@ export default function HomePage() {
                       ...current,
                       type: pill.type ?? "",
                       purpose: pill.purpose ?? "",
+                      saleReason: pill.saleReason ?? "",
                     }))
                   }
                   className={`rounded-full border px-4 py-1.5 text-xs font-bold transition ${

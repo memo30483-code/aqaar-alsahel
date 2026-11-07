@@ -138,6 +138,11 @@ export const commonMessages = {
   /* ---------- نوع العرض ---------- */
   "purpose.buy": { ar: "بيع", en: "Buy" },
   "purpose.rent": { ar: "إيجار", en: "Rent" },
+  "saleReason.normal": { ar: "بيع عادي", en: "Regular sale" },
+  "saleReason.installments": {
+    ar: "استكمال أقساط",
+    en: "Settle installments",
+  },
 
   /* ---------- الفوتر ---------- */
   "footer.tagline": {

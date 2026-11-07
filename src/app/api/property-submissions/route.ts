@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { USER_PROPERTIES_KEY } from "@/data/properties";
-import type { Property, PropertyDocument, PropertyType, Purpose, SellerType } from "@/types/property";
+import type {
+  Property,
+  PropertyDocument,
+  PropertyType,
+  Purpose,
+  SaleReason,
+  SellerType,
+} from "@/types/property";
 import { FINISH_STATES, isBuildingType, type FinishState } from "@/types/property";
 import {
   ADD_PROPERTY_FIELDS_KEY,
@@ -39,6 +46,7 @@ const PROPERTY_TYPES = new Set([
   "استوديو",
 ]);
 const PURPOSES = new Set(["بيع", "إيجار"]);
+const SALE_REASONS = new Set(["بيع عادي", "استكمال أقساط"]);
 const SELLERS = new Set(["فرد", "مطور", "مسوق"]);
 const FINISHES = new Set<string>(FINISH_STATES);
 
@@ -50,6 +58,7 @@ interface SubmissionBody {
   submissionId?: unknown;
   title?: unknown;
   purpose?: unknown;
+  saleReason?: unknown;
   city?: unknown;
   district?: unknown;
   type?: unknown;
@@ -199,6 +208,11 @@ export async function POST(request: Request) {
   const bathrooms = numberIn(body.bathrooms, 0, 100);
   const finishInput = text(body.finish, 40);
   const finish = FINISHES.has(finishInput) ? (finishInput as FinishState) : "";
+  const saleReasonInput = text(body.saleReason, 40);
+  const saleReason =
+    body.purpose === "بيع" && SALE_REASONS.has(saleReasonInput)
+      ? (saleReasonInput as SaleReason)
+      : "";
   const lat = numberIn(body.lat, -90, 90);
   const lng = numberIn(body.lng, -180, 180);
   const priceByAdmin = body.priceByAdmin === true;
@@ -240,7 +254,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "رقم التواصل غير صالح" }, { status: 400 });
   }
   if (!PROPERTY_TYPES.has(String(body.type)) || !PURPOSES.has(String(body.purpose))) {
-    return NextResponse.json({ ok: false, error: "نوع العقار أو العرض غير صالح" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "نوع العقار أو نوع العرض غير صالح" },
+      { status: 400 }
+    );
+  }
+  if (body.purpose === "بيع" && saleReasonInput && !saleReason) {
+    return NextResponse.json(
+      { ok: false, error: "الغرض من البيع غير صالح" },
+      { status: 400 }
+    );
   }
   if (finishInput && !finish) {
     return NextResponse.json({ ok: false, error: "حالة التشطيب غير صالحة" }, { status: 400 });
@@ -295,6 +318,7 @@ export async function POST(request: Request) {
     id,
     title,
     purpose: body.purpose as Purpose,
+    saleReason: saleReason || undefined,
     city,
     district,
     type: body.type as PropertyType,

@@ -77,6 +77,7 @@ function sanitizeProperties(
         lat: property.lat,
         lng: property.lng,
         purpose: property.purpose,
+        saleReason: property.saleReason,
         finish: property.finish,
         status: "approved",
         negotiable: property.negotiable,

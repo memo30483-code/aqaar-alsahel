@@ -60,9 +60,22 @@ export interface PropertyDocument {
 /** نوع العرض: بيع أو إيجار */
 export type Purpose = "بيع" | "إيجار";
 
+/**
+ * الغرض من البيع — يظهر فقط عندما يكون العرض «بيع».
+ * «استكمال أقساط» يخص المالكين الذين تعثّروا في السداد فيضطرون للبيع.
+ */
+export type SaleReason = "بيع عادي" | "استكمال أقساط";
+
+/** سبب البيع الخاص باستكمال سداد الأقساط */
+export const INSTALLMENT_SALE_REASON: SaleReason = "استكمال أقساط";
+
+/** أسباب البيع المعروضة في نموذج «أضف عقارك» */
+export const SALE_REASONS: SaleReason[] = ["بيع عادي", INSTALLMENT_SALE_REASON];
+
 export type RoomsFilter = "" | "1" | "2" | "3" | "4+";
 export type PropertyTypeFilter = PropertyType | "";
 export type PurposeFilter = Purpose | "";
+export type SaleReasonFilter = SaleReason | "";
 export type FinishFilter = FinishState | "";
 
 export interface Property {
@@ -86,6 +99,8 @@ export interface Property {
   lng: number;
   /** نوع العرض — غياب القيمة يعني "بيع" للإعلانات القديمة */
   purpose?: Purpose;
+  /** الغرض من البيع — اختياري، وغيابه يعني بيعاً عادياً */
+  saleReason?: SaleReason;
   /** حالة التشطيب — اختيارية للإعلانات القديمة، وتظهر للأنواع المبنية */
   finish?: FinishState;
   /** حالة النشر — غياب القيمة في إعلانات المستخدمين يعني "قيد المراجعة" */
@@ -106,6 +121,8 @@ export interface PropertyFilters {
   city: City | "";
   type: PropertyTypeFilter;
   purpose: PurposeFilter;
+  /** الغرض من البيع — يستخدمه تبويب «استكمال أقساط» */
+  saleReason: SaleReasonFilter;
   priceMin: number;
   priceMax: number;
   rooms: RoomsFilter;
@@ -123,6 +140,7 @@ export const defaultPropertyFilters: PropertyFilters = {
   city: "",
   type: "",
   purpose: "",
+  saleReason: "",
   priceMin: PRICE_FILTER_MIN,
   priceMax: PRICE_FILTER_MAX,
   rooms: "",

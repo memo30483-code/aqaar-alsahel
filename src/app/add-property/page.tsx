@@ -26,6 +26,8 @@ import {
   PropertyDocument,
   PropertyType,
   Purpose,
+  SALE_REASONS,
+  SaleReason,
   SellerType,
   type FinishState,
 } from "@/types/property";
@@ -106,6 +108,8 @@ const MAX_DOC_SIZE = 4 * 1024 * 1024;
 interface FormState {
   title: string;
   purpose: Purpose;
+  /** الغرض من البيع — يظهر عند اختيار «بيع» */
+  saleReason: SaleReason;
   city: City | "";
   district: string;
   area: string;
@@ -199,6 +203,7 @@ function compressImage(file: File): Promise<string> {
 const initial: FormState = {
   title: "",
   purpose: "بيع",
+  saleReason: "بيع عادي",
   city: "",
   district: "",
   area: "",
@@ -612,6 +617,7 @@ function AddPropertyContent() {
           submissionId,
           title: form.title.trim() || "عقار جديد",
           purpose: form.purpose,
+          saleReason: form.purpose === "بيع" ? form.saleReason : undefined,
           city: form.city,
           district: form.district.trim(),
           type: form.type,
@@ -857,6 +863,11 @@ function AddPropertyContent() {
                         setForm((prev) => ({
                           ...prev,
                           purpose: e.target.value as Purpose,
+                          /* الإيجار لا يحتاج غرض بيع — نعيد الافتراضي */
+                          saleReason:
+                            e.target.value === "بيع"
+                              ? prev.saleReason
+                              : "بيع عادي",
                         }))
                       }
                       className={FIELD}
@@ -909,6 +920,37 @@ function AddPropertyContent() {
 
               <div className="mt-4 space-y-3.5">
                 <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+                  {form.purpose === "بيع" && (
+                    <label className="block">
+                      <span className={LABEL}>
+                        {t("addProperty.fieldSaleReason")}
+                      </span>
+                      <select
+                        value={form.saleReason}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            saleReason: e.target.value as SaleReason,
+                          }))
+                        }
+                        className={FIELD}
+                      >
+                        {SALE_REASONS.map((reason) => (
+                          <option key={reason} value={reason}>
+                            {reason === "استكمال أقساط"
+                              ? t("addProperty.saleReasonInstallments")
+                              : t("addProperty.saleReasonNormal")}
+                          </option>
+                        ))}
+                      </select>
+                      {form.saleReason === "استكمال أقساط" && (
+                        <p className="mt-1.5 rounded-lg bg-gold-50 px-2.5 py-1.5 text-[10.5px] font-semibold leading-5 text-gold-800">
+                          {t("addProperty.saleReasonInstallmentsHint")}
+                        </p>
+                      )}
+                    </label>
+                  )}
+
                   <label className="block">
                     <span className={LABEL}>
                       {labelFor("type", "addProperty.fieldType")}

@@ -137,6 +137,10 @@ export const homeMessages = {
   "home.listings.filter.shops": { ar: "محلات", en: "Shops" },
   "home.listings.filter.lands": { ar: "أراضٍ", en: "Land" },
   "home.listings.filter.rent": { ar: "إيجار", en: "Rent" },
+  "home.listings.filter.installments": {
+    ar: "استكمال أقساط",
+    en: "Settle installments",
+  },
   "home.listings.live": { ar: "{count} عقار متاح الآن", en: "{count} properties available now" },
   "home.listings.liveSuffix": { ar: "عقار متاح الآن", en: "properties available now" },
   "home.listings.cta": {
@@ -146,6 +150,10 @@ export const homeMessages = {
   "home.listings.verified": { ar: "موثّق قانونياً", en: "Legally verified" },
   "home.listings.sale": { ar: "للبيع", en: "For sale" },
   "home.listings.rentTag": { ar: "للإيجار", en: "For rent" },
+  "home.listings.installmentTag": {
+    ar: "استكمال أقساط",
+    en: "Installments settlement",
+  },
   "home.listings.details": { ar: "شوف التفاصيل", en: "View details" },
   "home.listings.manage": {
     ar: "المعاينة والتواصل عبر إدارة الموقع",

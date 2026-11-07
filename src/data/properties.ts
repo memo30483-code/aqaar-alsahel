@@ -394,10 +394,12 @@ export const mockProperties: Property[] = [
     bathrooms: 3,
     price: 2900000,
     purpose: "بيع",
+    saleReason: "استكمال أقساط",
     finish: "كامل التشطيب",
     sellerType: "مطور",
     whatsapp: "201011122234",
-    description: "شقة واسعة بتشطيب سوبر لوكس وحديقة مشتركة، تقسيط حتى 7 سنوات.",
+    description:
+      "شقة واسعة بتشطيب سوبر لوكس وحديقة مشتركة. البائع يبيع لاستكمال سداد الأقساط المتبقية، مع تسهيلات في نقل الملكية.",
     image: PROPERTY_IMAGES.apartment3,
     images: gallery("apartment3b"),
     lat: 31.128,

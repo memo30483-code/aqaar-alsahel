@@ -40,6 +40,18 @@ const FINISH_KEYS: Record<string, MessageKey> = {
   "تحت الإنشاء": "finish.underConstruction",
 };
 
+/** ربط نوع العرض بمفتاح الترجمة */
+const PURPOSE_KEYS: Record<string, MessageKey> = {
+  بيع: "purpose.buy",
+  إيجار: "purpose.rent",
+};
+
+/** ربط الغرض من البيع بمفتاح الترجمة */
+const SALE_REASON_KEYS: Record<string, MessageKey> = {
+  "بيع عادي": "saleReason.normal",
+  "استكمال أقساط": "saleReason.installments",
+};
+
 /** ربط مستوى الطلب السوقي بمفتاح الترجمة */
 const DEMAND_KEYS: Record<string, MessageKey> = {
   مرتفع: "demand.high",
@@ -66,6 +78,12 @@ export const sellerTypeLabel = (value: string, t: Translate) =>
 
 export const finishLabel = (value: string, t: Translate) =>
   resolve(FINISH_KEYS, value, t);
+
+export const purposeLabel = (value: string, t: Translate) =>
+  resolve(PURPOSE_KEYS, value, t);
+
+export const saleReasonLabel = (value: string, t: Translate) =>
+  resolve(SALE_REASON_KEYS, value, t);
 
 export const demandLabel = (value: string, t: Translate) =>
   resolve(DEMAND_KEYS, value, t);

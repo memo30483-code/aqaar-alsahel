@@ -61,7 +61,9 @@ export default function PropertyDetail({ property }: Props) {
     property.type === "فيلا" || property.price >= 3_000_000
       ? t("property.badge.featured")
       : t("property.badge.ready");
-  const isRent = (property.purpose ?? "بيع") === "إيجار";
+  const purpose = property.purpose ?? "بيع";
+  const isRent = purpose === "إيجار";
+  const isInstallment = property.saleReason === "استكمال أقساط";
   const isApprovedCity = cities.some((city) =>
     cityMatches(property.city, city.nameAr)
   );
@@ -182,8 +184,18 @@ export default function PropertyDetail({ property }: Props) {
                 <span className="rounded-lg bg-ocean-50 px-2.5 py-1 text-[10.5px] font-bold text-ocean-700">
                   {propertyTypeLabel(property.type, t)}
                 </span>
-                <span className="rounded-lg border border-sand-200 bg-sand-50 px-2.5 py-1 text-[10.5px] font-bold text-sand-800">
-                  {isRent ? t("home.listings.rentTag") : t("home.listings.sale")}
+                <span
+                  className={`rounded-lg px-2.5 py-1 text-[10.5px] font-bold ${
+                    isInstallment
+                      ? "border border-gold-300 bg-gold-50 text-gold-800"
+                      : "border border-sand-200 bg-sand-50 text-sand-800"
+                  }`}
+                >
+                  {isRent
+                    ? t("home.listings.rentTag")
+                    : isInstallment
+                      ? t("home.listings.installmentTag")
+                      : t("home.listings.sale")}
                 </span>
                 <span className="rounded-lg border border-sand-200 bg-sand-50 px-2.5 py-1 text-[10.5px] font-semibold text-sand-700">
                   {sellerTypeLabel(property.sellerType, t)}

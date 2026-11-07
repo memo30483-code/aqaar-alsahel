@@ -17,6 +17,22 @@ export const addPropertyMessages = {
   /* ---------- بيانات الإعلان ---------- */
   "addProperty.sectionListing": { ar: "بيانات الإعلان", en: "Listing details" },
   "addProperty.fieldPurpose": { ar: "نوع العرض *", en: "Listing purpose *" },
+  "addProperty.fieldSaleReason": {
+    ar: "الغرض من البيع",
+    en: "Sale purpose",
+  },
+  "addProperty.saleReasonNormal": {
+    ar: "بيع عادي",
+    en: "Regular sale",
+  },
+  "addProperty.saleReasonInstallments": {
+    ar: "استكمال الأقساط",
+    en: "Settle outstanding installments",
+  },
+  "addProperty.saleReasonInstallmentsHint": {
+    ar: "اختر هذا الغرض إذا كنت تبيع العقار لاستكمال سداد الأقساط المتبقية. سيظهر العقار في تبويب «استكمال أقساط».",
+    en: "Choose this if you are selling to settle remaining installments. The listing will appear under “Settle installments”.",
+  },
   "addProperty.fieldTitle": { ar: "عنوان الإعلان *", en: "Listing title *" },
   "addProperty.titlePlaceholder": {
     ar: "مثال: شقة فاخرة مطلّة على البحر",

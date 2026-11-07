@@ -27,7 +27,9 @@ export default function PropertyCard({ property, compact = false }: Props) {
   const roomsValue = new Intl.NumberFormat(
     locale === "ar" ? "ar-EG" : "en-US"
   ).format(property.rooms);
-  const isRent = (property.purpose ?? "بيع") === "إيجار";
+  const purpose = property.purpose ?? "بيع";
+  const isRent = purpose === "إيجار";
+  const isInstallment = property.saleReason === "استكمال أقساط";
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-sand-200 bg-white shadow-soft transition duration-300 hover:-translate-y-1 hover:border-gold-300/70 hover:shadow-[0_24px_50px_-24px_rgba(20,26,51,0.35)]">
@@ -56,8 +58,18 @@ export default function PropertyCard({ property, compact = false }: Props) {
         </span>
 
         {/* نوع العرض */}
-        <span className="absolute left-3 top-3 z-10 rounded-lg bg-ocean-950/75 px-2.5 py-1 text-[10.5px] font-bold text-white backdrop-blur">
-          {isRent ? t("home.listings.rentTag") : t("home.listings.sale")}
+        <span
+          className={`absolute left-3 top-3 z-10 rounded-lg px-2.5 py-1 text-[10.5px] font-bold backdrop-blur ${
+            isInstallment
+              ? "bg-gold-400/95 text-ocean-950"
+              : "bg-ocean-950/75 text-white"
+          }`}
+        >
+          {isRent
+            ? t("home.listings.rentTag")
+            : isInstallment
+              ? t("home.listings.installmentTag")
+              : t("home.listings.sale")}
         </span>
       </Link>
 

@@ -131,7 +131,7 @@ function avgPricePerMeter(
       p.type === type &&
       p.area > 0 &&
       !p.priceByAdmin &&
-      (p.purpose ?? "بيع") === "بيع"
+      (p.purpose ?? "بيع") !== "إيجار"
   );
   if (items.length === 0) return null;
   const total = items.reduce((sum, p) => sum + p.price / p.area, 0);
@@ -178,7 +178,7 @@ export default function MarketGuideContent() {
     (p) =>
       !p.priceByAdmin &&
       p.area > 0 &&
-      (p.purpose ?? "بيع") === "بيع"
+      (p.purpose ?? "بيع") !== "إيجار"
   );
   const overallAvgMeter =
     pricedProperties.length > 0
