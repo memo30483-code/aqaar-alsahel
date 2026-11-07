@@ -111,6 +111,8 @@ export default function AdSlider({ block }: { block?: HomeBlock }) {
   const { t, locale } = useI18n();
   const trackRef = useRef<HTMLDivElement>(null);
   const drag = useDragScroll(trackRef);
+  /* يتوقف الشريط مؤقتاً عند مرور الماوس عليه ويعود للحركة عند الابتعاد */
+  const hoverPaused = useRef(false);
   const customAds: SponsorAd[] = (block?.items ?? []).map((item) => ({
     name: locale === "ar" ? item.titleAr : item.titleEn || item.titleAr,
     city:
@@ -158,7 +160,7 @@ export default function AdSlider({ block }: { block?: HomeBlock }) {
       const seconds = Math.min(100, now - last) / 1000;
       last = now;
 
-      if (!drag.dragging) {
+      if (!drag.dragging && !hoverPaused.current) {
         const cycle = node.scrollWidth / repeatCount;
         if (node.scrollWidth > node.clientWidth && cycle > 0) {
           const rtl = getComputedStyle(node).direction === "rtl";
@@ -205,7 +207,15 @@ export default function AdSlider({ block }: { block?: HomeBlock }) {
         </Link>
       </div>
 
-      <div className="relative mt-3 px-3">
+      <div
+        className="relative mt-3 px-3"
+        onMouseEnter={() => {
+          if (window.matchMedia("(hover: hover)").matches) hoverPaused.current = true;
+        }}
+        onMouseLeave={() => {
+          hoverPaused.current = false;
+        }}
+      >
         <span
           aria-hidden
           className="pointer-events-none absolute inset-y-0 start-0 z-[2] w-16 bg-gradient-to-l from-white to-transparent"

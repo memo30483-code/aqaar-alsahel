@@ -107,6 +107,8 @@ export function ProjectsSlider({
   const trackRef = useRef<HTMLDivElement>(null);
   const drag = useDragScroll(trackRef);
   const autoplayPauseUntil = useRef(0);
+  /* يتوقف الانتقال التلقائي عند مرور الماوس على الشريط */
+  const hoverPaused = useRef(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const cardStyle = cardWidth ? { width: `${cardWidth}px` } : undefined;
   const eyebrow =
@@ -151,7 +153,7 @@ export function ProjectsSlider({
 
     const timer = window.setInterval(() => {
       const node = trackRef.current;
-      if (!node || drag.dragging || Date.now() < autoplayPauseUntil.current) return;
+      if (!node || drag.dragging || hoverPaused.current || Date.now() < autoplayPauseUntil.current) return;
 
       const stride = projectStrideOf(node);
       const max = Math.max(0, node.scrollWidth - node.clientWidth);
@@ -187,7 +189,15 @@ export function ProjectsSlider({
         </div>
 
         {/* الشريط مع أزرار تحكم جانبية يمين ويسار منتصف الشريط */}
-        <div className="relative mt-6">
+        <div
+          className="relative mt-6"
+          onMouseEnter={() => {
+            if (window.matchMedia("(hover: hover)").matches) hoverPaused.current = true;
+          }}
+          onMouseLeave={() => {
+            hoverPaused.current = false;
+          }}
+        >
           <button
             type="button"
             onClick={() => scrollCards(-1)}
