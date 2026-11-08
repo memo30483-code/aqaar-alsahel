@@ -427,7 +427,14 @@ export interface CrmInquiryRow {
  * لذلك نتجاهلها هنا لمنع التكرار.
  */
 export function inquiryLead(row: CrmInquiryRow): CrmLead | null {
-  if (!row.id || row.kind === "property_submission") return null;
+  /* طلبات العقار تُنشئ بطاقة CRM خاصة بها عند الاستلام — لا نكرّرها عند الاستيراد */
+  if (
+    !row.id ||
+    row.kind === "property_submission" ||
+    row.kind === "property_request"
+  ) {
+    return null;
+  }
   const created = asIso(row.created_at, new Date().toISOString());
   const name =
     (row.name || "").trim() ||

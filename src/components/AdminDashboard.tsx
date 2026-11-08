@@ -7,6 +7,7 @@ import {
   Briefcase,
   Building2,
   ClipboardList,
+  FileSearch,
   Gift,
   Handshake,
   Home,
@@ -65,11 +66,13 @@ import AdminBrandTab from "@/components/admin/AdminBrandTab";
 import AdminAppTab from "@/components/admin/AdminAppTab";
 import AdminCrmTab from "@/components/admin/AdminCrmTab";
 import AdminReviewsTab from "@/components/admin/AdminReviewsTab";
+import AdminPropertyRequestsTab from "@/components/admin/AdminPropertyRequestsTab";
 
 type TabKey =
   | "overview"
   | "crm"
   | "reviews"
+  | "propertyRequests"
   | "builder"
   | "texts"
   | "listings"
@@ -96,6 +99,12 @@ const TABS: {
   { key: "overview", label: "نظرة عامة", Icon: BarChart3 },
   { key: "crm", label: "العملاء والفرص", Icon: Handshake, permission: "crm.view" },
   { key: "reviews", label: "التقييمات", Icon: Star, permission: "reviews.view" },
+  {
+    key: "propertyRequests",
+    label: "طلبات العقار",
+    Icon: FileSearch,
+    permission: "propertyRequests.view",
+  },
   { key: "builder", label: "Builder الصفحات", Icon: LayoutTemplate, permission: "site.settings" },
   { key: "texts", label: "النصوص والتنسيق", Icon: Type, permission: "site.settings" },
   { key: "listings", label: "الإعلانات", Icon: LayoutList, permission: "listings.view" },
@@ -145,6 +154,7 @@ export default function AdminDashboard() {
   const [permissionsVersion, setPermissionsVersion] = useState(0);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [flash, setFlash] = useState("");
+  const [propertyRequestCount, setPropertyRequestCount] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -262,6 +272,28 @@ export default function AdminDashboard() {
     const timer = setTimeout(() => setFlash(""), 2600);
     return () => clearTimeout(timer);
   }, [flash]);
+
+  /** عدّاد الطلبات الجديدة على تبويب «طلبات العقار» قبل فتحه. */
+  useEffect(() => {
+    if (!adminVerified) return;
+    let cancelled = false;
+    void fetch("/api/admin/property-requests", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) return;
+        const data = (await response.json()) as {
+          requests?: Array<{ status?: string }>;
+        };
+        if (!cancelled) {
+          setPropertyRequestCount(
+            (data.requests ?? []).filter((item) => item.status === "new").length
+          );
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [adminVerified]);
 
   const reloadLogs = useCallback(() => {
     setLogs(getAdminLogs(200));
@@ -402,6 +434,13 @@ export default function AdminDashboard() {
             >
               <item.Icon className="h-4 w-4" />
               {item.label}
+              {item.key === "propertyRequests" && propertyRequestCount > 0 && (
+                <span className={`min-w-5 rounded-full px-1.5 py-0.5 text-center text-[9px] font-black ${
+                  tab === item.key ? "bg-white text-ocean-950" : "bg-rose-500 text-white"
+                }`}>
+                  {propertyRequestCount > 99 ? "99+" : propertyRequestCount}
+                </span>
+              )}
             </button>
           ))}
         </nav>
@@ -428,6 +467,18 @@ export default function AdminDashboard() {
         {tab === "reviews" && (
           <AdminReviewsTab
             can={can}
+            notify={notify}
+            reloadLogs={reloadLogs}
+          />
+        )}
+
+        {tab === "propertyRequests" && (
+          <AdminPropertyRequestsTab
+            users={users}
+            settings={siteSettings}
+            can={can}
+            onSettingsChange={setSiteSettings}
+            onCountChange={setPropertyRequestCount}
             notify={notify}
             reloadLogs={reloadLogs}
           />

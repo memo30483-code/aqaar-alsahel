@@ -39,6 +39,8 @@ const CATEGORY_LABEL: Record<string, string> = {
   logs: "السجلات",
   professionals: "المهنيون",
   crm: "العملاء والفرص",
+  reviews: "التقييمات",
+  propertyRequests: "طلبات العقار",
   settings: "إعدادات عامة",
 };
 

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   ArrowLeft,
+  BellRing,
   Building2,
   Compass,
   FileText,
@@ -10,6 +11,7 @@ import {
   Home,
   MapPin,
   Scale,
+  SearchCheck,
   ShieldCheck,
   UserPlus,
 } from "lucide-react";
@@ -46,6 +48,7 @@ const GROUPS: Group[] = [
       { ar: "دليل المكاتب الهندسية", en: "Engineering offices", href: "/engineers", Icon: HardHat },
       { ar: "انضم إلى الدليل", en: "Join the directory", href: "/login?redirect=%2Fjoin", Icon: ShieldCheck },
       { ar: "أضف عقارك", en: "List your property", href: "/add-property", Icon: FileText },
+      { ar: "اطلب عقارك", en: "Request a property", href: "/request-property", Icon: SearchCheck },
     ],
   },
   {
@@ -54,6 +57,7 @@ const GROUPS: Group[] = [
     links: [
       { ar: "تسجيل الدخول", en: "Sign in", href: "/login", Icon: Home },
       { ar: "إنشاء حساب موثّق", en: "Create verified account", href: "/register", Icon: UserPlus },
+      { ar: "طلباتي العقارية", en: "My property requests", href: "/my-requests", Icon: BellRing },
     ],
   },
   {

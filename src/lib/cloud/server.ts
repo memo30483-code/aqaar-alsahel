@@ -354,3 +354,64 @@ export async function cloudGetInquiries(limit = 500): Promise<CloudInquiryRow[]>
   }
   return (await response.json()) as CloudInquiryRow[];
 }
+
+/** قراءة صفوف نوع واحد فقط (مثل طلبات العقار) بدل جلب كل الاستفسارات */
+export async function cloudGetInquiriesByKind(
+  kind: string,
+  limit = 1000
+): Promise<CloudInquiryRow[]> {
+  if (!kind.trim()) return [];
+  const safeLimit = Math.min(Math.max(Math.round(limit), 1), 1000);
+  const params = new URLSearchParams();
+  params.set(
+    "select",
+    "id,kind,name,phone,email,message,payload,status,created_at"
+  );
+  params.set("kind", `eq.${kind}`);
+  params.set("order", "created_at.desc");
+  params.set("limit", String(safeLimit));
+
+  return cloudRest<CloudInquiryRow[]>(`inquiries?${params.toString()}`, {
+    timeoutMs: 8_000,
+  });
+}
+
+/** تحديث صف استفسار واحد — يُستخدم لطلبات العقار (حالة، ملاحظات، تواصل) */
+export async function cloudUpdateInquiry(
+  id: string,
+  patch: {
+    name?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    message?: string | null;
+    payload?: Record<string, unknown>;
+    status?: string;
+  }
+): Promise<CloudInquiryRow | null> {
+  const safeId = encodeURIComponent(id);
+  const body: Record<string, unknown> = {};
+  for (const key of ["name", "phone", "email", "message", "payload", "status"] as const) {
+    if (patch[key] !== undefined) body[key] = patch[key];
+  }
+  if (!Object.keys(body).length) return null;
+
+  const rows = await cloudRest<CloudInquiryRow[]>(
+    `inquiries?id=eq.${safeId}`,
+    {
+      method: "PATCH",
+      body,
+      prefer: "return=representation",
+      timeoutMs: 10_000,
+    }
+  );
+  return rows[0] ?? null;
+}
+
+/** حذف صف استفسار واحد */
+export async function cloudDeleteInquiry(id: string): Promise<void> {
+  const safeId = encodeURIComponent(id);
+  await cloudRest<void>(`inquiries?id=eq.${safeId}`, {
+    method: "DELETE",
+    timeoutMs: 10_000,
+  });
+}

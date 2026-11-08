@@ -74,6 +74,7 @@ const QUICK_LINKS: { key: MessageKey; href: string }[] = [
   { key: "companies.engineers", href: "/engineers" },
   { key: "companies.join", href: "/login?redirect=%2Fjoin" },
   { key: "nav.addProperty", href: "/add-property" },
+  { key: "nav.requestProperty", href: "/request-property" },
 ];
 
 /** فوتر غامق بثلاثة أعمدة + نشرة بريدية + ملاحظة «كل التواصل عبر الإدارة» */

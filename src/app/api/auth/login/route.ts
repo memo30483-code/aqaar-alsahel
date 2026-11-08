@@ -12,6 +12,11 @@ import {
   isRateLimited,
   recordAttempt,
 } from "@/lib/auth/rate-limit";
+import {
+  USER_COOKIE,
+  USER_SESSION_MAX_AGE,
+  createUserToken,
+} from "@/lib/user-session";
 
 /**
  * تسجيل دخول المستخدمين — التحقق من البريد وكلمة المرور على السيرفر فقط.
@@ -88,10 +93,29 @@ export async function POST(request: Request) {
     }
 
     clearAttempts(key, RATE);
-    return NextResponse.json({
+
+    /* كوكي جلسة موقّع لربط طلبات العقار بالحساب على السيرفر */
+    const response = NextResponse.json({
       ok: true,
       account: toPublicAccount(account),
     });
+    try {
+      const token = await createUserToken({
+        sub: account.id,
+        email: account.email,
+        name: account.name,
+      });
+      response.cookies.set(USER_COOKIE, token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: USER_SESSION_MAX_AGE,
+      });
+    } catch {
+      /* لا نُفشل الدخول إذا تعذّر إنشاء الكوكي — الجلسة المحلية تعمل */
+    }
+    return response;
   } catch (error) {
     return NextResponse.json(
       {

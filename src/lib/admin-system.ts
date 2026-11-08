@@ -8,6 +8,11 @@ import type { UserRole } from "@/lib/session";
 import { DEFAULT_THEME, type SeasonThemeCfg } from "@/lib/theme-season";
 import { DEFAULT_BRANDING, resolveBranding, type BrandingCfg } from "@/lib/branding";
 import { DEFAULT_APP_SETTINGS, resolveAppSettings, type AppSettings } from "@/lib/app-settings";
+import {
+  DEFAULT_PROPERTY_REQUEST_SETTINGS,
+  normalizePropertyRequestSettings,
+  type PropertyRequestsSettings,
+} from "@/lib/property-requests";
 import { mockProperties, USER_PROPERTIES_KEY } from "@/data/properties";
 
 export type ListingStatus = "pending" | "approved" | "rejected" | "archived" | "deleted";
@@ -39,6 +44,7 @@ export interface Permission {
     | "professionals"
     | "crm"
     | "reviews"
+    | "propertyRequests"
     | "settings";
 }
 
@@ -136,6 +142,8 @@ export interface SiteSettings {
   branding?: BrandingCfg;
   /** محتوى قسم التطبيق وصفحة /app وبانر الموبايل */
   app?: AppSettings;
+  /** إعدادات «العقار المطلوب» — النصوص والجمهور والدعوة في الرئيسية */
+  propertyRequests?: PropertyRequestsSettings;
 }
 
 export interface Offer {
@@ -207,6 +215,7 @@ export interface AdminLog {
     | "professionals"
     | "crm"
     | "reviews"
+    | "propertyRequests"
     | "settings";
   performedBy: string;
   performedByName: string;
@@ -257,6 +266,8 @@ export const ALL_PERMISSIONS: Permission[] = [
   { id: "p27", key: "crm.assign", labelAr: "إسناد العملاء للموظفين", labelEn: "Assign CRM Leads", category: "crm" },
   { id: "p28", key: "reviews.view", labelAr: "عرض التقييمات", labelEn: "View Reviews", category: "reviews" },
   { id: "p29", key: "reviews.manage", labelAr: "إدارة التقييمات والردود", labelEn: "Manage Reviews & Replies", category: "reviews" },
+  { id: "p30", key: "propertyRequests.view", labelAr: "عرض طلبات العقار", labelEn: "View Property Requests", category: "propertyRequests" },
+  { id: "p31", key: "propertyRequests.manage", labelAr: "إدارة الطلبات والمطابقات والتواصل", labelEn: "Manage Requests, Matches & Contact", category: "propertyRequests" },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {
@@ -272,6 +283,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     "professionals.view", "professionals.manage",
     "crm.view", "crm.manage", "crm.assign",
     "reviews.view", "reviews.manage",
+    "propertyRequests.view", "propertyRequests.manage",
     "logs.view",
     /* الأدمن يملك التحكم الكامل في الإعدادات افتراضياً (كان يُمنح عبر تجاوز الدور) */
     "settings.full",
@@ -281,7 +293,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     "listings.archive", "listings.assign", "listings.feature",
     "offers.view", "offers.manage",
     "crm.view", "crm.manage",
-    "reviews.view", "reviews.manage"
+    "reviews.view", "reviews.manage",
+    "propertyRequests.view", "propertyRequests.manage",
   ],
   agent: ["listings.view", "crm.view"],
   user: [],
@@ -305,6 +318,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   seasonTheme: { preset: "custom", active: false, gold: DEFAULT_THEME.gold, sand: DEFAULT_THEME.sand, ocean: DEFAULT_THEME.ocean, heroGradient: DEFAULT_THEME.heroGradient, accent: DEFAULT_THEME.accent },
   branding: DEFAULT_BRANDING,
   app: DEFAULT_APP_SETTINGS,
+  propertyRequests: DEFAULT_PROPERTY_REQUEST_SETTINGS,
 };
 
 export const DEFAULT_OFFERS_SETTINGS: OffersSettings = {
@@ -471,6 +485,7 @@ export function getSiteSettings(): SiteSettings {
     seasonTheme,
     branding: resolveBranding(stored.branding),
     app: resolveAppSettings(stored.app),
+    propertyRequests: normalizePropertyRequestSettings(stored.propertyRequests),
   };
 }
 

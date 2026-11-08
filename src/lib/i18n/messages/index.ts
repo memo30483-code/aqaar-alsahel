@@ -8,6 +8,7 @@ import { legalMessages } from "./legal";
 import { registerMessages } from "./register";
 import { adminMessages } from "./admin";
 import { professionalsMessages } from "./professionals";
+import { propertyRequestsMessages } from "./propertyRequests";
 
 /** قاموس الرسائل الموحّد لكل المنصة */
 export const messages = {
@@ -21,6 +22,7 @@ export const messages = {
   ...registerMessages,
   ...adminMessages,
   ...professionalsMessages,
+  ...propertyRequestsMessages,
 };
 
 /** كل مفاتيح الترجمة المتاحة — مضمونة النوع عند وقت البناء */

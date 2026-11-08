@@ -5,11 +5,14 @@ import Link from "next/link";
 import {
   ArrowLeft,
   BadgeCheck,
+  BellRing,
+  Building2,
   Check,
   ChevronDown,
   FileText,
   Headset,
   Lock,
+  ClipboardList,
   ScanLine,
   Search,
   ShieldCheck,
@@ -65,6 +68,7 @@ import { useSeasonTheme } from "@/components/ThemeProvider";
 import AppSection from "@/components/AppSection";
 import { resolveAppSettings } from "@/lib/app-settings";
 import { useSiteSettings } from "@/lib/site-settings";
+import { normalizePropertyRequestSettings } from "@/lib/property-requests";
 import {
   LISTING_OVERRIDE_KEY,
   getApprovedListingIds,
@@ -109,6 +113,9 @@ export default function HomePage() {
   const seasonTheme = useSeasonTheme();
   const siteSettings = useSiteSettings();
   const appSettings = resolveAppSettings(siteSettings.app);
+  const propertyRequestSettings = normalizePropertyRequestSettings(
+    siteSettings.propertyRequests
+  );
   const { formatWithSymbol } = useCurrency();
   const cityOptions = useCityOptions();
   const [search, setSearch] = useState("");
@@ -376,6 +383,8 @@ export default function HomePage() {
   const isRamadan = seasonTheme.active && seasonTheme.preset === "ramadan";
   /** التطبيق تنويه ثانوي في نهاية الرئيسية، بعد كل أقسام التسويق العقاري. */
   const appOrder = Math.max(0, ...layout.map((block) => block.order)) + 1;
+  const propertyRequestOrder =
+    (blocksOf("featured_listings")[0]?.order ?? 4) + 0.25;
   return (
     <>
       <div className="flex w-full flex-col">
@@ -1047,6 +1056,71 @@ export default function HomePage() {
       </section>
       </div>
       ))}
+
+      {propertyRequestSettings.enabled && propertyRequestSettings.showOnHome && (
+        <div style={{ order: propertyRequestOrder }} className="w-full bg-sand-50 px-4 pb-12 sm:px-6 sm:pb-16">
+          <section className="relative mx-auto max-w-[1240px] overflow-hidden rounded-[2rem] border border-gold-300/40 bg-ocean-950 text-white shadow-[0_30px_80px_-48px_rgba(18,27,52,.75)]">
+            <span aria-hidden className="pointer-events-none absolute -right-24 -top-36 h-80 w-80 rounded-full bg-[radial-gradient(circle,rgba(201,146,42,.32),transparent_67%)]" />
+            <span aria-hidden className="pointer-events-none absolute -bottom-44 -left-20 h-96 w-96 rounded-full bg-[radial-gradient(circle,rgba(65,123,166,.34),transparent_67%)]" />
+            <div className="relative grid items-center gap-8 px-6 py-8 sm:px-9 sm:py-10 lg:grid-cols-[1.15fr_.85fr] lg:px-12">
+              <div>
+                <span className="inline-flex items-center gap-2 rounded-full border border-gold-300/30 bg-gold-300/10 px-3 py-1.5 text-xs font-black text-gold-200">
+                  <Sparkles className="h-4 w-4" />
+                  {t("propertyRequests.label")}
+                </span>
+                <h2 className="mt-4 max-w-2xl text-2xl font-black leading-tight sm:text-3xl">
+                  {locale === "ar"
+                    ? propertyRequestSettings.homeTitleAr
+                    : propertyRequestSettings.homeTitleEn}
+                </h2>
+                <p className="mt-3 max-w-2xl text-sm font-medium leading-8 text-sand-200">
+                  {locale === "ar"
+                    ? propertyRequestSettings.homeSubtitleAr
+                    : propertyRequestSettings.homeSubtitleEn}
+                </p>
+                <Link
+                  href="/request-property"
+                  className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gold-500 px-6 py-3.5 text-sm font-black text-ocean-950 shadow-lg shadow-gold-900/20 transition hover:-translate-y-0.5 hover:bg-gold-400"
+                >
+                  <ClipboardList className="h-4 w-4" />
+                  {locale === "ar"
+                    ? propertyRequestSettings.homeCtaAr
+                    : propertyRequestSettings.homeCtaEn}
+                  <ArrowLeft className="h-4 w-4" />
+                </Link>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                {[
+                  {
+                    Icon: Building2,
+                    ar: "مواصفات وميزانية واضحة",
+                    en: "Clear specs and budget",
+                  },
+                  {
+                    Icon: Search,
+                    ar: "مطابقة مع الإعلانات المعتمدة",
+                    en: "Matching approved listings",
+                  },
+                  {
+                    Icon: BellRing,
+                    ar: "تنبيه عند ظهور فرصة مناسبة",
+                    en: "Alerts for suitable opportunities",
+                  },
+                ].map(({ Icon, ar, en }) => (
+                  <div key={ar} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[.07] p-3.5 backdrop-blur-sm">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold-300/15 text-gold-200">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <span className="text-xs font-extrabold text-sand-100">
+                      {locale === "ar" ? ar : en}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
 
       {blocksOf("ad_band").map((block) => (
       <div key={block.id} {...shellFor(block.order, block.style)}>

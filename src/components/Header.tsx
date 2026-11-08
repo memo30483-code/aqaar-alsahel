@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   BadgeCheck,
+  BellRing,
   Building2,
   Check,
   ChevronDown,
@@ -19,6 +20,7 @@ import {
   Plus,
   Scale,
   ShieldCheck,
+  SearchCheck,
   Smartphone,
   User,
   X,
@@ -40,6 +42,7 @@ import { RamadanGarland } from "@/components/RamadanDecorations";
 import OffersHeaderLink from "@/components/OffersHeaderLink";
 import { useSeasonTheme } from "@/components/ThemeProvider";
 import { useSiteSettings } from "@/lib/site-settings";
+import { PROPERTY_REQUEST_NOTIFICATIONS_EVENT } from "@/lib/property-requests";
 
 /** نمط موحّد لروابط التنقّل الرئيسية */
 const NAV_LINK =
@@ -129,6 +132,7 @@ export default function Header() {
   const { currency, setCurrency, live, updatedAt } = useCurrency();
   const [open, setOpen] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
+  const [requestNotifications, setRequestNotifications] = useState(0);
   const professionals = useProfessionals();
   const router = useRouter();
   const pathname = usePathname();
@@ -153,9 +157,56 @@ export default function Header() {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  const handleLogout = () => {
-    /* إنهاء جلسة الأدمن على السيرفر أيضًا — الكوكي httpOnly لا يُمسح من المتصفح */
-    void fetch("/api/admin/logout", { method: "POST" }).catch(() => undefined);
+  /** شارة المطابقات الجديدة للمستخدم — البيانات نفسها لا تخرج إلا لصاحب الحساب. */
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      if (
+        !session ||
+        hasAdminAccess(session) ||
+        siteSettings.propertyRequests?.enabled === false
+      ) {
+        setRequestNotifications(0);
+        return;
+      }
+      try {
+        const response = await fetch("/api/property-requests/mine", {
+          cache: "no-store",
+        });
+        if (!response.ok) {
+          if (!cancelled) setRequestNotifications(0);
+          return;
+        }
+        const data = (await response.json()) as { notificationCount?: number };
+        if (!cancelled) {
+          setRequestNotifications(
+            typeof data.notificationCount === "number"
+              ? Math.max(0, data.notificationCount)
+              : 0
+          );
+        }
+      } catch {
+        if (!cancelled) setRequestNotifications(0);
+      }
+    };
+    void load();
+    const onNotifications = () => void load();
+    window.addEventListener(PROPERTY_REQUEST_NOTIFICATIONS_EVENT, onNotifications);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(
+        PROPERTY_REQUEST_NOTIFICATIONS_EVENT,
+        onNotifications
+      );
+    };
+  }, [session, pathname, siteSettings.propertyRequests?.enabled]);
+
+  const handleLogout = async () => {
+    /* إنهاء كوكي الأدمن وكوكي المستخدم قبل مغادرة الصفحة. */
+    await Promise.allSettled([
+      fetch("/api/admin/logout", { method: "POST" }),
+      fetch("/api/auth/logout", { method: "POST" }),
+    ]);
     clearSession();
     setSession(null);
     setOpen(false);
@@ -315,6 +366,15 @@ export default function Header() {
             <LayoutGrid className="h-4 w-4 text-ocean-500" />
             {t("nav.projects")}
           </Link>
+          {siteSettings.propertyRequests?.enabled !== false && (
+            <Link
+              href="/request-property"
+              className={`${NAV_LINK} border border-gold-200 bg-gold-50/70 text-gold-800 hover:bg-gold-100`}
+            >
+              <SearchCheck className="h-4 w-4 text-gold-600" />
+              {t("nav.requestProperty")}
+            </Link>
+          )}
           <Link href="/market-guide" className={`${NAV_LINK} max-[1799px]:hidden`}>
             <Compass className="h-4 w-4 text-ocean-500" />
             {t("nav.compass")}
@@ -480,6 +540,17 @@ export default function Header() {
                       {t("nav.professionalPanel")}
                     </Link>
                   )}
+                  {!hasAdminAccess(session) && (
+                    <Link href="/my-requests" className={MENU_ITEM} onClick={close}>
+                      <BellRing className="h-4 w-4 shrink-0 text-gold-600" />
+                      <span className="flex-1">{t("nav.myRequests")}</span>
+                      {requestNotifications > 0 && (
+                        <span className="min-w-5 rounded-full bg-rose-500 px-1.5 py-0.5 text-center text-[10px] font-black text-white">
+                          {requestNotifications > 99 ? "99+" : requestNotifications}
+                        </span>
+                      )}
+                    </Link>
+                  )}
                   <button
                     type="button"
                     onClick={() => {
@@ -589,6 +660,16 @@ export default function Header() {
               <Compass className="h-4 w-4 text-ocean-500" />
               {t("nav.compass")}
             </Link>
+            {siteSettings.propertyRequests?.enabled !== false && (
+              <Link
+                href="/request-property"
+                className={`${NAV_LINK} border border-gold-200 bg-gold-50 text-gold-800`}
+                onClick={closeMobile}
+              >
+                <SearchCheck className="h-4 w-4 text-gold-600" />
+                {t("nav.requestProperty")}
+              </Link>
+            )}
             <Link
               href="/legal-consultational"
               className={NAV_LINK}
@@ -684,6 +765,17 @@ export default function Header() {
                   >
                     <Building2 className="h-4 w-4 text-gold-600" />
                     {t("nav.professionalPanel")}
+                  </Link>
+                )}
+                {!hasAdminAccess(session) && (
+                  <Link href="/my-requests" className={NAV_LINK} onClick={closeMobile}>
+                    <BellRing className="h-4 w-4 text-gold-600" />
+                    <span className="flex-1">{t("nav.myRequests")}</span>
+                    {requestNotifications > 0 && (
+                      <span className="min-w-5 rounded-full bg-rose-500 px-1.5 py-0.5 text-center text-[10px] font-black text-white">
+                        {requestNotifications > 99 ? "99+" : requestNotifications}
+                      </span>
+                    )}
                   </Link>
                 )}
                 <button

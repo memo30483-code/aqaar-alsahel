@@ -2,6 +2,7 @@ import type { MessageKey } from "./messages";
 import type { City } from "@/types/property";
 import { CITY_CENTERS } from "@/data/properties";
 import { getCityByName } from "@/lib/cities-store";
+export { cityMatches } from "@/lib/city-match";
 
 /** ربط اسم المدينة العربي (كما هو في البيانات) بمفتاح الترجمة */
 export const CITY_MESSAGE_KEY: Record<string, MessageKey> = {
@@ -14,18 +15,6 @@ export const CITY_MESSAGE_KEY: Record<string, MessageKey> = {
   "جمصة": "city.gamasa",
   "المنصورة الجديدة": "city.newMansoura",
 };
-
-/** مرادفات المدينة: فلتر «دمياط» يفتح أيضاً إعلانات «دمياط القديمة» */
-const CITY_ALIASES: Record<string, string[]> = {
-  دمياط: ["دمياط القديمة"],
-};
-
-/** هل يطابق اسم مدينة العقار مدينة الفلتر المختارة؟ ("" = كل المدن) */
-export function cityMatches(propertyCity: string, city: City | ""): boolean {
-  if (!city) return true;
-  if (propertyCity === city) return true;
-  return (CITY_ALIASES[city] ?? []).includes(propertyCity);
-}
 
 /** مركز المدينة على الخريطة — من سجل المدن الديناميكي مع رجوع آمن */
 export function cityCenter(city: City | ""): { lat: number; lng: number } {

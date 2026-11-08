@@ -15,6 +15,11 @@ import {
   isRateLimited,
   recordAttempt,
 } from "@/lib/auth/rate-limit";
+import {
+  USER_COOKIE,
+  USER_SESSION_MAX_AGE,
+  createUserToken,
+} from "@/lib/user-session";
 
 /**
  * إنشاء حساب مستخدم حقيقي.
@@ -135,10 +140,27 @@ export async function POST(request: Request) {
       accounts: [...store.file.accounts, record],
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       ok: true,
       account: toPublicAccount(record),
     });
+    try {
+      const token = await createUserToken({
+        sub: record.id,
+        email: record.email,
+        name: record.name,
+      });
+      response.cookies.set(USER_COOKIE, token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: USER_SESSION_MAX_AGE,
+      });
+    } catch {
+      /* الحساب أُنشئ بالفعل — تعذّر الكوكي لا يمنع إتمام التسجيل */
+    }
+    return response;
   } catch (error) {
     return NextResponse.json(
       {
