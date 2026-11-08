@@ -11,7 +11,15 @@ import {
 } from "@/lib/admin-system";
 import AdminThemeTab from "@/components/admin/AdminThemeTab";
 import AdminCloudPanel from "@/components/admin/AdminCloudPanel";
-import { BTN_PRIMARY, Field, INPUT, Panel } from "@/components/admin/shared";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
+import {
+  BTN_PRIMARY,
+  Field,
+  INPUT,
+  Panel,
+  ToggleRow,
+} from "@/components/admin/shared";
+import { normalizeWhatsAppWidgetSettings } from "@/lib/whatsapp-widget";
 
 interface Props {
   settings: SiteSettings;
@@ -37,6 +45,18 @@ const BLOCK_LABELS: Record<BlockKey, string> = {
 export default function AdminSiteTab({ settings, can, onChange, notify, reloadLogs }: Props) {
   const session = typeof window !== "undefined" ? getSession() : null;
   const editable = can("site.settings") || can("site.blocks");
+  const whatsappWidget = normalizeWhatsAppWidgetSettings(
+    settings.whatsappWidget
+  );
+
+  const updateWhatsAppWidget = (
+    patch: Partial<typeof whatsappWidget>
+  ) => {
+    onChange({
+      ...settings,
+      whatsappWidget: { ...whatsappWidget, ...patch },
+    });
+  };
 
   const persist = () => {
     if (!saveSiteSettings(settings)) {
@@ -144,6 +164,80 @@ export default function AdminSiteTab({ settings, can, onChange, notify, reloadLo
               className={INPUT}
               disabled={!editable}
             />
+          </Field>
+        </div>
+      </Panel>
+
+      <Panel
+        title="زر واتساب المباشر الثابت"
+        desc="يظهر أسفل يسار جميع صفحات المنصة، يظل ثابتًا ولا يملك الزائر زرًا لإغلاقه. الإعلانات العائمة ترتفع تلقائيًا فوقه."
+        actions={
+          <button onClick={persist} className={BTN_PRIMARY} disabled={!editable}>
+            <Save className="h-4 w-4" /> حفظ إعدادات واتساب
+          </button>
+        }
+      >
+        <div className="grid gap-3 md:grid-cols-3">
+          <ToggleRow
+            title="تشغيل زر واتساب"
+            hint="إظهار أو إخفاء الزر من كل الصفحات."
+            checked={whatsappWidget.enabled}
+            onChange={(enabled) => updateWhatsAppWidget({ enabled })}
+            disabled={!editable}
+          />
+          <ToggleRow
+            title="تفعيل الوميض"
+            hint="حلقة نابضة لجذب الانتباه دون إزعاج."
+            checked={whatsappWidget.pulse}
+            onChange={(pulse) => updateWhatsAppWidget({ pulse })}
+            disabled={!editable}
+          />
+          <ToggleRow
+            title="إظهار عبارة التواصل"
+            hint="تظهر بجوار العلامة على الشاشات الكبيرة."
+            checked={whatsappWidget.showLabel}
+            onChange={(showLabel) => updateWhatsAppWidget({ showLabel })}
+            disabled={!editable}
+          />
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <Field
+            label="رقم واتساب الزر"
+            hint="اتركه فارغًا لاستخدام «واتساب الإدارة» ثم رقم هاتف الإدارة تلقائيًا."
+          >
+            <input
+              value={whatsappWidget.phone}
+              onChange={(event) =>
+                updateWhatsAppWidget({ phone: event.target.value })
+              }
+              className={INPUT}
+              dir="ltr"
+              placeholder="201xxxxxxxxx"
+              disabled={!editable}
+            />
+          </Field>
+          <div className="flex items-end">
+            <div className="flex w-full items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white shadow-sm">
+                <WhatsAppIcon className="h-6 w-6" />
+              </span>
+              <div>
+                <p className="text-[11px] font-black text-emerald-900">معاينة النص العربي</p>
+                <p className="mt-0.5 text-[10px] font-bold text-emerald-700">{whatsappWidget.labelAr}</p>
+              </div>
+            </div>
+          </div>
+          <Field label="العبارة بجوار العلامة — عربي">
+            <input value={whatsappWidget.labelAr} onChange={(event) => updateWhatsAppWidget({ labelAr: event.target.value })} className={INPUT} disabled={!editable} />
+          </Field>
+          <Field label="Label beside icon — English">
+            <input value={whatsappWidget.labelEn} onChange={(event) => updateWhatsAppWidget({ labelEn: event.target.value })} className={INPUT} disabled={!editable} />
+          </Field>
+          <Field label="رسالة واتساب الجاهزة — عربي">
+            <textarea rows={3} value={whatsappWidget.messageAr} onChange={(event) => updateWhatsAppWidget({ messageAr: event.target.value })} className={INPUT} disabled={!editable} />
+          </Field>
+          <Field label="Prefilled WhatsApp message — English">
+            <textarea rows={3} value={whatsappWidget.messageEn} onChange={(event) => updateWhatsAppWidget({ messageEn: event.target.value })} className={INPUT} disabled={!editable} />
           </Field>
         </div>
       </Panel>

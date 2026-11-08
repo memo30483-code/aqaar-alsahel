@@ -13,6 +13,7 @@ import {
   FileSearch,
   Filter,
   Flame,
+  Globe2,
   Loader2,
   Mail,
   MapPin,
@@ -43,6 +44,7 @@ import {
   PROPERTY_REQUEST_STATUS_LABEL,
   PROPERTY_REQUEST_STATUS_STYLE,
   normalizePropertyRequestSettings,
+  propertyRequestPublicTitle,
   propertyRequestSummary,
   type PropertyRequest,
   type PropertyRequestPriority,
@@ -132,12 +134,12 @@ const TEXT_FIELDS: Array<{
   { key: "ctaLabelEn", label: "Submit button — English" },
   { key: "successNoteAr", label: "رسالة النجاح — عربي", rows: 3 },
   { key: "successNoteEn", label: "Success message — English", rows: 3 },
-  { key: "homeTitleAr", label: "عنوان دعوة الرئيسية — عربي" },
-  { key: "homeTitleEn", label: "Homepage CTA title — English" },
-  { key: "homeSubtitleAr", label: "وصف دعوة الرئيسية — عربي", rows: 3 },
-  { key: "homeSubtitleEn", label: "Homepage CTA description — English", rows: 3 },
-  { key: "homeCtaAr", label: "زر الرئيسية — عربي" },
-  { key: "homeCtaEn", label: "Homepage button — English" },
+  { key: "directoryTitleAr", label: "عنوان صفحة العقارات المطلوبة — عربي" },
+  { key: "directoryTitleEn", label: "Wanted page title — English" },
+  { key: "directorySubtitleAr", label: "وصف صفحة العقارات المطلوبة — عربي", rows: 3 },
+  { key: "directorySubtitleEn", label: "Wanted page description — English", rows: 3 },
+  { key: "directoryEmptyAr", label: "رسالة عدم وجود طلبات منشورة — عربي", rows: 2 },
+  { key: "directoryEmptyEn", label: "Empty directory message — English", rows: 2 },
   { key: "contactNoteAr", label: "تنويه الخصوصية — عربي", rows: 2 },
   { key: "contactNoteEn", label: "Privacy note — English", rows: 2 },
 ];
@@ -432,6 +434,7 @@ export default function AdminPropertyRequestsTab({
       ).length,
       won: requests.filter((item) => item.status === "won").length,
       hot: requests.filter((item) => item.priority === "hot").length,
+      published: requests.filter((item) => item.published).length,
     }),
     [requests]
   );
@@ -442,13 +445,14 @@ export default function AdminPropertyRequestsTab({
 
   return (
     <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
         {[
           { label: "إجمالي الطلبات", value: stats.total, Icon: FileSearch, color: "text-ocean-700 bg-ocean-50" },
           { label: "طلبات جديدة", value: stats.new, Icon: BellRing, color: "text-sky-700 bg-sky-50" },
           { label: "تحت المتابعة", value: stats.active, Icon: CalendarClock, color: "text-violet-700 bg-violet-50" },
           { label: "تم البيع", value: stats.won, Icon: Check, color: "text-emerald-700 bg-emerald-50" },
           { label: "طلبات عاجلة", value: stats.hot, Icon: Flame, color: "text-rose-700 bg-rose-50" },
+          { label: "منشور للعامة", value: stats.published, Icon: Globe2, color: "text-emerald-700 bg-emerald-50" },
         ].map(({ label, value, Icon, color }) => (
           <div key={label} className="rounded-2xl border border-sand-200 bg-white p-4 shadow-sm">
             <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${color}`}><Icon className="h-4 w-4" /></span>
@@ -486,7 +490,7 @@ export default function AdminPropertyRequestsTab({
             </div>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               <ToggleRow title="تشغيل خدمة العقار المطلوب" hint="عند الإيقاف لا يقبل السيرفر طلبات جديدة." checked={settingsDraft.enabled} onChange={(enabled) => setSettingsDraft((current) => ({ ...current, enabled }))} disabled={!canManage} />
-              <ToggleRow title="إظهار الدعوة في الصفحة الرئيسية" checked={settingsDraft.showOnHome} onChange={(showOnHome) => setSettingsDraft((current) => ({ ...current, showOnHome }))} disabled={!canManage} />
+              <ToggleRow title="تشغيل صفحة العقارات المطلوبة المنشورة" hint="لا يظهر فيها أي طلب إلا بعد موافقة الأدمن على نشره." checked={settingsDraft.directoryEnabled} onChange={(directoryEnabled) => setSettingsDraft((current) => ({ ...current, directoryEnabled }))} disabled={!canManage} />
               <Field label="من يمكنه إرسال طلب؟" hint="الافتراضي: المسجلون فقط.">
                 <select value={settingsDraft.audience} onChange={(event) => setSettingsDraft((current) => ({ ...current, audience: event.target.value === "open" ? "open" : "signed_in" }))} className={SELECT} disabled={!canManage}>
                   <option value="signed_in">المسجلون فقط</option>
@@ -558,6 +562,7 @@ export default function AdminPropertyRequestsTab({
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   <span className={`rounded-full border px-2 py-0.5 text-[9px] font-black ${PROPERTY_REQUEST_STATUS_STYLE[item.status]}`}>{PROPERTY_REQUEST_STATUS_LABEL[item.status]}</span>
                   <span className={`rounded-full border px-2 py-0.5 text-[9px] font-black ${PROPERTY_REQUEST_PRIORITY_STYLE[item.priority]}`}>{PROPERTY_REQUEST_PRIORITY_LABEL[item.priority]}</span>
+                  {item.published && <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[9px] font-black text-emerald-700">منشور للعامة</span>}
                 </div>
                 <p className="mt-2 text-[9px] font-semibold text-sand-400">{dateLabel(item.createdAt)}</p>
               </button>
@@ -613,8 +618,24 @@ function RequestDetail({
 }) {
   const item = detail.request;
   const [notes, setNotes] = useState(item.adminNotes);
+  const [publicTitleAr, setPublicTitleAr] = useState(
+    item.publicTitleAr || propertyRequestPublicTitle(item.brief)
+  );
+  const [publicTitleEn, setPublicTitleEn] = useState(item.publicTitleEn);
+  const [publicDescriptionAr, setPublicDescriptionAr] = useState(
+    item.publicDescriptionAr
+  );
+  const [publicDescriptionEn, setPublicDescriptionEn] = useState(
+    item.publicDescriptionEn
+  );
 
   useEffect(() => setNotes(item.adminNotes), [item.adminNotes, item.id]);
+  useEffect(() => {
+    setPublicTitleAr(item.publicTitleAr || propertyRequestPublicTitle(item.brief));
+    setPublicTitleEn(item.publicTitleEn);
+    setPublicDescriptionAr(item.publicDescriptionAr);
+    setPublicDescriptionEn(item.publicDescriptionEn);
+  }, [item]);
 
   return (
     <div>
@@ -675,6 +696,47 @@ function RequestDetail({
             {item.brief.saleReason && <Spec label="نوع فرصة البيع" value={item.brief.saleReason} />}
           </div>
           {item.brief.notes && <div className="mt-3 rounded-xl bg-white p-3 text-xs font-semibold leading-6 text-sand-700"><b className="text-ocean-900">ملاحظات العميل:</b> {item.brief.notes}</div>}
+        </section>
+
+        <section className={`rounded-2xl border p-4 ${item.published ? "border-emerald-300 bg-emerald-50/40" : "border-gold-200 bg-gold-50/35"}`}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h3 className="flex items-center gap-2 text-xs font-black text-ocean-900"><Globe2 className="h-4 w-4 text-emerald-600" /> النشر في صفحة «عقار مطلوب»</h3>
+              <p className="mt-1 text-[10px] leading-5 text-sand-600">لن تظهر أي بيانات شخصية. تُنشر المواصفات والنص العام فقط بعد موافقتك.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {item.published && <Link href="/wanted-properties" target="_blank" className="inline-flex items-center gap-1 rounded-xl border border-emerald-200 bg-white px-3 py-2 text-[10px] font-black text-emerald-700"><Eye className="h-3.5 w-3.5" /> معاينة</Link>}
+              <button
+                type="button"
+                disabled={!canManage || saving}
+                onClick={() => void patchRequest({
+                  published: !item.published,
+                  publicTitleAr,
+                  publicTitleEn,
+                  publicDescriptionAr,
+                  publicDescriptionEn,
+                }, item.published ? "تم إيقاف نشر الطلب" : "تم اعتماد ونشر الطلب للعامة", item.published ? "property_request.unpublish" : "property_request.publish")}
+                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[10px] font-black text-white disabled:opacity-50 ${item.published ? "bg-rose-600" : "bg-emerald-600"}`}
+              >
+                <Globe2 className="h-3.5 w-3.5" /> {item.published ? "إلغاء النشر" : "السماح بالنشر"}
+              </button>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <Field label="العنوان العام — عربي">
+              <input value={publicTitleAr} onChange={(event) => setPublicTitleAr(event.target.value)} className={INPUT} maxLength={180} disabled={!canManage} />
+            </Field>
+            <Field label="Public title — English">
+              <input value={publicTitleEn} onChange={(event) => setPublicTitleEn(event.target.value)} className={INPUT} maxLength={180} disabled={!canManage} />
+            </Field>
+            <Field label="وصف عام اختياري — عربي" hint="لا تنسخ رقم الهاتف أو اسم العميل هنا.">
+              <textarea rows={3} value={publicDescriptionAr} onChange={(event) => setPublicDescriptionAr(event.target.value)} className={INPUT} maxLength={1200} disabled={!canManage} />
+            </Field>
+            <Field label="Public description — English">
+              <textarea rows={3} value={publicDescriptionEn} onChange={(event) => setPublicDescriptionEn(event.target.value)} className={INPUT} maxLength={1200} disabled={!canManage} />
+            </Field>
+          </div>
+          <button type="button" onClick={() => void patchRequest({ publicTitleAr, publicTitleEn, publicDescriptionAr, publicDescriptionEn }, "تم حفظ نص النشر العام", "property_request.public_copy")} className={`${BTN_PRIMARY} mt-3`} disabled={!canManage || saving}><Save className="h-3.5 w-3.5" /> حفظ نص النشر</button>
         </section>
 
         <section>

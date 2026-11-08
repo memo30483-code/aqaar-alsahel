@@ -49,6 +49,7 @@ const GROUPS: Group[] = [
       { ar: "انضم إلى الدليل", en: "Join the directory", href: "/login?redirect=%2Fjoin", Icon: ShieldCheck },
       { ar: "أضف عقارك", en: "List your property", href: "/add-property", Icon: FileText },
       { ar: "اطلب عقارك", en: "Request a property", href: "/request-property", Icon: SearchCheck },
+      { ar: "عقارات مطلوبة", en: "Wanted properties", href: "/wanted-properties", Icon: SearchCheck },
     ],
   },
   {

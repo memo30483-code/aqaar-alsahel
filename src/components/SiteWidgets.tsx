@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import FeaturedAds from "./FeaturedAds";
 import AssistantWidget from "./AssistantWidget";
 import OffersFloatingBanner from "./OffersFloatingBanner";
+import WhatsAppWidget from "./WhatsAppWidget";
 
 /**
  * العناصر العائمة تظهر في صفحات الزوار فقط.
@@ -16,13 +17,16 @@ export default function SiteWidgets() {
   const hidden = HIDDEN_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );
-  if (hidden) return null;
-
   return (
     <>
-      <FeaturedAds />
-      <AssistantWidget />
-      <OffersFloatingBanner />
+      <WhatsAppWidget />
+      {!hidden && (
+        <>
+          <FeaturedAds />
+          <AssistantWidget />
+          <OffersFloatingBanner />
+        </>
+      )}
     </>
   );
 }

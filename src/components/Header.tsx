@@ -366,15 +366,6 @@ export default function Header() {
             <LayoutGrid className="h-4 w-4 text-ocean-500" />
             {t("nav.projects")}
           </Link>
-          {siteSettings.propertyRequests?.enabled !== false && (
-            <Link
-              href="/request-property"
-              className={`${NAV_LINK} border border-gold-200 bg-gold-50/70 text-gold-800 hover:bg-gold-100`}
-            >
-              <SearchCheck className="h-4 w-4 text-gold-600" />
-              {t("nav.requestProperty")}
-            </Link>
-          )}
           <Link href="/market-guide" className={`${NAV_LINK} max-[1799px]:hidden`}>
             <Compass className="h-4 w-4 text-ocean-500" />
             {t("nav.compass")}
@@ -582,6 +573,16 @@ export default function Header() {
               <span className="hidden text-sm font-black min-[1800px]:inline">
                 {locale === "ar" ? "التطبيق" : "App"}
               </span>
+            </Link>
+          )}
+
+          {siteSettings.propertyRequests?.enabled !== false && (
+            <Link
+              href="/request-property"
+              className="flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-gold-400 bg-gold-50 px-4 py-2.5 text-sm font-black text-gold-900 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-gold-100"
+            >
+              <SearchCheck className="h-4 w-4 text-gold-700" />
+              {t("nav.requestProperty")}
             </Link>
           )}
 

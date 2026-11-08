@@ -75,6 +75,7 @@ const QUICK_LINKS: { key: MessageKey; href: string }[] = [
   { key: "companies.join", href: "/login?redirect=%2Fjoin" },
   { key: "nav.addProperty", href: "/add-property" },
   { key: "nav.requestProperty", href: "/request-property" },
+  { key: "propertyRequests.wanted", href: "/wanted-properties" },
 ];
 
 /** فوتر غامق بثلاثة أعمدة + نشرة بريدية + ملاحظة «كل التواصل عبر الإدارة» */

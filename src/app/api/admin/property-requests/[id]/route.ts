@@ -106,6 +106,11 @@ interface PatchBody {
   name?: unknown;
   phone?: unknown;
   email?: unknown;
+  published?: unknown;
+  publicTitleAr?: unknown;
+  publicTitleEn?: unknown;
+  publicDescriptionAr?: unknown;
+  publicDescriptionEn?: unknown;
   contactText?: unknown;
   expectedVersion?: unknown;
 }
@@ -181,6 +186,24 @@ export async function PATCH(
         name: body.name !== undefined ? text(body.name, 120) ?? "" : undefined,
         phone: body.phone !== undefined ? text(body.phone, 40) ?? "" : undefined,
         email: body.email !== undefined ? text(body.email, 240) ?? "" : undefined,
+        published:
+          body.published !== undefined ? body.published === true : undefined,
+        publicTitleAr:
+          body.publicTitleAr !== undefined
+            ? text(body.publicTitleAr, 180) ?? ""
+            : undefined,
+        publicTitleEn:
+          body.publicTitleEn !== undefined
+            ? text(body.publicTitleEn, 180) ?? ""
+            : undefined,
+        publicDescriptionAr:
+          body.publicDescriptionAr !== undefined
+            ? text(body.publicDescriptionAr, 1200) ?? ""
+            : undefined,
+        publicDescriptionEn:
+          body.publicDescriptionEn !== undefined
+            ? text(body.publicDescriptionEn, 1200) ?? ""
+            : undefined,
         contactText: text(body.contactText, 500),
         expectedVersion:
           typeof body.expectedVersion === "number"

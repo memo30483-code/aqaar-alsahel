@@ -13,6 +13,11 @@ import {
   normalizePropertyRequestSettings,
   type PropertyRequestsSettings,
 } from "@/lib/property-requests";
+import {
+  DEFAULT_WHATSAPP_WIDGET_SETTINGS,
+  normalizeWhatsAppWidgetSettings,
+  type WhatsAppWidgetSettings,
+} from "@/lib/whatsapp-widget";
 import { mockProperties, USER_PROPERTIES_KEY } from "@/data/properties";
 
 export type ListingStatus = "pending" | "approved" | "rejected" | "archived" | "deleted";
@@ -144,6 +149,8 @@ export interface SiteSettings {
   app?: AppSettings;
   /** إعدادات «العقار المطلوب» — النصوص والجمهور والدعوة في الرئيسية */
   propertyRequests?: PropertyRequestsSettings;
+  /** زر واتساب الثابت في أسفل يسار جميع الصفحات */
+  whatsappWidget?: WhatsAppWidgetSettings;
 }
 
 export interface Offer {
@@ -319,6 +326,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   branding: DEFAULT_BRANDING,
   app: DEFAULT_APP_SETTINGS,
   propertyRequests: DEFAULT_PROPERTY_REQUEST_SETTINGS,
+  whatsappWidget: DEFAULT_WHATSAPP_WIDGET_SETTINGS,
 };
 
 export const DEFAULT_OFFERS_SETTINGS: OffersSettings = {
@@ -486,6 +494,7 @@ export function getSiteSettings(): SiteSettings {
     branding: resolveBranding(stored.branding),
     app: resolveAppSettings(stored.app),
     propertyRequests: normalizePropertyRequestSettings(stored.propertyRequests),
+    whatsappWidget: normalizeWhatsAppWidgetSettings(stored.whatsappWidget),
   };
 }
 

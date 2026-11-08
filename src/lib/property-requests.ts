@@ -149,6 +149,14 @@ export interface PropertyRequest {
   seenPropertyIds: string[];
   /** حساب المستخدم إن أرسل الطلب وهو مسجّل */
   accountId?: string;
+  /** لا يظهر الطلب للعامة إلا بعد تفعيل النشر صراحةً من الأدمن */
+  published: boolean;
+  publicTitleAr: string;
+  publicTitleEn: string;
+  publicDescriptionAr: string;
+  publicDescriptionEn: string;
+  publishedAt?: string;
+  publishedBy?: string;
   history: PropertyRequestEvent[];
   createdAt: string;
   updatedAt: string;
@@ -173,8 +181,8 @@ export interface PropertyRequestsSettings {
    * `open`: أي زائر، مع ربط الطلب بحسابه تلقائياً إن كان مسجلاً.
    */
   audience: "signed_in" | "open";
-  /** إظهار دعوة «اطلب عقارك» في الصفحة الرئيسية */
-  showOnHome: boolean;
+  /** تشغيل صفحة الطلبات المنشورة للعامة */
+  directoryEnabled: boolean;
   pageTitleAr: string;
   pageTitleEn: string;
   pageSubtitleAr: string;
@@ -183,12 +191,12 @@ export interface PropertyRequestsSettings {
   ctaLabelEn: string;
   successNoteAr: string;
   successNoteEn: string;
-  homeTitleAr: string;
-  homeTitleEn: string;
-  homeSubtitleAr: string;
-  homeSubtitleEn: string;
-  homeCtaAr: string;
-  homeCtaEn: string;
+  directoryTitleAr: string;
+  directoryTitleEn: string;
+  directorySubtitleAr: string;
+  directorySubtitleEn: string;
+  directoryEmptyAr: string;
+  directoryEmptyEn: string;
   /** نص يظهر بجانب نموذج التواصل لتوضيح سرية البيانات */
   contactNoteAr: string;
   contactNoteEn: string;
@@ -197,7 +205,7 @@ export interface PropertyRequestsSettings {
 export const DEFAULT_PROPERTY_REQUEST_SETTINGS: PropertyRequestsSettings = {
   enabled: true,
   audience: "signed_in",
-  showOnHome: true,
+  directoryEnabled: true,
   pageTitleAr: "مش لاقي عقارك؟ قولنا مواصفاتك",
   pageTitleEn: "Can't find your property? Tell us what you need",
   pageSubtitleAr:
@@ -210,14 +218,14 @@ export const DEFAULT_PROPERTY_REQUEST_SETTINGS: PropertyRequestsSettings = {
     "تم استلام طلبك. سيتواصل معك فريق الإدارة خلال ٤٨ ساعة عمل بعرض العقارات المطابقة.",
   successNoteEn:
     "Your request was received. Our team will contact you within 48 business hours with matching properties.",
-  homeTitleAr: "عقارك المطلوب… بنوصفه لك",
-  homeTitleEn: "The property you want, described by you",
-  homeSubtitleAr:
-    "قولنا المدينة والميزانية وعدد الغرف، وفريق المنصة يجيب لك العقارات المطابقة ويتواصل معك.",
-  homeSubtitleEn:
-    "Tell us the city, budget and rooms. Our team finds matching properties and contacts you.",
-  homeCtaAr: "اطلب عقارك الآن",
-  homeCtaEn: "Request your property",
+  directoryTitleAr: "عقارات مطلوبة من مشترين جادين",
+  directoryTitleEn: "Properties wanted by serious buyers",
+  directorySubtitleAr:
+    "طلبات وافقت الإدارة على نشرها. إذا كان لديك عقار يطابق المواصفات، تواصل مباشرة مع إدارة المنصة.",
+  directorySubtitleEn:
+    "Requests approved for publication by management. If your property matches, contact platform management directly.",
+  directoryEmptyAr: "لا توجد طلبات منشورة حاليًا — تابع الصفحة لاحقًا.",
+  directoryEmptyEn: "There are no published requests right now. Please check again later.",
   contactNoteAr:
     "بياناتك تُستخدم للتواصل معك بخصوص طلبك فقط، ولا تظهر للزوار أو لمقدّمي العقارات.",
   contactNoteEn:
@@ -250,7 +258,10 @@ export function normalizePropertyRequestSettings(
   return {
     enabled: flag(source.enabled, defaults.enabled),
     audience,
-    showOnHome: flag(source.showOnHome, defaults.showOnHome),
+    directoryEnabled: flag(
+      source.directoryEnabled,
+      defaults.directoryEnabled
+    ),
     pageTitleAr: text(source.pageTitleAr, defaults.pageTitleAr),
     pageTitleEn: text(source.pageTitleEn, defaults.pageTitleEn),
     pageSubtitleAr: text(source.pageSubtitleAr, defaults.pageSubtitleAr),
@@ -259,12 +270,18 @@ export function normalizePropertyRequestSettings(
     ctaLabelEn: text(source.ctaLabelEn, defaults.ctaLabelEn),
     successNoteAr: text(source.successNoteAr, defaults.successNoteAr),
     successNoteEn: text(source.successNoteEn, defaults.successNoteEn),
-    homeTitleAr: text(source.homeTitleAr, defaults.homeTitleAr),
-    homeTitleEn: text(source.homeTitleEn, defaults.homeTitleEn),
-    homeSubtitleAr: text(source.homeSubtitleAr, defaults.homeSubtitleAr),
-    homeSubtitleEn: text(source.homeSubtitleEn, defaults.homeSubtitleEn),
-    homeCtaAr: text(source.homeCtaAr, defaults.homeCtaAr),
-    homeCtaEn: text(source.homeCtaEn, defaults.homeCtaEn),
+    directoryTitleAr: text(source.directoryTitleAr, defaults.directoryTitleAr),
+    directoryTitleEn: text(source.directoryTitleEn, defaults.directoryTitleEn),
+    directorySubtitleAr: text(
+      source.directorySubtitleAr,
+      defaults.directorySubtitleAr
+    ),
+    directorySubtitleEn: text(
+      source.directorySubtitleEn,
+      defaults.directorySubtitleEn
+    ),
+    directoryEmptyAr: text(source.directoryEmptyAr, defaults.directoryEmptyAr),
+    directoryEmptyEn: text(source.directoryEmptyEn, defaults.directoryEmptyEn),
     contactNoteAr: text(source.contactNoteAr, defaults.contactNoteAr),
     contactNoteEn: text(source.contactNoteEn, defaults.contactNoteEn),
   };
@@ -422,6 +439,16 @@ export function propertyRequestSummary(brief: PropertyRequestBrief): string {
     );
   }
   return parts.join(" • ");
+}
+
+/** عنوان عام آمن لا يحتوي على اسم أو وسيلة تواصل مقدّم الطلب. */
+export function propertyRequestPublicTitle(
+  brief: PropertyRequestBrief
+): string {
+  const action = brief.purpose === "إيجار" ? "للإيجار" : "للشراء";
+  const type = brief.types.length ? brief.types.join(" أو ") : "عقار";
+  const city = brief.cities.length ? ` في ${brief.cities.join(" أو ")}` : "";
+  return `مطلوب ${type} ${action}${city}`;
 }
 
 function formatPriceShort(value: number): string {

@@ -29,6 +29,7 @@ import {
   isPropertyRequestStatus,
   normalizePropertyRequestBrief,
   normalizePropertyRequestSettings,
+  propertyRequestPublicTitle,
   propertyRequestReference,
   propertyRequestSummary,
   type PropertyRequest,
@@ -129,6 +130,13 @@ export function toPropertyRequest(row: CloudInquiryRow): PropertyRequest {
     sentPropertyIds,
     seenPropertyIds,
     accountId: stringValue(payload.accountId) || undefined,
+    published: payload.published === true,
+    publicTitleAr: stringValue(payload.publicTitleAr).slice(0, 180),
+    publicTitleEn: stringValue(payload.publicTitleEn).slice(0, 180),
+    publicDescriptionAr: stringValue(payload.publicDescriptionAr).slice(0, 1200),
+    publicDescriptionEn: stringValue(payload.publicDescriptionEn).slice(0, 1200),
+    publishedAt: stringValue(payload.publishedAt) || undefined,
+    publishedBy: stringValue(payload.publishedBy) || undefined,
     history: normalizeHistory(payload.history),
     createdAt,
     updatedAt: stringValue(payload.updatedAt, createdAt),
@@ -147,6 +155,13 @@ function toPayload(request: PropertyRequest): Record<string, unknown> {
     adminNotes: request.adminNotes,
     sentPropertyIds: request.sentPropertyIds.slice(0, 100),
     seenPropertyIds: request.seenPropertyIds.slice(0, 200),
+    published: request.published,
+    publicTitleAr: request.publicTitleAr,
+    publicTitleEn: request.publicTitleEn,
+    publicDescriptionAr: request.publicDescriptionAr,
+    publicDescriptionEn: request.publicDescriptionEn,
+    publishedAt: request.publishedAt,
+    publishedBy: request.publishedBy,
     history: request.history.slice(-80),
     version: request.version,
     updatedAt: request.updatedAt,
@@ -180,6 +195,11 @@ export async function createPropertyRequest(
     adminNotes: "",
     sentPropertyIds: [],
     seenPropertyIds: [],
+    published: false,
+    publicTitleAr: "",
+    publicTitleEn: "",
+    publicDescriptionAr: "",
+    publicDescriptionEn: "",
     accountId: input.accountId,
     history: [
       {
@@ -250,6 +270,11 @@ export interface UpdatePropertyRequestPatch {
   name?: string;
   phone?: string;
   email?: string;
+  published?: boolean;
+  publicTitleAr?: string;
+  publicTitleEn?: string;
+  publicDescriptionAr?: string;
+  publicDescriptionEn?: string;
   /** تسجيل محاولة تواصل مستقلة في سجل الطلب */
   contactText?: string;
   expectedVersion?: number;
@@ -336,6 +361,39 @@ export async function updatePropertyRequest(
   if (patch.name !== undefined) next.name = patch.name;
   if (patch.phone !== undefined) next.phone = patch.phone;
   if (patch.email !== undefined) next.email = patch.email;
+  if (patch.publicTitleAr !== undefined) {
+    next.publicTitleAr = patch.publicTitleAr.slice(0, 180);
+  }
+  if (patch.publicTitleEn !== undefined) {
+    next.publicTitleEn = patch.publicTitleEn.slice(0, 180);
+  }
+  if (patch.publicDescriptionAr !== undefined) {
+    next.publicDescriptionAr = patch.publicDescriptionAr.slice(0, 1200);
+  }
+  if (patch.publicDescriptionEn !== undefined) {
+    next.publicDescriptionEn = patch.publicDescriptionEn.slice(0, 1200);
+  }
+  if (patch.published !== undefined && patch.published !== current.published) {
+    next.published = patch.published;
+    if (patch.published) {
+      next.publicTitleAr =
+        next.publicTitleAr || propertyRequestPublicTitle(next.brief);
+      next.publishedAt = now;
+      next.publishedBy = actor;
+    } else {
+      next.publishedAt = undefined;
+      next.publishedBy = undefined;
+    }
+    events.push({
+      id: `evt-${Date.now()}-publish`,
+      at: now,
+      by: actor,
+      kind: "status",
+      text: patch.published
+        ? "وافقت الإدارة على نشر الطلب في صفحة العقارات المطلوبة."
+        : "أوقفت الإدارة نشر الطلب من الصفحة العامة.",
+    });
+  }
   if (patch.contactText) {
     events.push({
       id: `evt-${Date.now()}-contact`,
