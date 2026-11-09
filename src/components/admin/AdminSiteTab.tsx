@@ -11,7 +11,7 @@ import {
 } from "@/lib/admin-system";
 import AdminThemeTab from "@/components/admin/AdminThemeTab";
 import AdminCloudPanel from "@/components/admin/AdminCloudPanel";
-import WhatsAppIcon from "@/components/WhatsAppIcon";
+import WhatsAppBubbleIcon from "@/components/WhatsAppBubbleIcon";
 import {
   BTN_PRIMARY,
   Field,
@@ -218,9 +218,7 @@ export default function AdminSiteTab({ settings, can, onChange, notify, reloadLo
           </Field>
           <div className="flex items-end">
             <div className="flex w-full items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white shadow-sm">
-                <WhatsAppIcon className="h-6 w-6" />
-              </span>
+              <WhatsAppBubbleIcon className="h-10 w-10 shrink-0 drop-shadow-sm" />
               <div>
                 <p className="text-[11px] font-black text-emerald-900">معاينة النص العربي</p>
                 <p className="mt-0.5 text-[10px] font-bold text-emerald-700">{whatsappWidget.labelAr}</p>

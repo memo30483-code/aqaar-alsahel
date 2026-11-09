@@ -3,7 +3,7 @@
 import { useI18n } from "@/lib/i18n";
 import { useSiteSettings, whatsappHref } from "@/lib/site-settings";
 import { normalizeWhatsAppWidgetSettings } from "@/lib/whatsapp-widget";
-import WhatsAppIcon from "@/components/WhatsAppIcon";
+import WhatsAppBubbleIcon from "@/components/WhatsAppBubbleIcon";
 
 /** زر واتساب ثابت بلا زر إغلاق — يظهر في جميع صفحات المنصة. */
 export default function WhatsAppWidget() {
@@ -32,14 +32,15 @@ export default function WhatsAppWidget() {
       title={label}
       className="group fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 z-[90] flex items-center gap-2.5 sm:left-6"
     >
-      <span className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_14px_34px_-12px_rgba(37,211,102,.85)] ring-4 ring-white transition group-hover:-translate-y-1 group-hover:scale-105 sm:h-16 sm:w-16">
+      <span className="relative block h-[62px] w-[62px] shrink-0 transition duration-200 group-hover:-translate-y-1 sm:h-[70px] sm:w-[70px]">
         {config.pulse && (
-          <>
-            <span className="absolute inset-0 -z-10 animate-ping rounded-full bg-[#25D366]/55 motion-reduce:animate-none" />
-            <span className="absolute -inset-2 -z-20 animate-pulse rounded-full border-2 border-[#25D366]/35 motion-reduce:animate-none" />
-          </>
+          <WhatsAppBubbleIcon className="whatsapp-bubble-echo absolute inset-0 h-full w-full motion-reduce:animate-none" />
         )}
-        <WhatsAppIcon className="h-7 w-7 sm:h-8 sm:w-8" />
+        <WhatsAppBubbleIcon
+          className={`relative h-full w-full ${
+            config.pulse ? "whatsapp-bubble-pulse" : ""
+          }`}
+        />
       </span>
       {config.showLabel && (
         <span

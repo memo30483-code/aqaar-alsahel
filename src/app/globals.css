@@ -272,6 +272,40 @@ h6 {
   animation: offers-banner-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+@keyframes whatsapp-bubble-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 10px 16px rgba(37, 211, 102, 0.35));
+  }
+  50% {
+    transform: scale(1.07);
+    filter: drop-shadow(0 16px 30px rgba(37, 211, 102, 0.8));
+  }
+}
+
+.whatsapp-bubble-pulse {
+  transform-origin: center;
+  animation: whatsapp-bubble-pulse 2.1s ease-in-out infinite;
+}
+
+@keyframes whatsapp-bubble-echo {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.45);
+  }
+}
+
+.whatsapp-bubble-echo {
+  transform-origin: center;
+  animation: whatsapp-bubble-echo 1.9s ease-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .marquee-track,
   .ai-win,
@@ -282,7 +316,9 @@ h6 {
   .mascot-idle,
   .mascot-eyes,
   .mascot-halo,
-  .offers-banner-in {
+  .offers-banner-in,
+  .whatsapp-bubble-pulse,
+  .whatsapp-bubble-echo {
     animation: none;
   }
 }
