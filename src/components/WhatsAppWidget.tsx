@@ -3,7 +3,7 @@
 import { useI18n } from "@/lib/i18n";
 import { useSiteSettings, whatsappHref } from "@/lib/site-settings";
 import { normalizeWhatsAppWidgetSettings } from "@/lib/whatsapp-widget";
-import WhatsAppBubbleIcon from "@/components/WhatsAppBubbleIcon";
+import WhatsAppIcon from "@/components/WhatsAppIcon";
 
 /** زر واتساب ثابت بلا زر إغلاق — يظهر في جميع صفحات المنصة. */
 export default function WhatsAppWidget() {
@@ -32,13 +32,14 @@ export default function WhatsAppWidget() {
       title={label}
       className="group fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 z-[90] flex items-center gap-2.5 sm:left-6"
     >
-      <span className="relative block h-[62px] w-[62px] shrink-0 transition duration-200 group-hover:-translate-y-1 sm:h-[70px] sm:w-[70px]">
+      {/* علامة واتساب نفسها فقط — بدون أي دائرة أو خلفية */}
+      <span className="relative block h-[58px] w-[58px] shrink-0 transition duration-200 group-hover:-translate-y-1 sm:h-[64px] sm:w-[64px]">
         {config.pulse && (
-          <WhatsAppBubbleIcon className="whatsapp-bubble-echo absolute inset-0 h-full w-full motion-reduce:animate-none" />
+          <WhatsAppIcon className="whatsapp-mark-echo absolute inset-0 h-full w-full text-[#25D366] motion-reduce:animate-none" />
         )}
-        <WhatsAppBubbleIcon
-          className={`relative h-full w-full ${
-            config.pulse ? "whatsapp-bubble-pulse" : ""
+        <WhatsAppIcon
+          className={`relative h-full w-full text-[#25D366] ${
+            config.pulse ? "whatsapp-mark-pulse" : ""
           }`}
         />
       </span>
