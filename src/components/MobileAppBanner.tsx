@@ -56,7 +56,7 @@ export default function MobileAppBanner() {
   };
 
   return (
-    <div className="fixed inset-x-3 bottom-3 z-40 md:hidden" dir="rtl">
+    <div className="fixed inset-x-3 bottom-[92px] z-40 md:hidden" dir="rtl">
       <div className="flex items-center gap-2.5 rounded-2xl border border-white/10 bg-ocean-950/95 p-2.5 shadow-[0_18px_40px_-16px_rgba(0,0,0,0.8)] backdrop-blur-xl">
         <AppIcon size={34} />
         <div className="min-w-0 flex-1">

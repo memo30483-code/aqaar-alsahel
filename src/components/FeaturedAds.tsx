@@ -36,7 +36,7 @@ export default function FeaturedAds() {
   return (
     <div
       data-floating-banner={visible ? "featured-ad" : undefined}
-      className={`fixed inset-x-3 bottom-[108px] z-40 transition duration-500 sm:inset-x-auto sm:left-6 sm:w-[22rem] ${
+      className={`fixed inset-x-3 bottom-[172px] z-40 transition duration-500 sm:inset-x-auto sm:bottom-[108px] sm:left-6 sm:w-[22rem] ${
         visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
       }`}
     >
