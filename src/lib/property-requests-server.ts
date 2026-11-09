@@ -37,6 +37,7 @@ import {
   type PropertyRequestMatch,
   type PropertyRequestsSettings,
 } from "@/lib/property-requests";
+import { initializeReviewRecord } from "@/lib/workflow-server";
 import { PROPERTY_REQUEST_KIND } from "@/lib/property-requests";
 import type { Property } from "@/types/property";
 
@@ -224,6 +225,9 @@ export async function createPropertyRequest(
     payload: toPayload(request),
     status: request.status,
   });
+  await initializeReviewRecord("propertyRequests", inserted.id, "property-request-form").catch(
+    () => undefined
+  );
 
   return { ...request, id: inserted.id };
 }

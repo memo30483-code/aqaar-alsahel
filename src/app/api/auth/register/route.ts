@@ -20,6 +20,9 @@ import {
   USER_SESSION_MAX_AGE,
   createUserToken,
 } from "@/lib/user-session";
+import { readWorkflowSettings } from "@/lib/workflow-server";
+import { initializeReviewRecord } from "@/lib/workflow-server";
+import { cloudGetRows, cloudPutRow } from "@/lib/cloud/server";
 
 /**
  * إنشاء حساب مستخدم حقيقي.
@@ -42,6 +45,124 @@ interface RegisterBody {
   phone?: unknown;
   accountType?: unknown;
   ownerToken?: unknown;
+  professionalProfile?: unknown;
+}
+
+const PROFESSIONALS_KEY = "aqaar-professionals";
+
+interface ProfessionalRegistrationDocument {
+  id: string;
+  type: string;
+  label: string;
+  fileName: string;
+  dataUrl: string;
+  uploadedAt: string;
+}
+
+interface ProfessionalRegistrationProfile {
+  nameAr: string;
+  companyAr?: string;
+  licenseNumber?: string;
+  documents: ProfessionalRegistrationDocument[];
+}
+
+function professionalProfile(value: unknown): ProfessionalRegistrationProfile | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const source = value as Record<string, unknown>;
+  const nameAr = typeof source.nameAr === "string" ? source.nameAr.trim().slice(0, 160) : "";
+  if (!nameAr) return null;
+  const rawDocuments = Array.isArray(source.documents) ? source.documents : [];
+  let totalBytes = 0;
+  const documents = rawDocuments.slice(0, 10).flatMap((raw, index) => {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return [];
+    const item = raw as Record<string, unknown>;
+    const dataUrl = typeof item.dataUrl === "string" ? item.dataUrl : "";
+    if (!/^data:image\/(?:jpeg|jpg|png|webp);base64,/i.test(dataUrl)) return [];
+    totalBytes += dataUrl.length;
+    if (dataUrl.length > 1_500_000 || totalBytes > 4_000_000) return [];
+    const type = typeof item.type === "string" ? item.type.slice(0, 80) : `document-${index}`;
+    return [{
+      id: typeof item.id === "string" ? item.id.slice(0, 120) : `doc-${index}`,
+      type,
+      label: typeof item.label === "string" ? item.label.slice(0, 160) : type,
+      fileName: typeof item.fileName === "string" ? item.fileName.slice(0, 180) : type,
+      dataUrl,
+      uploadedAt: new Date().toISOString(),
+    }];
+  });
+  if (rawDocuments.length > 0 && documents.length !== rawDocuments.slice(0, 10).length) {
+    return null;
+  }
+  return {
+    nameAr,
+    companyAr:
+      typeof source.companyAr === "string" && source.companyAr.trim()
+        ? source.companyAr.trim().slice(0, 180)
+        : undefined,
+    licenseNumber:
+      typeof source.licenseNumber === "string" && source.licenseNumber.trim()
+        ? source.licenseNumber.trim().slice(0, 120)
+        : undefined,
+    documents,
+  };
+}
+
+async function saveProfessionalRegistration(input: {
+  accountId: string;
+  accountType: Exclude<AccountRecord["accountType"], "individual">;
+  email: string;
+  phone: string;
+  ownerToken?: string;
+  profile: ProfessionalRegistrationProfile;
+}): Promise<string> {
+  const rows = await cloudGetRows({ keys: [PROFESSIONALS_KEY], timeoutMs: 8_000 });
+  const stored = rows.find((row) => row.key === PROFESSIONALS_KEY)?.value;
+  const records = Array.isArray(stored) ? stored : [];
+  const normalizedEmail = normalizeEmail(input.email);
+  const existing = records.find((raw) => {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return false;
+    const item = raw as Record<string, unknown>;
+    return typeof item.email === "string" && normalizeEmail(item.email) === normalizedEmail;
+  });
+  if (existing && typeof existing === "object" && !Array.isArray(existing)) {
+    return String((existing as Record<string, unknown>).id ?? "");
+  }
+  const now = new Date().toISOString();
+  const id = `${input.accountType}-${Date.now()}-${randomUUID().slice(0, 8)}`;
+  const order =
+    records.filter(
+      (raw) =>
+        raw &&
+        typeof raw === "object" &&
+        !Array.isArray(raw) &&
+        (raw as Record<string, unknown>).kind === input.accountType
+    ).length + 1;
+  const record = {
+    id,
+    kind: input.accountType,
+    status: "pending",
+    verified: false,
+    featured: false,
+    nameAr: input.profile.nameAr,
+    companyAr: input.profile.companyAr,
+    phone: input.phone,
+    email: input.email,
+    licenseNumber: input.profile.licenseNumber,
+    documents: input.profile.documents,
+    licenses: [],
+    reels: [],
+    projects: [],
+    ownerToken: input.ownerToken,
+    accountId: input.accountId,
+    publishPolicy: "review",
+    requestedAt: now,
+    createdAt: now,
+    updatedAt: now,
+    order,
+  };
+  await cloudPutRow(PROFESSIONALS_KEY, [...records, record].slice(-5000), input.email);
+  await initializeReviewRecord("professionals", id, input.email).catch(() => undefined);
+  return id;
 }
 
 export async function POST(request: Request) {
@@ -117,7 +238,22 @@ export async function POST(request: Request) {
       );
     }
 
+    const workflow = await readWorkflowSettings();
+    if (workflow.members.mode === "closed") {
+      return NextResponse.json(
+        { ok: false, error: "registration_closed" },
+        { status: 403 }
+      );
+    }
+    const profile = accountType === "individual" ? null : professionalProfile(body.professionalProfile);
+    if (accountType !== "individual" && !profile) {
+      return NextResponse.json(
+        { ok: false, error: "invalid_professional_profile" },
+        { status: 400 }
+      );
+    }
     const { salt, hash } = await hashPassword(password);
+    const memberStatus = workflow.members.mode === "open" ? "approved" : "pending";
     const record: AccountRecord = {
       id: randomUUID(),
       name,
@@ -133,6 +269,9 @@ export async function POST(request: Request) {
       salt,
       hash,
       createdAt: new Date().toISOString(),
+      status: memberStatus,
+      statusUpdatedAt: new Date().toISOString(),
+      statusUpdatedBy: memberStatus === "approved" ? "registration-policy" : "system",
     };
 
     await writeAccounts({
@@ -140,11 +279,30 @@ export async function POST(request: Request) {
       accounts: [...store.file.accounts, record],
     });
 
+    let professionalId: string | undefined;
+    if (accountType !== "individual" && profile) {
+      try {
+        professionalId = await saveProfessionalRegistration({
+          accountId: record.id,
+          accountType,
+          email: record.email,
+          phone: record.phone,
+          ownerToken: record.ownerToken,
+          profile,
+        });
+      } catch {
+        /* الحساب محفوظ؛ يبقى الملف المحلي متاحًا ويمكن للإدارة استعادته. */
+      }
+    }
+
     const response = NextResponse.json({
       ok: true,
       account: toPublicAccount(record),
+      requiresApproval: memberStatus === "pending",
+      professionalId,
     });
     try {
+      if (memberStatus !== "approved") return response;
       const token = await createUserToken({
         sub: record.id,
         email: record.email,

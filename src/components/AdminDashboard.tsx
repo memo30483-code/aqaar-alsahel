@@ -8,6 +8,7 @@ import {
   Building2,
   ClipboardList,
   FileSearch,
+  GitPullRequest,
   Gift,
   Handshake,
   Home,
@@ -24,6 +25,7 @@ import {
   Star,
   Type,
   Users,
+  UserRoundCheck,
 } from "lucide-react";
 import { getSession, saveSession, type Session } from "@/lib/session";
 import { applyRemoteValue } from "@/lib/cloud/push";
@@ -31,14 +33,11 @@ import {
   DEFAULT_OFFERS_SETTINGS,
   DEFAULT_SITE_SETTINGS,
   getAdminLogs,
-  getAdminPermissions,
   getListings,
   getMarqueeItems,
   getOffers,
   getOffersSettings,
   getSiteSettings,
-  getUsers,
-  hasPermission,
   type AdminListing,
   type AdminLog,
   type AdminUser,
@@ -67,6 +66,9 @@ import AdminAppTab from "@/components/admin/AdminAppTab";
 import AdminCrmTab from "@/components/admin/AdminCrmTab";
 import AdminReviewsTab from "@/components/admin/AdminReviewsTab";
 import AdminPropertyRequestsTab from "@/components/admin/AdminPropertyRequestsTab";
+import AdminMembersTab from "@/components/admin/AdminMembersTab";
+import AdminWorkflowTab from "@/components/admin/AdminWorkflowTab";
+import type { AuditEntry } from "@/lib/workflow-server";
 
 type TabKey =
   | "overview"
@@ -85,6 +87,8 @@ type TabKey =
   | "app"
   | "marquee"
   | "users"
+  | "members"
+  | "workflow"
   | "permissions"
   | "professionals"
   | "projects"
@@ -121,7 +125,9 @@ const TABS: {
   { key: "brand", label: "الهوية والشعارات", Icon: Palette, permission: "settings.full" },
   { key: "app", label: "تطبيق الموبايل", Icon: Smartphone, permission: "settings.full" },
   { key: "marquee", label: "البنرات والشريط", Icon: Megaphone, permission: "banners.manage" },
-  { key: "users", label: "المستخدمون", Icon: Users, permission: "users.view" },
+  { key: "users", label: "فريق الإدارة", Icon: Users, permission: "users.view" },
+  { key: "members", label: "أعضاء الموقع", Icon: UserRoundCheck, permission: "members.view" },
+  { key: "workflow", label: "المراجعة والموافقات", Icon: GitPullRequest, permission: "workflow.manage" },
   { key: "permissions", label: "الصلاحيات", Icon: ShieldCheck, permission: "users.roles" },
   { key: "professionals", label: "المهنيون", Icon: Building2, permission: "professionals.view" },
   { key: "projects", label: "المشاريع", Icon: Briefcase, permission: "professionals.view" },
@@ -132,6 +138,7 @@ const ROLE_LABEL: Record<string, string> = {
   user: "مستخدم",
   agent: "وسيط",
   moderator: "مشرف",
+  reviewer: "مراجع مستندات",
   admin: "أدمن",
   super_admin: "مدير عام",
 };
@@ -155,6 +162,8 @@ export default function AdminDashboard() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [flash, setFlash] = useState("");
   const [propertyRequestCount, setPropertyRequestCount] = useState(0);
+  const [memberCount, setMemberCount] = useState(0);
+  const [workflowCounts, setWorkflowCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -167,29 +176,32 @@ export default function AdminDashboard() {
     };
 
     const readStores = () => {
-      const userList = getUsers();
-      setUsers(userList);
       setListings(getListings());
       setOffers(getOffers());
       setOffersSettings(getOffersSettings());
       setSiteSettings(getSiteSettings());
       setMarquee(getMarqueeItems());
       setLogs(getAdminLogs(200));
-      setPermissionsCount(
-        userList.reduce(
-          (total, user) => total + getAdminPermissions(user.id).length,
-          0
-        )
-      );
     };
 
     const load = async () => {
+      /* تنظيف أي نسخة قديمة سبق أن حُقنت في localStorage قبل فصل الأسرار. */
+      for (const secretKey of [
+        "aqaar-accounts",
+        "aqaar-staff-auth",
+        "aqaar-review-state",
+        "aqaar-audit-log",
+      ]) {
+        window.localStorage.removeItem(secretKey);
+      }
       /* 1) تأكيد كوكي الأدمن الموقّع على السيرفر — سريع ومحدود بمهلة */
       let verified = false;
       let serverAdmin: {
         email: string;
         name: string;
-        role: "admin" | "super_admin";
+        uid?: string;
+        role: Session["role"];
+        permissions: string[];
       } | null = null;
 
       try {
@@ -202,14 +214,18 @@ export default function AdminDashboard() {
             authenticated?: boolean;
             email?: string;
             name?: string;
-            role?: "admin" | "super_admin";
+            uid?: string;
+            role?: Session["role"];
+            permissions?: string[];
           };
           if (data.authenticated && data.email) {
             verified = true;
             serverAdmin = {
               email: data.email,
               name: data.name || "",
-              role: data.role === "admin" ? "admin" : "super_admin",
+              uid: data.uid,
+              role: data.role,
+              permissions: data.permissions ?? [],
             };
           }
         }
@@ -230,6 +246,8 @@ export default function AdminDashboard() {
               accountType: "admin",
               verifiedAt: new Date().toISOString(),
               role: serverAdmin.role,
+              staffId: serverAdmin.uid,
+              permissions: serverAdmin.permissions,
             }
           : stored;
 
@@ -237,7 +255,11 @@ export default function AdminDashboard() {
       setSession(current);
 
       /* 2) نعرض اللوحة فورًا بالنسخة المحلية بدل الانتظار لشبكة السحابة */
-      if (current) readStores();
+      const mayReadSensitiveLocalCopy =
+        serverAdmin?.role === "super_admin" ||
+        (serverAdmin?.permissions.includes("owner.contact.view") === true &&
+          serverAdmin?.permissions.includes("documents.view") === true);
+      if (current && mayReadSensitiveLocalCopy) readStores();
       setReady(true);
 
       /* 3) ثم نحدّث النسخة الكاملة (ومنها الطلبات والمستندات) في الخلفية */
@@ -259,6 +281,65 @@ export default function AdminDashboard() {
       } catch {
         /* انقطاع مؤقت: اللوحة تستمر بالنسخة المحلية ولا تتعطّل */
       }
+
+      const serverCan = (permission: string) =>
+        serverAdmin?.role === "super_admin" ||
+        serverAdmin?.permissions.includes(permission);
+
+      if (serverCan("users.view") || serverCan("workflow.manage") || serverCan("review.assign")) {
+        void fetch("/api/admin/staff", { cache: "no-store" })
+          .then(async (response) => {
+            if (!response.ok) return;
+            const data = (await response.json()) as {
+              users?: AdminUser[];
+              permissionSets?: Array<{ permissions?: string[] }>;
+            };
+            if (cancelled) return;
+            setUsers(data.users ?? []);
+            setPermissionsCount(
+              (data.permissionSets ?? []).reduce(
+                (total, entry) => total + (entry.permissions?.length ?? 0),
+                0
+              )
+            );
+          })
+          .catch(() => undefined);
+      }
+
+      if (serverCan("logs.view")) {
+        void fetch("/api/admin/audit?limit=300", { cache: "no-store" })
+          .then(async (response) => {
+            if (!response.ok) return;
+            const data = (await response.json()) as { logs?: AuditEntry[] };
+            if (!cancelled) {
+              setLogs(
+                (data.logs ?? []).map((entry) => ({
+                  id: entry.id,
+                  action: entry.action,
+                  category: entry.category,
+                  performedBy: entry.actorEmail,
+                  performedByName: entry.actorName,
+                  performedByRole: entry.actorRole,
+                  details: entry.details,
+                  timestamp: entry.at,
+                  meta: entry.meta,
+                }))
+              );
+            }
+          })
+          .catch(() => undefined);
+      }
+
+      void fetch("/api/admin/counts", { cache: "no-store" })
+        .then(async (response) => {
+          if (!response.ok) return;
+          const data = (await response.json()) as { counts?: Record<string, number> };
+          if (!cancelled) {
+            setWorkflowCounts(data.counts ?? {});
+            setMemberCount(data.counts?.members ?? 0);
+          }
+        })
+        .catch(() => undefined);
     };
 
     void load();
@@ -272,6 +353,22 @@ export default function AdminDashboard() {
     const timer = setTimeout(() => setFlash(""), 2600);
     return () => clearTimeout(timer);
   }, [flash]);
+
+  useEffect(() => {
+    if (!adminVerified) return;
+    const refreshCounts = () => {
+      void fetch("/api/admin/counts", { cache: "no-store" })
+        .then(async (response) => {
+          if (!response.ok) return;
+          const data = (await response.json()) as { counts?: Record<string, number> };
+          setWorkflowCounts(data.counts ?? {});
+          setMemberCount(data.counts?.members ?? 0);
+        })
+        .catch(() => undefined);
+    };
+    window.addEventListener("aqaar:workflow-updated", refreshCounts);
+    return () => window.removeEventListener("aqaar:workflow-updated", refreshCounts);
+  }, [adminVerified]);
 
   /** عدّاد الطلبات الجديدة على تبويب «طلبات العقار» قبل فتحه. */
   useEffect(() => {
@@ -296,29 +393,56 @@ export default function AdminDashboard() {
   }, [adminVerified]);
 
   const reloadLogs = useCallback(() => {
-    setLogs(getAdminLogs(200));
+    void fetch("/api/admin/audit?limit=300", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) return;
+        const data = (await response.json()) as { logs?: AuditEntry[] };
+        setLogs(
+          (data.logs ?? []).map((entry) => ({
+            id: entry.id,
+            action: entry.action,
+            category: entry.category,
+            performedBy: entry.actorEmail,
+            performedByName: entry.actorName,
+            performedByRole: entry.actorRole,
+            details: entry.details,
+            timestamp: entry.at,
+            meta: entry.meta,
+          }))
+        );
+      })
+      .catch(() => undefined);
   }, []);
 
   const notify = useCallback((message: string) => setFlash(message), []);
 
-  const currentUser = useMemo(
-    () => users.find((user) => user.email === session?.email),
-    [users, session]
-  );
-
   const can = useCallback(
-    (key: string) => hasPermission(session?.role, currentUser?.id, key),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [session, currentUser, permissionsVersion]
+    (key: string) =>
+      session?.role === "super_admin" ||
+      session?.permissions?.includes(key) === true,
+    [session]
   );
 
   /* إعادة قراءة العدّاد بعد أي تعديل على الصلاحيات */
   useEffect(() => {
-    if (!permissionsVersion || users.length === 0) return;
-    setPermissionsCount(
-      users.reduce((total, user) => total + getAdminPermissions(user.id).length, 0)
-    );
-  }, [permissionsVersion, users]);
+    if (!permissionsVersion || !can("users.view")) return;
+    void fetch("/api/admin/staff", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) return;
+        const data = (await response.json()) as {
+          users?: AdminUser[];
+          permissionSets?: Array<{ permissions?: string[] }>;
+        };
+        setUsers(data.users ?? []);
+        setPermissionsCount(
+          (data.permissionSets ?? []).reduce(
+            (total, item) => total + (item.permissions?.length ?? 0),
+            0
+          )
+        );
+      })
+      .catch(() => undefined);
+  }, [permissionsVersion, can]);
 
   const visibleTabs = useMemo(
     () => TABS.filter((item) => !item.permission || can(item.permission)),
@@ -439,6 +563,21 @@ export default function AdminDashboard() {
                   tab === item.key ? "bg-white text-ocean-950" : "bg-rose-500 text-white"
                 }`}>
                   {propertyRequestCount > 99 ? "99+" : propertyRequestCount}
+                </span>
+              )}
+              {item.key === "members" && memberCount > 0 && (
+                <span className={`min-w-5 rounded-full px-1.5 py-0.5 text-center text-[9px] font-black ${tab === item.key ? "bg-white text-ocean-950" : "bg-rose-500 text-white"}`}>
+                  {memberCount > 99 ? "99+" : memberCount}
+                </span>
+              )}
+              {item.key === "listings" && (workflowCounts["listings.review"] ?? 0) + (workflowCounts["listings.approval"] ?? 0) > 0 && (
+                <span className={`min-w-5 rounded-full px-1.5 py-0.5 text-center text-[9px] font-black ${tab === item.key ? "bg-white text-ocean-950" : "bg-amber-500 text-white"}`}>
+                  {(workflowCounts["listings.review"] ?? 0) + (workflowCounts["listings.approval"] ?? 0)}
+                </span>
+              )}
+              {item.key === "professionals" && (workflowCounts["professionals.review"] ?? 0) + (workflowCounts["professionals.approval"] ?? 0) > 0 && (
+                <span className={`min-w-5 rounded-full px-1.5 py-0.5 text-center text-[9px] font-black ${tab === item.key ? "bg-white text-ocean-950" : "bg-amber-500 text-white"}`}>
+                  {(workflowCounts["professionals.review"] ?? 0) + (workflowCounts["professionals.approval"] ?? 0)}
                 </span>
               )}
             </button>
@@ -599,6 +738,18 @@ export default function AdminDashboard() {
               setTab("permissions");
             }}
           />
+        )}
+
+        {tab === "members" && (
+          <AdminMembersTab
+            can={can}
+            notify={notify}
+            onCountChange={setMemberCount}
+          />
+        )}
+
+        {tab === "workflow" && (
+          <AdminWorkflowTab users={users} can={can} notify={notify} />
         )}
 
         {tab === "permissions" && (

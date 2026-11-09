@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminActor, getAdminApiSession } from "@/lib/admin-api";
+import { adminActor, adminCan, getAdminApiSession } from "@/lib/admin-api";
 import {
   cloudGetCrmSettings,
   cloudSaveCrmSettings,
@@ -31,6 +31,9 @@ export async function GET() {
   if (!session) {
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 401 });
   }
+  if (!adminCan(session, "crm.view")) {
+    return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 403 });
+  }
   try {
     const settings = await cloudGetCrmSettings();
     return NextResponse.json({ ok: true, settings }, { headers: { "Cache-Control": "no-store" } });
@@ -43,6 +46,9 @@ export async function PUT(request: Request) {
   const session = await getAdminApiSession();
   if (!session) {
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 401 });
+  }
+  if (!adminCan(session, "crm.manage")) {
+    return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 403 });
   }
   let raw: unknown;
   try {

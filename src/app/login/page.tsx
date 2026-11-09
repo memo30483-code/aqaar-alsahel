@@ -85,7 +85,9 @@ function LoginContent() {
         const data = (await response.json()) as {
           name?: string;
           email?: string;
-          role?: "admin" | "super_admin";
+          uid?: string;
+          role?: "agent" | "moderator" | "reviewer" | "admin" | "super_admin";
+          permissions?: string[];
         };
         saveSession({
           name: data.name || "مدير النظام",
@@ -93,7 +95,9 @@ function LoginContent() {
           phone: "",
           accountType: "admin",
           verifiedAt: new Date().toISOString(),
-          role: data.role === "admin" ? "admin" : "super_admin",
+          role: data.role ?? "reviewer",
+          staffId: data.uid,
+          permissions: data.permissions ?? [],
         });
         /* تنقّل كامل: يضمن إرسال الكوكي الجديد ولا يعلّق على كاش الراوتر */
         window.location.replace("/admin");
@@ -107,7 +111,7 @@ function LoginContent() {
       }
 
       if (response.status === 503) {
-        setError("خدمة الدخول غير مهيأة على السيرفر. تواصل مع الدعم.");
+        setError("خدمة الدخول غير متاحة مؤقتًا. حاول مرة أخرى بعد قليل.");
         setLoading(false);
         return;
       }
@@ -142,6 +146,7 @@ function LoginContent() {
             phone?: string;
             accountType?: string;
             role?: Session["role"];
+            status?: Session["memberStatus"];
             ownerToken?: string;
           };
         };
@@ -158,6 +163,7 @@ function LoginContent() {
           accountType: account.accountType || "individual",
           verifiedAt: new Date().toISOString(),
           role: account.role === "agent" ? "agent" : "user",
+          memberStatus: account.status ?? "approved",
           ...(account.ownerToken ? { ownerToken: account.ownerToken } : {}),
         });
         /* لا نوجّه المستخدم العادي إلى لوحة الإدارة */
@@ -173,6 +179,19 @@ function LoginContent() {
 
       if (response.status === 503) {
         setError("خدمة الحسابات غير متاحة حاليًا. تواصل مع الدعم.");
+        setLoading(false);
+        return;
+      }
+
+      if (response.status === 403) {
+        const data = (await response.json().catch(() => ({}))) as { error?: string };
+        setError(
+          data.error === "account_pending"
+            ? "حسابك بانتظار موافقة الإدارة. سنسمح بالدخول فور اعتماده."
+            : data.error === "account_suspended"
+              ? "هذا الحساب موقوف. تواصل مع الإدارة."
+              : "لم تتم الموافقة على هذا الحساب. تواصل مع الإدارة للمساعدة."
+        );
         setLoading(false);
         return;
       }

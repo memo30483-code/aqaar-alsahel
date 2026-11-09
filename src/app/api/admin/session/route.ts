@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { ADMIN_COOKIE, verifyAdminToken } from "@/lib/admin-session";
+import { getAdminApiSession } from "@/lib/admin-api";
 
 /**
  * حالة جلسة الأدمن حسب الكوكي الموقّع على السيرفر.
@@ -10,8 +9,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const token = cookies().get(ADMIN_COOKIE)?.value;
-  const payload = await verifyAdminToken(token);
+  const payload = await getAdminApiSession();
 
   if (!payload) {
     return NextResponse.json({ authenticated: false }, { status: 401 });
@@ -22,5 +20,7 @@ export async function GET() {
     email: payload.sub,
     name: payload.name,
     role: payload.role,
+    uid: payload.uid,
+    permissions: payload.permissions,
   });
 }

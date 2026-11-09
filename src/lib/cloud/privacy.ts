@@ -97,6 +97,9 @@ function sanitizeProfessionals(value: unknown): unknown[] {
       delete publicRecord.documents;
       delete publicRecord.ownerToken;
       delete publicRecord.reviewNote;
+      delete publicRecord.accountId;
+      delete publicRecord.phone;
+      delete publicRecord.email;
 
       publicRecord.projects = Array.isArray(source.projects)
         ? source.projects

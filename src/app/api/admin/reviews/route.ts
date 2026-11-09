@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminActor, getAdminApiSession } from "@/lib/admin-api";
+import { adminActor, adminCan, getAdminApiSession } from "@/lib/admin-api";
 import {
   cloudGetAdminReviews,
   cloudGetReviewSettings,
@@ -44,6 +44,9 @@ export async function GET(request: Request) {
       { status: 401 }
     );
   }
+  if (!adminCan(session, "reviews.view")) {
+    return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 403 });
+  }
 
   const url = new URL(request.url);
   const statusRaw = url.searchParams.get("status") ?? "all";
@@ -73,6 +76,9 @@ export async function PUT(request: Request) {
       { ok: false, error: "غير مصرّح" },
       { status: 401 }
     );
+  }
+  if (!adminCan(session, "reviews.manage")) {
+    return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 403 });
   }
   let raw: unknown;
   try {

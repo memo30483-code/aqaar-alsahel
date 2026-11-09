@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAdminApiSession } from "@/lib/admin-api";
+import { adminCan, getAdminApiSession } from "@/lib/admin-api";
 import {
   cloudDeleteReview,
   cloudUpdateReview,
@@ -33,6 +33,9 @@ export async function PATCH(
   const session = await getAdminApiSession();
   if (!session) {
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 401 });
+  }
+  if (!adminCan(session, "reviews.manage")) {
+    return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 403 });
   }
   let body: {
     status?: unknown;
@@ -107,6 +110,9 @@ export async function DELETE(
   const session = await getAdminApiSession();
   if (!session) {
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 401 });
+  }
+  if (!adminCan(session, "reviews.manage")) {
+    return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 403 });
   }
   try {
     const removed = await cloudDeleteReview(params.id);

@@ -14,6 +14,8 @@ const PUBLIC_ADMIN_PATHS = new Set([
   "/api/admin/login",
   "/api/admin/logout",
   "/api/admin/session",
+  "/api/admin/join",
+  "/admin/join",
 ]);
 
 export async function middleware(request: NextRequest) {

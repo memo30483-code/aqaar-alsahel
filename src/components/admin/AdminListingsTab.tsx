@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -36,6 +36,8 @@ import {
   type ListingStatus,
 } from "@/lib/admin-system";
 import { Panel, ROW_ACTION, STATUS_LABEL, STATUS_STYLE, INPUT } from "@/components/admin/shared";
+import AdminReviewPanel from "@/components/admin/AdminReviewPanel";
+import { REVIEW_STAGE_LABEL, REVIEW_STAGE_STYLE, type ReviewRecord, type ReviewStage } from "@/lib/workflow";
 
 interface Props {
   listings: AdminListing[];
@@ -104,6 +106,25 @@ export default function AdminListingsTab({
   const [replaceNote, setReplaceNote] = useState("");
   const [historyFor, setHistoryFor] = useState<AdminListing | null>(null);
   const [docsFor, setDocsFor] = useState<AdminListing | null>(null);
+  const [reviewStages, setReviewStages] = useState<Record<string, ReviewStage>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch("/api/admin/review?scope=listings", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) return;
+        const data = (await response.json()) as { records?: ReviewRecord[] };
+        if (!cancelled) {
+          setReviewStages(
+            Object.fromEntries((data.records ?? []).map((item) => [item.itemId, item.stage]))
+          );
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const session = typeof window !== "undefined" ? getSession() : null;
   const performerId =
@@ -328,6 +349,11 @@ export default function AdminListingsTab({
                     <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold ${STATUS_STYLE[listing.status]}`}>
                       {STATUS_LABEL[listing.status]}
                     </span>
+                    {listing.status === "pending" && (
+                      <span className={`mt-1 flex w-fit rounded-full border px-2 py-0.5 text-[9px] font-black ${REVIEW_STAGE_STYLE[reviewStages[listing.id] ?? "new"]}`}>
+                        {REVIEW_STAGE_LABEL[reviewStages[listing.id] ?? "new"]}
+                      </span>
+                    )}
                   </td>
                   <td className="p-3">
                     <div className="flex flex-wrap gap-1">
@@ -335,32 +361,14 @@ export default function AdminListingsTab({
                         <Eye className="h-3 w-3" /> معاينة
                       </Link>
 
-                      {listing.status !== "approved" &&
+                      {(can("listings.review") || can("listings.publish")) &&
                         listing.status !== "archived" &&
-                        listing.status !== "deleted" &&
-                        can("listings.approve") &&
-                        (incompleteDocs(listing).length > 0 ? (
-                          <span
-                            title="لا يمكن الاعتماد قبل رفع المستندات الإجبارية"
-                            className={`${ROW_ACTION} cursor-not-allowed border-sand-200 text-sand-400`}
-                          >
-                            <Check className="h-3 w-3" /> موافقة
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => runAction(listing, "approved", "approved")}
-                            className={`${ROW_ACTION} border-emerald-200 text-emerald-700 hover:border-emerald-400 hover:text-emerald-700`}
-                          >
-                            <Check className="h-3 w-3" /> موافقة
-                          </button>
-                        ))}
-
-                      {listing.status !== "rejected" && can("listings.reject") && (
+                        listing.status !== "deleted" && (
                         <button
-                          onClick={() => runAction(listing, "rejected", "rejected")}
-                          className={`${ROW_ACTION} border-rose-200 text-rose-700 hover:border-rose-400 hover:text-rose-700`}
+                          onClick={() => setDocsFor(listing)}
+                          className={`${ROW_ACTION} border-emerald-200 text-emerald-700 hover:border-emerald-400 hover:text-emerald-700`}
                         >
-                          <X className="h-3 w-3" /> رفض
+                          <Check className="h-3 w-3" /> المراجعة والموافقة
                         </button>
                       )}
 
@@ -376,10 +384,10 @@ export default function AdminListingsTab({
                       {(listing.status === "archived" || listing.status === "deleted") &&
                         can("listings.restore") && (
                           <button
-                            onClick={() => runAction(listing, "restored", "approved")}
+                            onClick={() => runAction(listing, "restored", "pending")}
                             className={`${ROW_ACTION} border-emerald-200 text-emerald-700 hover:border-emerald-400 hover:text-emerald-700`}
                           >
-                            <RefreshCw className="h-3 w-3" /> إعادة نشر
+                            <RefreshCw className="h-3 w-3" /> إعادة للمراجعة
                           </button>
                         )}
 
@@ -534,7 +542,7 @@ export default function AdminListingsTab({
 
       {replaceFor && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-ocean-950/50 p-4">
-          <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
+          <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
             <h3 className="text-lg font-black text-ocean-900">استبدال الإعلان بإعلان جديد</h3>
             <p className="mt-1 text-sm text-sand-600">
               سيتم أرشفة «{replaceFor.title}» وربطه بالإعلان البديل مع تسجيل السبب.
@@ -658,7 +666,7 @@ export default function AdminListingsTab({
               </p>
             )}
 
-            <div className="mt-4 max-h-80 space-y-2 overflow-y-auto">
+            {can("documents.view") ? <div className="mt-4 max-h-80 space-y-2 overflow-y-auto">
               {(docsFor.documents ?? []).map((doc, index) => (
                 <div
                   key={`${doc.key}-${index}`}
@@ -698,6 +706,29 @@ export default function AdminListingsTab({
                   لا توجد مستندات مرفوعة مع هذا الطلب.
                 </p>
               )}
+            </div> : (
+              <p className="mt-4 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-xs font-bold text-sky-800">عرض المستندات يحتاج صلاحية «عرض المستندات الخاصة».</p>
+            )}
+
+            <div className="mt-5">
+              <AdminReviewPanel
+                scope="listings"
+                itemId={docsFor.id}
+                can={can}
+                documents={(docsFor.documents ?? []).map((doc, index) => ({
+                  key: `${doc.key}-${index}`,
+                  label: doc.label || doc.name,
+                }))}
+                notify={notify}
+                onDecision={(stage) => {
+                  setReviewStages((current) => ({ ...current, [docsFor.id]: stage }));
+                  const status = stage === "approved" ? "approved" : stage === "rejected" ? "rejected" : stage === "returned" ? "pending" : undefined;
+                  if (!status) return;
+                  saveListingOverride(docsFor.id, { status });
+                  onChange(listings.map((row) => row.id === docsFor.id ? { ...row, status } : row));
+                  setDocsFor((current) => current ? { ...current, status } : current);
+                }}
+              />
             </div>
 
             <p className="mt-4 flex items-center gap-1.5 text-[10.5px] font-semibold text-sand-500">

@@ -48,9 +48,11 @@ export interface Permission {
     | "logs"
     | "professionals"
     | "crm"
-    | "reviews"
-    | "propertyRequests"
-    | "settings";
+     | "reviews"
+     | "propertyRequests"
+     | "members"
+     | "workflow"
+     | "settings";
 }
 
 export interface AdminPermissionSet {
@@ -112,7 +114,11 @@ export interface AdminUser {
   phone: string;
   role: UserRole;
   active: boolean;
+  /** حالة حساب الطاقم الحقيقية على السيرفر. */
+  status?: "invited" | "active" | "suspended";
   joinedAt: string;
+  lastLoginAt?: string;
+  inviteExpiresAt?: string;
   customPermissions?: string[];
 }
 
@@ -221,9 +227,14 @@ export interface AdminLog {
     | "auth"
     | "professionals"
     | "crm"
-    | "reviews"
-    | "propertyRequests"
-    | "settings";
+     | "reviews"
+     | "propertyRequests"
+     | "members"
+     | "workflow"
+     | "staff"
+     | "documents"
+     | "review"
+     | "settings";
   performedBy: string;
   performedByName: string;
   performedByRole: UserRole;
@@ -275,35 +286,38 @@ export const ALL_PERMISSIONS: Permission[] = [
   { id: "p29", key: "reviews.manage", labelAr: "إدارة التقييمات والردود", labelEn: "Manage Reviews & Replies", category: "reviews" },
   { id: "p30", key: "propertyRequests.view", labelAr: "عرض طلبات العقار", labelEn: "View Property Requests", category: "propertyRequests" },
   { id: "p31", key: "propertyRequests.manage", labelAr: "إدارة الطلبات والمطابقات والتواصل", labelEn: "Manage Requests, Matches & Contact", category: "propertyRequests" },
+  { id: "p32", key: "listings.review", labelAr: "مراجعة مستندات الإعلانات", labelEn: "Review Listing Documents", category: "listings" },
+  { id: "p33", key: "documents.view", labelAr: "عرض المستندات الخاصة", labelEn: "View Private Documents", category: "workflow" },
+  { id: "p34", key: "listings.publish", labelAr: "الموافقة النهائية ونشر الإعلانات", labelEn: "Final Listing Approval", category: "listings" },
+  { id: "p35", key: "owner.contact.view", labelAr: "عرض بيانات مقدم الطلب", labelEn: "View Submitter Contact", category: "workflow" },
+  { id: "p36", key: "members.view", labelAr: "عرض أعضاء الموقع", labelEn: "View Site Members", category: "members" },
+  { id: "p37", key: "members.approve", labelAr: "قبول ورفض أعضاء الموقع", labelEn: "Approve Site Members", category: "members" },
+  { id: "p38", key: "review.assign", labelAr: "إسناد طلبات المراجعة", labelEn: "Assign Reviews", category: "workflow" },
+  { id: "p39", key: "workflow.manage", labelAr: "إدارة سياسة الموافقات والتفويض", labelEn: "Manage Workflow & Delegations", category: "workflow" },
+  { id: "p40", key: "propertyRequests.review", labelAr: "مراجعة طلبات العقار", labelEn: "Review Property Requests", category: "propertyRequests" },
+  { id: "p41", key: "propertyRequests.publish", labelAr: "الموافقة النهائية على طلبات العقار", labelEn: "Final Property Request Approval", category: "propertyRequests" },
+  { id: "p42", key: "professionals.review", labelAr: "مراجعة مستندات المهنيين", labelEn: "Review Professional Documents", category: "professionals" },
+  { id: "p43", key: "professionals.publish", labelAr: "الموافقة النهائية على المهنيين", labelEn: "Final Professional Approval", category: "professionals" },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   super_admin: ALL_PERMISSIONS.map(p => p.key),
-  admin: [
-    "listings.view", "listings.approve", "listings.reject", "listings.edit", 
-    "listings.archive", "listings.delete", "listings.restore", "listings.replace", 
-    "listings.assign", "listings.feature",
-    "users.view", "users.manage", "users.roles",
-    "offers.view", "offers.manage", "offers.publish",
-    "site.blocks", "site.settings", "site.contact",
-    "banners.manage",
-    "professionals.view", "professionals.manage",
-    "crm.view", "crm.manage", "crm.assign",
-    "reviews.view", "reviews.manage",
-    "propertyRequests.view", "propertyRequests.manage",
-    "logs.view",
-    /* الأدمن يملك التحكم الكامل في الإعدادات افتراضياً (كان يُمنح عبر تجاوز الدور) */
-    "settings.full",
-  ],
+  admin: ALL_PERMISSIONS.map(p => p.key),
   moderator: [
     "listings.view", "listings.approve", "listings.reject", "listings.edit", 
     "listings.archive", "listings.assign", "listings.feature",
     "offers.view", "offers.manage",
-    "crm.view", "crm.manage",
     "reviews.view", "reviews.manage",
     "propertyRequests.view", "propertyRequests.manage",
+    "listings.review", "documents.view", "propertyRequests.review",
+    "professionals.review",
   ],
-  agent: ["listings.view", "crm.view"],
+  reviewer: [
+    "listings.view", "listings.review", "documents.view",
+    "propertyRequests.view", "propertyRequests.review",
+    "professionals.view", "professionals.review",
+  ],
+  agent: ["listings.view"],
   user: [],
 };
 

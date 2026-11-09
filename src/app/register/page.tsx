@@ -683,6 +683,7 @@ function RegisterContent() {
   const [otpError, setOtpError] = useState("");
   const [resent, setResent] = useState(false);
   const [verified, setVerified] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState(false);
 
   const router = useRouter();
   const [redirectTo, setRedirectTo] = useState("");
@@ -705,10 +706,10 @@ function RegisterContent() {
 
   /** بعد نجاح التوثيق: توجيه تلقائي لصفحة الهدف (مثل أضف عقارك) */
   useEffect(() => {
-    if (!verified || !redirectTo) return;
+    if (!verified || pendingApproval || !redirectTo) return;
     const timer = window.setTimeout(() => router.push(redirectTo), 1200);
     return () => window.clearTimeout(timer);
-  }, [verified, redirectTo, router]);
+  }, [verified, pendingApproval, redirectTo, router]);
 
   const fields = TYPE_FIELDS[accountType];
 
@@ -886,6 +887,29 @@ function RegisterContent() {
           phone: details.phone,
           accountType,
           ownerToken,
+          ...(accountType !== "individual"
+            ? {
+                professionalProfile: {
+                  nameAr:
+                    accountType === "lawyer"
+                      ? details.fullTripleName
+                      : details.legalOfficerName || details.companyName,
+                  companyAr: accountType === "lawyer" ? "" : details.companyName,
+                  licenseNumber:
+                    details.barNumber || details.commercialRegister || "",
+                  documents: fileFields
+                    .filter((field) => documents[field.name])
+                    .map((field) => ({
+                      id: `doc-${field.name}`,
+                      type: field.name,
+                      label: t(field.labelKey),
+                      fileName: field.name,
+                      dataUrl: documents[field.name],
+                      uploadedAt: new Date().toISOString(),
+                    })),
+                },
+              }
+            : {}),
         }),
       });
 
@@ -909,6 +933,17 @@ function RegisterContent() {
         return;
       }
 
+      if (response.status === 403) {
+        const denied = (await response.json().catch(() => ({}))) as { error?: string };
+        setOtpError(
+          denied.error === "registration_closed"
+            ? "التسجيل متوقف مؤقتًا بقرار الإدارة. تواصل معنا للمساعدة."
+            : "تعذّر إتمام التسجيل حاليًا."
+        );
+        setRegistering(false);
+        return;
+      }
+
       if (!response.ok) {
         setOtpError("تعذّر إنشاء الحساب. حاول تاني بعد لحظات.");
         setRegistering(false);
@@ -916,12 +951,14 @@ function RegisterContent() {
       }
 
       const data = (await response.json()) as {
+        requiresApproval?: boolean;
         account?: {
           name?: string;
           email?: string;
           phone?: string;
           accountType?: string;
           role?: Session["role"];
+          status?: Session["memberStatus"];
           ownerToken?: string;
         };
       };
@@ -932,6 +969,7 @@ function RegisterContent() {
         return;
       }
 
+      const requiresApproval = data.requiresApproval === true || account.status === "pending";
       const nextSession: Session = {
         name: account.name || displayName,
         email: account.email || trimmedEmail,
@@ -939,9 +977,11 @@ function RegisterContent() {
         accountType: account.accountType || accountType,
         verifiedAt: new Date().toISOString(),
         role: account.role === "agent" ? "agent" : "user",
+        memberStatus: account.status ?? (requiresApproval ? "pending" : "approved"),
         ...(account.ownerToken ? { ownerToken: account.ownerToken } : {}),
       };
-      saveSession(nextSession);
+      if (!requiresApproval) saveSession(nextSession);
+      setPendingApproval(requiresApproval);
       setVerified(true);
       setRegistering(false);
     } catch {
@@ -1004,11 +1044,13 @@ function RegisterContent() {
                   {t("register.success.title")}
                 </h2>
                 <p className="mt-2 text-[12px] leading-6 text-sand-600">
-                  {t(
-                    accountType === "individual"
-                      ? "register.success.desc"
-                      : "register.success.pendingDesc"
-                  )}
+                  {pendingApproval
+                    ? "تم استلام طلب إنشاء حسابك، وهو الآن بانتظار موافقة الإدارة. لن تتمكن من تسجيل الدخول قبل الاعتماد."
+                    : t(
+                        accountType === "individual"
+                          ? "register.success.desc"
+                          : "register.success.pendingDesc"
+                      )}
                 </p>
                 <dl className="mx-auto mt-6 max-w-md space-y-2 rounded-2xl border border-sand-200 bg-sand-50/70 p-4 text-right text-[12.5px]">
                   <div className="flex justify-between gap-3">
@@ -1055,30 +1097,30 @@ function RegisterContent() {
                     </dt>
                     <dd
                       className={`font-bold ${
-                        accountType === "individual"
+                        !pendingApproval
                           ? "text-emerald-600"
                           : "text-amber-600"
                       }`}
                     >
                       {t(
-                        accountType === "individual"
+                        !pendingApproval
                           ? "register.success.verified"
                           : "register.success.pendingReview"
                       )}
                     </dd>
                   </div>
                 </dl>
-                {redirectTo && (
+                {redirectTo && !pendingApproval && (
                   <p className="mt-5 rounded-2xl bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-700">
                     {t("register.success.redirecting")}
                   </p>
                 )}
                 <div className="mt-6 flex flex-wrap justify-center gap-3">
                   <Link
-                    href={redirectTo || "/add-property"}
+                    href={pendingApproval ? "/login" : redirectTo || "/add-property"}
                     className="rounded-xl bg-gradient-to-l from-gold-500 to-gold-400 px-5 py-2.5 text-[12.5px] font-black text-ocean-950 transition hover:-translate-y-0.5"
                   >
-                    {t("register.success.addProperty")}
+                    {pendingApproval ? "الذهاب لصفحة الدخول" : t("register.success.addProperty")}
                   </Link>
                   <Link
                     href="/"

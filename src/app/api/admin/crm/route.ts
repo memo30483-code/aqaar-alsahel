@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminActor, getAdminApiSession } from "@/lib/admin-api";
+import { adminActor, adminCan, getAdminApiSession } from "@/lib/admin-api";
 import {
   cloudCreateCrmLead,
   cloudGetCrmLeads,
@@ -57,6 +57,9 @@ function databaseError(error: unknown) {
 export async function GET() {
   const session = await getAdminApiSession();
   if (!session) return unauthorized();
+  if (!adminCan(session, "crm.view") || !adminCan(session, "owner.contact.view")) {
+    return NextResponse.json({ ok: false, error: "غير مصرّح ببيانات العملاء" }, { status: 403 });
+  }
   try {
     const leads = await cloudGetCrmLeads();
     return NextResponse.json(
@@ -77,6 +80,9 @@ interface PostBody {
 export async function POST(request: Request) {
   const session = await getAdminApiSession();
   if (!session) return unauthorized();
+  if (!adminCan(session, "crm.manage") || !adminCan(session, "owner.contact.view")) {
+    return NextResponse.json({ ok: false, error: "غير مصرّح ببيانات العملاء" }, { status: 403 });
+  }
 
   let body: PostBody;
   try {

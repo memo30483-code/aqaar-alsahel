@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAdminApiSession } from "@/lib/admin-api";
+import { adminCan, getAdminApiSession } from "@/lib/admin-api";
 import {
   cloudDeleteCrmTask,
   cloudGetCrmLead,
@@ -34,6 +34,9 @@ export async function PATCH(
   if (!session) {
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 401 });
   }
+  if (!adminCan(session, "crm.manage")) {
+    return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 403 });
+  }
   let body: { done?: unknown };
   try {
     body = (await request.json()) as { done?: unknown };
@@ -62,6 +65,9 @@ export async function DELETE(
   const session = await getAdminApiSession();
   if (!session) {
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 401 });
+  }
+  if (!adminCan(session, "crm.manage")) {
+    return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 403 });
   }
   try {
     const changed = await cloudDeleteCrmTask(params.id, params.taskId);

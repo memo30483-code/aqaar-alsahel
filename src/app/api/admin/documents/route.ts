@@ -1,16 +1,18 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { ADMIN_COOKIE, verifyAdminToken } from "@/lib/admin-session";
 import { cloudDownloadDocument } from "@/lib/cloud/server";
+import { adminCan, getAdminApiSession } from "@/lib/admin-api";
+import { actorSummary, appendAudit } from "@/lib/workflow-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  const token = cookies().get(ADMIN_COOKIE)?.value;
-  const session = await verifyAdminToken(token);
+  const session = await getAdminApiSession();
   if (!session) {
     return NextResponse.json({ error: "غير مصرّح" }, { status: 401 });
+  }
+  if (!adminCan(session, "documents.view")) {
+    return NextResponse.json({ error: "لا تملك صلاحية عرض المستندات" }, { status: 403 });
   }
 
   const url = new URL(request.url);
@@ -27,6 +29,13 @@ export async function GET(request: Request) {
   const name = requestedName.replace(/[^a-zA-Z0-9._\u0600-\u06ff -]/g, "_").slice(0, 180);
   try {
     const document = await cloudDownloadDocument(path);
+    await appendAudit({
+      ...actorSummary(session),
+      action: "document.view",
+      category: "documents",
+      details: `عرض مستند خاص: ${name || "document"}`,
+      meta: { path },
+    }).catch(() => undefined);
     return new NextResponse(document.bytes, {
       headers: {
         "Content-Type": document.contentType,

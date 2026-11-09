@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminActor, getAdminApiSession } from "@/lib/admin-api";
+import { adminActor, adminCan, getAdminApiSession } from "@/lib/admin-api";
 import {
   deletePropertyRequest,
   getPropertyRequest,
@@ -14,6 +14,11 @@ import {
   isPropertyRequestPriority,
   isPropertyRequestStatus,
 } from "@/lib/property-requests";
+import {
+  canPublishScope,
+  getReviewRecord,
+  readWorkflowSettings,
+} from "@/lib/workflow-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -63,6 +68,9 @@ export async function GET(
       { status: 401, headers: NO_STORE }
     );
   }
+  if (!adminCan(session, "propertyRequests.view")) {
+    return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 403, headers: NO_STORE });
+  }
 
   try {
     const [item, properties] = await Promise.all([
@@ -87,8 +95,11 @@ export async function GET(
           ]
         : [];
     });
+    const visibleItem = adminCan(session, "owner.contact.view")
+      ? item
+      : { ...item, name: "بيانات مقدم الطلب محجوبة", phone: "", email: "" };
     return NextResponse.json(
-      { ok: true, request: item, matches },
+      { ok: true, request: visibleItem, matches },
       { headers: NO_STORE }
     );
   } catch (error) {
@@ -126,6 +137,9 @@ export async function PATCH(
       { status: 401, headers: NO_STORE }
     );
   }
+  if (!adminCan(session, "propertyRequests.manage")) {
+    return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 403, headers: NO_STORE });
+  }
 
   let body: PatchBody;
   try {
@@ -154,6 +168,37 @@ export async function PATCH(
       { ok: false, error: "قائمة العقارات المرشحة غير صالحة" },
       { status: 400, headers: NO_STORE }
     );
+  }
+  if (
+    !adminCan(session, "owner.contact.view") &&
+    (body.name !== undefined ||
+      body.phone !== undefined ||
+      body.email !== undefined ||
+      body.contactText !== undefined)
+  ) {
+    return NextResponse.json(
+      { ok: false, error: "تعديل أو استخدام بيانات مقدم الطلب يحتاج صلاحية خاصة" },
+      { status: 403, headers: NO_STORE }
+    );
+  }
+
+  if (body.published !== undefined) {
+    const workflow = await readWorkflowSettings();
+    if (!canPublishScope(session, workflow, "propertyRequests")) {
+      return NextResponse.json(
+        { ok: false, error: "لا تملك صلاحية الموافقة النهائية" },
+        { status: 403, headers: NO_STORE }
+      );
+    }
+    if (body.published === true && workflow.propertyRequests.enabled) {
+      const review = await getReviewRecord("propertyRequests", params.id);
+      if (review.stage !== "approved") {
+        return NextResponse.json(
+          { ok: false, error: "يجب إتمام المراجعة والموافقة النهائية أولًا" },
+          { status: 409, headers: NO_STORE }
+        );
+      }
+    }
   }
 
   const sentPropertyIds = Array.isArray(body.sentPropertyIds)
@@ -231,6 +276,9 @@ export async function DELETE(
       { ok: false, error: "غير مصرّح" },
       { status: 401, headers: NO_STORE }
     );
+  }
+  if (!adminCan(session, "propertyRequests.manage")) {
+    return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 403, headers: NO_STORE });
   }
   try {
     const deleted = await deletePropertyRequest(params.id);

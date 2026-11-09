@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminActor, getAdminApiSession } from "@/lib/admin-api";
+import { adminActor, adminCan, getAdminApiSession } from "@/lib/admin-api";
 import {
   cloudAssignCrmLead,
   cloudChangeCrmStage,
@@ -62,6 +62,9 @@ export async function GET(
   if (!session) {
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 401 });
   }
+  if (!adminCan(session, "crm.view") || !adminCan(session, "owner.contact.view")) {
+    return NextResponse.json({ ok: false, error: "غير مصرّح ببيانات العملاء" }, { status: 403 });
+  }
   try {
     const lead = await cloudGetCrmLead(params.id);
     if (!lead) {
@@ -89,6 +92,9 @@ export async function PATCH(
   const session = await getAdminApiSession();
   if (!session) {
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 401 });
+  }
+  if (!adminCan(session, "crm.manage") || !adminCan(session, "owner.contact.view")) {
+    return NextResponse.json({ ok: false, error: "غير مصرّح ببيانات العملاء" }, { status: 403 });
   }
   let body: PatchBody;
   try {
@@ -196,6 +202,9 @@ export async function DELETE(
   const session = await getAdminApiSession();
   if (!session) {
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 401 });
+  }
+  if (!adminCan(session, "crm.manage")) {
+    return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 403 });
   }
   try {
     const lead = await cloudUpdateCrmLead(params.id, { archived: true });

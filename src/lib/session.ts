@@ -6,6 +6,7 @@ export type UserRole =
   | "user"
   | "agent"
   | "moderator"
+  | "reviewer"
   | "admin"
   | "super_admin";
 
@@ -17,6 +18,12 @@ export interface Session {
   verifiedAt: string;
   /** دور المستخدم — غياب القيمة يعني مستخدماً عادياً */
   role?: UserRole;
+  /** الصلاحيات الفعلية القادمة من السيرفر لجلسات الطاقم */
+  permissions?: string[];
+  /** معرّف حساب الطاقم على السيرفر */
+  staffId?: string;
+  /** حالة عضوية الموقع (للأعضاء المسجلين) */
+  memberStatus?: "pending" | "approved" | "rejected" | "suspended";
   /**
    * رمز ملكية يُنشأ عند التسجيل ويُربط بالسجل المهني.
    * يمنع دخول أي شخص للوحة مهني عبر كتابة بريده فقط.
@@ -86,6 +93,19 @@ export function clearSession(): void {
 /** هل الدور الممرّر يمنح صلاحية الدخول إلى لوحة تحكم المدير */
 export function isAdminRole(role: unknown): role is "admin" | "super_admin" {
   return role === "admin" || role === "super_admin";
+}
+
+/** أدوار الطاقم التي يُسمح لها بالدخول إلى لوحة الإدارة */
+export function isStaffRole(
+  role: unknown
+): role is "agent" | "moderator" | "reviewer" | "admin" | "super_admin" {
+  return (
+    role === "agent" ||
+    role === "moderator" ||
+    role === "reviewer" ||
+    role === "admin" ||
+    role === "super_admin"
+  );
 }
 
 /** هل الجلسة الحالية تخصّ مديراً (admin أو super_admin) */

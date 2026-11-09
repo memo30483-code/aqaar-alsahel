@@ -94,6 +94,21 @@ export async function POST(request: Request) {
 
     clearAttempts(key, RATE);
 
+    if (account.status !== "approved") {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            account.status === "pending"
+              ? "account_pending"
+              : account.status === "suspended"
+                ? "account_suspended"
+                : "account_rejected",
+        },
+        { status: 403 }
+      );
+    }
+
     /* كوكي جلسة موقّع لربط طلبات العقار بالحساب على السيرفر */
     const response = NextResponse.json({
       ok: true,

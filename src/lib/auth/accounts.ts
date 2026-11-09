@@ -27,6 +27,7 @@ export const ACCOUNT_TYPES = [
 
 export type AccountType = (typeof ACCOUNT_TYPES)[number];
 export type AccountRole = "user" | "agent";
+export type MemberStatus = "pending" | "approved" | "rejected" | "suspended";
 
 export interface AccountRecord {
   id: string;
@@ -43,6 +44,10 @@ export interface AccountRecord {
   salt: string;
   hash: string;
   createdAt: string;
+  status: MemberStatus;
+  statusUpdatedAt?: string;
+  statusUpdatedBy?: string;
+  statusNote?: string;
 }
 
 interface AccountsFile {
@@ -57,6 +62,7 @@ export interface PublicAccount {
   phone: string;
   accountType: AccountType;
   role: AccountRole;
+  status: MemberStatus;
   ownerToken?: string;
 }
 
@@ -103,6 +109,18 @@ function parseFile(value: unknown): AccountsFile {
       hash,
       createdAt:
         typeof item.createdAt === "string" ? item.createdAt : new Date().toISOString(),
+      status:
+        item.status === "pending" ||
+        item.status === "rejected" ||
+        item.status === "suspended"
+          ? item.status
+          : "approved",
+      statusUpdatedAt:
+        typeof item.statusUpdatedAt === "string" ? item.statusUpdatedAt : undefined,
+      statusUpdatedBy:
+        typeof item.statusUpdatedBy === "string" ? item.statusUpdatedBy : undefined,
+      statusNote:
+        typeof item.statusNote === "string" ? item.statusNote.slice(0, 1000) : undefined,
     });
   }
 
@@ -173,6 +191,38 @@ export function toPublicAccount(record: AccountRecord): PublicAccount {
     phone: record.phone,
     accountType: record.accountType,
     role: record.role,
+    status: record.status,
     ...(record.ownerToken ? { ownerToken: record.ownerToken } : {}),
+  };
+}
+
+/** بيانات عضو آمنة للوحة الإدارة — بلا ملح أو بصمة كلمة المرور أو رمز الملكية. */
+export interface AdminMemberAccount {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  accountType: AccountType;
+  role: AccountRole;
+  status: MemberStatus;
+  createdAt: string;
+  statusUpdatedAt?: string;
+  statusUpdatedBy?: string;
+  statusNote?: string;
+}
+
+export function toAdminMember(record: AccountRecord): AdminMemberAccount {
+  return {
+    id: record.id,
+    name: record.name,
+    email: record.email,
+    phone: record.phone,
+    accountType: record.accountType,
+    role: record.role,
+    status: record.status,
+    createdAt: record.createdAt,
+    statusUpdatedAt: record.statusUpdatedAt,
+    statusUpdatedBy: record.statusUpdatedBy,
+    statusNote: record.statusNote,
   };
 }

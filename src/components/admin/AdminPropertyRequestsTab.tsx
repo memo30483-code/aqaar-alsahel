@@ -51,6 +51,8 @@ import {
   type PropertyRequestStatus,
   type PropertyRequestsSettings,
 } from "@/lib/property-requests";
+import AdminReviewPanel from "@/components/admin/AdminReviewPanel";
+import { REVIEW_STAGE_LABEL, REVIEW_STAGE_STYLE, type ReviewRecord, type ReviewStage } from "@/lib/workflow";
 import {
   BTN_GOLD,
   BTN_PRIMARY,
@@ -161,6 +163,7 @@ export default function AdminPropertyRequestsTab({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<DetailState | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [reviewStages, setReviewStages] = useState<Record<string, ReviewStage>>({});
   const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | PropertyRequestStatus>("all");
@@ -257,6 +260,22 @@ export default function AdminPropertyRequestsTab({
     }
     void loadDetail(selectedId);
   }, [loadDetail, selectedId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch("/api/admin/review?scope=propertyRequests", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) return;
+        const data = (await response.json()) as { records?: ReviewRecord[] };
+        if (!cancelled) {
+          setReviewStages(Object.fromEntries((data.records ?? []).map((item) => [item.itemId, item.stage])));
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const updateLocal = useCallback((updated: PropertyRequest) => {
     setRequests((items) =>
@@ -563,6 +582,7 @@ export default function AdminPropertyRequestsTab({
                   <span className={`rounded-full border px-2 py-0.5 text-[9px] font-black ${PROPERTY_REQUEST_STATUS_STYLE[item.status]}`}>{PROPERTY_REQUEST_STATUS_LABEL[item.status]}</span>
                   <span className={`rounded-full border px-2 py-0.5 text-[9px] font-black ${PROPERTY_REQUEST_PRIORITY_STYLE[item.priority]}`}>{PROPERTY_REQUEST_PRIORITY_LABEL[item.priority]}</span>
                   {item.published && <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[9px] font-black text-emerald-700">منشور للعامة</span>}
+                  {!item.published && <span className={`rounded-full border px-2 py-0.5 text-[9px] font-black ${REVIEW_STAGE_STYLE[reviewStages[item.id] ?? "new"]}`}>{REVIEW_STAGE_LABEL[reviewStages[item.id] ?? "new"]}</span>}
                 </div>
                 <p className="mt-2 text-[9px] font-semibold text-sand-400">{dateLabel(item.createdAt)}</p>
               </button>
@@ -579,11 +599,15 @@ export default function AdminPropertyRequestsTab({
                 detail={detail}
                 staff={staff}
                 canManage={canManage}
+                can={can}
                 saving={saving}
                 patchRequest={patchRequest}
                 toggleSent={toggleSent}
                 recordContact={recordContact}
                 deleteSelected={deleteSelected}
+                refresh={() => void loadDetail(detail.request.id)}
+                notify={notify}
+                onReviewDecision={(stage) => setReviewStages((current) => ({ ...current, [detail.request.id]: stage }))}
               />
             )}
           </div>
@@ -597,15 +621,20 @@ function RequestDetail({
   detail,
   staff,
   canManage,
+  can,
   saving,
   patchRequest,
   toggleSent,
   recordContact,
   deleteSelected,
+  refresh,
+  notify,
+  onReviewDecision,
 }: {
   detail: DetailState;
   staff: AdminUser[];
   canManage: boolean;
+  can: (key: string) => boolean;
   saving: boolean;
   patchRequest: (
     patch: Record<string, unknown>,
@@ -615,6 +644,9 @@ function RequestDetail({
   toggleSent: (propertyId: string) => Promise<void>;
   recordContact: (channel: "الهاتف" | "واتساب" | "البريد") => void;
   deleteSelected: () => Promise<void>;
+  refresh: () => void;
+  notify: (message: string) => void;
+  onReviewDecision: (stage: ReviewStage) => void;
 }) {
   const item = detail.request;
   const [notes, setNotes] = useState(item.adminNotes);
@@ -654,14 +686,27 @@ function RequestDetail({
       </header>
 
       <div className="space-y-5 p-4 sm:p-5">
-        <section>
+        <AdminReviewPanel
+          scope="propertyRequests"
+          itemId={item.id}
+          can={can}
+          notify={notify}
+          onDecision={(stage) => {
+            onReviewDecision(stage);
+            refresh();
+          }}
+        />
+
+        {can("owner.contact.view") ? <section>
           <h3 className="mb-3 text-xs font-black text-ocean-900">التواصل مع مقدم الطلب</h3>
           <div className="grid gap-2 sm:grid-cols-3">
             <a href={phoneHref(item.phone)} onClick={() => recordContact("الهاتف")} className="flex items-center gap-2 rounded-xl border border-sand-200 bg-white p-3 text-xs font-bold text-ocean-800 transition hover:border-gold-300"><Phone className="h-4 w-4 text-sky-600" /><span className="min-w-0 truncate" dir="ltr">{item.phone || "لا يوجد رقم"}</span></a>
             <a href={whatsappHref(item)} target="_blank" rel="noopener noreferrer" onClick={() => recordContact("واتساب")} className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-bold text-emerald-800"><MessageCircle className="h-4 w-4" /> واتساب مباشر</a>
             <a href={`mailto:${item.email}?subject=${encodeURIComponent(`طلب عقار ${item.reference}`)}`} onClick={() => recordContact("البريد")} className="flex items-center gap-2 rounded-xl border border-sand-200 bg-white p-3 text-xs font-bold text-ocean-800"><Mail className="h-4 w-4 text-violet-600" /><span className="min-w-0 truncate" dir="ltr">{item.email}</span></a>
           </div>
-        </section>
+        </section> : (
+          <p className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-xs font-bold text-sky-800">بيانات مقدم الطلب محجوبة عن هذا الحساب. يستطيع الأدمن منح صلاحية «عرض بيانات مقدم الطلب» عند الحاجة.</p>
+        )}
 
         <section className="grid gap-3 sm:grid-cols-3">
           <Field label="الحالة">
@@ -708,7 +753,7 @@ function RequestDetail({
               {item.published && <Link href="/wanted-properties" target="_blank" className="inline-flex items-center gap-1 rounded-xl border border-emerald-200 bg-white px-3 py-2 text-[10px] font-black text-emerald-700"><Eye className="h-3.5 w-3.5" /> معاينة</Link>}
               <button
                 type="button"
-                disabled={!canManage || saving}
+                disabled={!can("propertyRequests.publish") || saving}
                 onClick={() => void patchRequest({
                   published: !item.published,
                   publicTitleAr,

@@ -5,11 +5,11 @@ import {
   ADMIN_SESSION_MAX_AGE,
   createAdminToken,
 } from "@/lib/admin-session";
+import { authenticateStaff, isStaffRoleValue } from "@/lib/staff-server";
+import { appendAudit } from "@/lib/workflow-server";
 
 /**
- * تسجيل دخول الأدمن — التحقق يتم على السيرفر فقط.
- * بيانات الدخول من متغيّرات البيئة (ADMIN_EMAIL / ADMIN_PASSWORD)،
- * ولا تظهر أبدًا في حزمة JavaScript التي تُحمَّل للمتصفح.
+ * تسجيل دخول المدير العام أو أحد الموظفين — التحقق يتم على السيرفر فقط.
  */
 
 export const runtime = "nodejs";
@@ -76,42 +76,70 @@ export async function POST(request: Request) {
   const adminEmail = (process.env.ADMIN_EMAIL ?? "").trim().toLowerCase();
   const adminPassword = process.env.ADMIN_PASSWORD ?? "";
 
-  /* فشل مغلق: بدون إعدادات على السيرفر لا يُسمح بأي دخول إداري */
-  if (!adminEmail || !adminPassword) {
-    return NextResponse.json(
-      { ok: false, error: "not_configured" },
-      { status: 503 }
-    );
+  if (!email || !password) {
+    recordFailure(key);
+    return NextResponse.json({ ok: false, error: "invalid_credentials" }, { status: 401 });
   }
 
-  if (
-    !email ||
-    !password ||
-    !safeEqual(email, adminEmail) ||
-    !safeEqual(password, adminPassword)
-  ) {
-    recordFailure(key);
-    return NextResponse.json(
-      { ok: false, error: "invalid_credentials" },
-      { status: 401 }
-    );
+  const isRoot = Boolean(
+    adminEmail &&
+      adminPassword &&
+      safeEqual(email, adminEmail) &&
+      safeEqual(password, adminPassword)
+  );
+
+  let uid = "root";
+  let name = process.env.ADMIN_NAME || "مدير النظام";
+  let role: "agent" | "moderator" | "reviewer" | "admin" | "super_admin" =
+    "super_admin";
+
+  if (!isRoot) {
+    try {
+      const staff = await authenticateStaff(email, password);
+      if (!staff || !isStaffRoleValue(staff.role)) {
+        recordFailure(key);
+        return NextResponse.json(
+          { ok: false, error: "invalid_credentials" },
+          { status: 401 }
+        );
+      }
+      uid = staff.id;
+      name = staff.name;
+      role = staff.role;
+    } catch {
+      return NextResponse.json(
+        { ok: false, error: "service_unavailable" },
+        { status: 503 }
+      );
+    }
   }
 
   attempts.delete(key);
 
-  const name = process.env.ADMIN_NAME || "مدير النظام";
   const token = await createAdminToken({
-    sub: adminEmail,
+    sub: isRoot ? adminEmail : email,
+    uid,
     name,
-    role: "super_admin",
+    role,
   });
 
   const response = NextResponse.json({
     ok: true,
     name,
-    email: adminEmail,
-    role: "super_admin",
+    email: isRoot ? adminEmail : email,
+    uid,
+    role,
   });
+
+  await appendAudit({
+    action: "auth.login",
+    category: "auth",
+    actorId: uid,
+    actorEmail: isRoot ? adminEmail : email,
+    actorName: name,
+    actorRole: role,
+    details: "تسجيل دخول ناجح إلى لوحة الإدارة",
+  }).catch(() => undefined);
 
   response.cookies.set(ADMIN_COOKIE, token, {
     httpOnly: true,

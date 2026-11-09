@@ -40,8 +40,11 @@ export const CLOUD_KEYS: Record<string, CloudKeyMeta> = {
   /* حسابات المستخدمين: تُقرأ على السيرفر فقط، ولا تُحقن في المتصفح أبدًا */
   "aqaar-accounts": { public: false, label: "حسابات المستخدمين" },
   "aqaar-admin-users-v2": { public: false, label: "حسابات الإدارة" },
+  "aqaar-staff-auth": { public: false, label: "بيانات دخول طاقم الإدارة" },
   "aqaar-admin-permissions": { public: false, label: "صلاحيات الإدارة" },
-  "aqaar-admin-logs": { public: false, label: "سجل العمليات" },
+  "aqaar-audit-log": { public: false, label: "سجل التدقيق المركزي" },
+  "aqaar-workflow-settings": { public: false, label: "سياسة المراجعة والموافقات" },
+  "aqaar-review-state": { public: false, label: "حالة مراجعة الطلبات" },
   "aqaar-listing-actions": { public: false, label: "قرارات مراجعة الإعلانات" },
   "aqaar-professional-requests": { public: false, label: "طلبات الانضمام" },
   "aqaar-crm-v1": { public: false, label: "العملاء والفرص (CRM)" },

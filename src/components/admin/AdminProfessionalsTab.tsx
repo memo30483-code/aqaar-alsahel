@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Archive,
   BadgeCheck,
@@ -49,6 +49,8 @@ import {
   type ProfessionalProject,
   type ProfessionalRecord,
 } from "@/lib/professionals-store";
+import AdminReviewPanel from "@/components/admin/AdminReviewPanel";
+import { REVIEW_STAGE_LABEL, REVIEW_STAGE_STYLE, type ReviewRecord, type ReviewStage } from "@/lib/workflow";
 import { addAdminLog } from "@/lib/admin-system";
 import { getSession } from "@/lib/session";
 import { toEmbedUrl } from "@/lib/embed";
@@ -143,6 +145,23 @@ export default function AdminProfessionalsTab({ can, notify, reloadLogs }: Props
   const [reelTitle, setReelTitle] = useState("");
   const [reelUrl, setReelUrl] = useState("");
   const [reelError, setReelError] = useState("");
+  const [reviewStages, setReviewStages] = useState<Record<string, ReviewStage>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch("/api/admin/review?scope=professionals", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) return;
+        const data = (await response.json()) as { records?: ReviewRecord[] };
+        if (!cancelled) {
+          setReviewStages(Object.fromEntries((data.records ?? []).map((item) => [item.itemId, item.stage])));
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const session = typeof window !== "undefined" ? getSession() : null;
 
@@ -198,15 +217,6 @@ export default function AdminProfessionalsTab({ can, notify, reloadLogs }: Props
     });
     return base;
   }, [records]);
-
-  const approve = (record: ProfessionalRecord) => {
-    setProfessionalStatus(record.id, "approved");
-    log("professional.approve", `تم اعتماد ${record.companyAr || record.nameAr}`, {
-      id: record.id,
-      kind: record.kind,
-    });
-    notify(`تم اعتماد «${record.companyAr || record.nameAr}» ونشره في الدليل`);
-  };
 
   const reject = () => {
     if (!rejectFor) return;
@@ -631,6 +641,11 @@ export default function AdminProfessionalsTab({ can, notify, reloadLogs }: Props
                           >
                             {status.labelAr}
                           </span>
+                          {record.status === "pending" && (
+                            <span className={`rounded-full border px-2 py-0.5 text-[9px] font-black ${REVIEW_STAGE_STYLE[reviewStages[record.id] ?? "new"]}`}>
+                              {REVIEW_STAGE_LABEL[reviewStages[record.id] ?? "new"]}
+                            </span>
+                          )}
                           {record.verified && (
                             <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[9.5px] font-extrabold text-emerald-700">
                               <BadgeCheck className="h-2.5 w-2.5" /> موثّق
@@ -647,8 +662,9 @@ export default function AdminProfessionalsTab({ can, notify, reloadLogs }: Props
                           {record.titleAr ? ` · ${record.titleAr}` : ""}
                         </p>
                         <p className="mt-1 text-[10.5px] font-semibold text-sand-500" dir="ltr">
-                          {record.phone}
-                          {record.email ? ` · ${record.email}` : ""}
+                          {can("owner.contact.view")
+                            ? `${record.phone}${record.email ? ` · ${record.email}` : ""}`
+                            : "بيانات التواصل محجوبة"}
                         </p>
                         <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[10px] font-bold text-sand-600">
                           <span>{record.documents.length} مستند</span>
@@ -669,27 +685,13 @@ export default function AdminProfessionalsTab({ can, notify, reloadLogs }: Props
                       </div>
 
                       <div className="flex flex-wrap items-center gap-1.5">
-                        {record.status !== "approved" && (
+                        {(can("professionals.review") || can("professionals.publish")) && (
                           <button
                             type="button"
-                            disabled={!canManage}
-                            onClick={() => approve(record)}
+                            onClick={() => setDocsFor(record)}
                             className={`${ROW_ACTION} border-emerald-200 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-50`}
                           >
-                            <Check className="h-3 w-3" /> اعتماد
-                          </button>
-                        )}
-                        {record.status !== "rejected" && (
-                          <button
-                            type="button"
-                            disabled={!canManage}
-                            onClick={() => {
-                              setRejectFor(record);
-                              setRejectNote("");
-                            }}
-                            className={`${ROW_ACTION} border-rose-200 text-rose-600 hover:border-rose-300 hover:bg-rose-50`}
-                          >
-                            <X className="h-3 w-3" /> رفض
+                            <Check className="h-3 w-3" /> المراجعة والموافقة
                           </button>
                         )}
                         {record.status !== "archived" ? (
@@ -751,7 +753,7 @@ export default function AdminProfessionalsTab({ can, notify, reloadLogs }: Props
                         </button>
                         <button
                           type="button"
-                          disabled={!canManage}
+                          disabled={!can("documents.view") && !can("professionals.review") && !can("professionals.publish")}
                           onClick={() => setDocsFor(record)}
                           className={ROW_ACTION}
                         >
@@ -1003,7 +1005,11 @@ export default function AdminProfessionalsTab({ can, notify, reloadLogs }: Props
           <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[10.5px] font-bold leading-5 text-amber-800">
             هذه المستندات للإدارة فقط ولا تُعرض للزوار أو للجهات الأخرى.
           </p>
-          {docsFor.documents.length === 0 ? (
+          {!can("documents.view") ? (
+            <p className="mt-3 rounded-xl border border-sky-200 bg-sky-50 p-4 text-center text-[11.5px] font-bold text-sky-800">
+              عرض المستندات يحتاج صلاحية «عرض المستندات الخاصة».
+            </p>
+          ) : docsFor.documents.length === 0 ? (
             <p className="mt-3 rounded-xl border border-dashed border-sand-300 bg-sand-50/60 p-4 text-center text-[11.5px] font-bold text-sand-500">
               لا توجد مستندات مرفوعة لهذا السجل.
             </p>
@@ -1077,6 +1083,22 @@ export default function AdminProfessionalsTab({ can, notify, reloadLogs }: Props
               </ul>
             </div>
           )}
+          <div className="mt-5">
+            <AdminReviewPanel
+              scope="professionals"
+              itemId={docsFor.id}
+              can={can}
+              documents={docsFor.documents.map((doc) => ({ key: doc.id, label: doc.label }))}
+              notify={notify}
+              onDecision={(stage) => {
+                setReviewStages((current) => ({ ...current, [docsFor.id]: stage }));
+                const status = stage === "approved" ? "approved" : stage === "rejected" ? "rejected" : stage === "returned" ? "pending" : undefined;
+                if (!status) return;
+                setProfessionalStatus(docsFor.id, status);
+                setDocsFor((current) => current ? { ...current, status, verified: status === "approved" ? true : status === "rejected" ? false : current.verified } : current);
+              }}
+            />
+          </div>
         </Modal>
       )}
 

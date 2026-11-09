@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAdminApiSession } from "@/lib/admin-api";
+import { adminCan, getAdminApiSession } from "@/lib/admin-api";
 import {
   inquirySchemaMissing,
   listPropertyRequests,
@@ -18,8 +18,23 @@ export async function GET() {
       { status: 401, headers: NO_STORE }
     );
   }
+  if (!adminCan(session, "propertyRequests.view")) {
+    return NextResponse.json(
+      { ok: false, error: "غير مصرّح" },
+      { status: 403, headers: NO_STORE }
+    );
+  }
   try {
-    const requests = await listPropertyRequests(1000);
+    const rawRequests = await listPropertyRequests(1000);
+    const showContact = adminCan(session, "owner.contact.view");
+    const requests = showContact
+      ? rawRequests
+      : rawRequests.map((item) => ({
+          ...item,
+          name: "بيانات مقدم الطلب محجوبة",
+          phone: "",
+          email: "",
+        }));
     return NextResponse.json(
       { ok: true, storage: "postgresql", requests },
       { headers: NO_STORE }

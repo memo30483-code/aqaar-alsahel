@@ -27,6 +27,7 @@ import {
   cloudCreateCrmLead,
   cloudGetCrmSettings,
 } from "@/lib/crm-server";
+import { initializeReviewRecord } from "@/lib/workflow-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -372,6 +373,7 @@ export async function POST(request: Request) {
       [...existing.filter((item) => item.id !== id), property].slice(-5000),
       "public-property-form"
     );
+    await initializeReviewRecord("listings", id, "public-property-form").catch(() => undefined);
 
     /*
      * إنشاء بطاقة عميل تلقائيًا حتى يجد فريق المبيعات الطلب في الـCRM

@@ -13,11 +13,18 @@ export const ADMIN_COOKIE = "aqaar_admin";
 /** مدة الجلسة: 8 ساعات */
 export const ADMIN_SESSION_MAX_AGE = 60 * 60 * 8;
 
-export type AdminRole = "admin" | "super_admin";
+export type AdminRole =
+  | "agent"
+  | "moderator"
+  | "reviewer"
+  | "admin"
+  | "super_admin";
 
 export interface AdminTokenPayload {
   /** بريد الأدمن */
   sub: string;
+  /** معرّف سجل الموظف؛ root لحساب متغيرات البيئة. */
+  uid: string;
   name: string;
   role: AdminRole;
   /** تاريخ الانتهاء بالثواني (Unix) */
@@ -110,12 +117,24 @@ export async function verifyAdminToken(
     ) as Partial<AdminTokenPayload>;
 
     if (!payload || typeof payload.sub !== "string" || !payload.sub) return null;
-    if (payload.role !== "admin" && payload.role !== "super_admin") return null;
+    if (
+      payload.role !== "agent" &&
+      payload.role !== "moderator" &&
+      payload.role !== "reviewer" &&
+      payload.role !== "admin" &&
+      payload.role !== "super_admin"
+    ) return null;
     if (typeof payload.exp !== "number") return null;
     if (payload.exp * 1000 <= Date.now()) return null;
 
     return {
       sub: payload.sub,
+      uid:
+        typeof payload.uid === "string" && payload.uid
+          ? payload.uid
+          : payload.role === "super_admin"
+            ? "root"
+            : payload.sub,
       name: typeof payload.name === "string" ? payload.name : "",
       role: payload.role,
       exp: payload.exp,

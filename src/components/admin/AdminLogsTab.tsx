@@ -20,6 +20,11 @@ const CATEGORY_LABEL: Record<AdminLog["category"], string> = {
   crm: "العملاء والفرص",
   reviews: "التقييمات",
   propertyRequests: "طلبات العقار",
+  members: "أعضاء الموقع",
+  workflow: "المراجعة والموافقات",
+  staff: "فريق الإدارة",
+  documents: "عرض المستندات",
+  review: "مراجعة الطلبات",
   settings: "الإعدادات",
 };
 

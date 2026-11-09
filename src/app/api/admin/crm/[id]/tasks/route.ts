@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminActor, getAdminApiSession } from "@/lib/admin-api";
+import { adminActor, adminCan, getAdminApiSession } from "@/lib/admin-api";
 import { cloudAddCrmTask, cloudGetCrmLead, crmSchemaMissing } from "@/lib/crm-server";
 
 export const runtime = "nodejs";
@@ -12,6 +12,9 @@ export async function POST(
   const session = await getAdminApiSession();
   if (!session) {
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 401 });
+  }
+  if (!adminCan(session, "crm.manage") || !adminCan(session, "owner.contact.view")) {
+    return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 403 });
   }
   let body: { title?: unknown; dueAt?: unknown };
   try {
