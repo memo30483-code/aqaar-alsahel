@@ -28,8 +28,9 @@ function fail(error: unknown) {
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getAdminApiSession();
   if (!session) {
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 401 });
@@ -87,7 +88,7 @@ export async function PATCH(
   }
 
   try {
-    const review = await cloudUpdateReview(params.id, patch);
+    const review = await cloudUpdateReview(id, patch);
     if (!review) {
       return NextResponse.json(
         { ok: false, error: "التقييم غير موجود" },
@@ -105,8 +106,9 @@ export async function PATCH(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getAdminApiSession();
   if (!session) {
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 401 });
@@ -115,7 +117,7 @@ export async function DELETE(
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 403 });
   }
   try {
-    const removed = await cloudDeleteReview(params.id);
+    const removed = await cloudDeleteReview(id);
     if (!removed) {
       return NextResponse.json(
         { ok: false, error: "التقييم غير موجود" },

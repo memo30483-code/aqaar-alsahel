@@ -263,7 +263,7 @@ export async function POST(request: Request) {
     const otpSettings = await readOtpSettings();
     if (otpSettings.requiredForRegistration) {
       const proof = readOtpProofToken(
-        cookies().get(OTP_PROOF_COOKIE)?.value
+        (await cookies()).get(OTP_PROOF_COOKIE)?.value
       );
       if (!proof || !otpProofMatchesRegistration(proof, { email, phone })) {
         return NextResponse.json(

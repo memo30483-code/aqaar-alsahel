@@ -9,8 +9,9 @@ const UUID = /^[0-9a-f-]{36}$/i;
 /** إبلاغ عن تقييم مسيء — يزيد عدّاد البلاغات للمراجعة الإدارية */
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const origin = request.headers.get("origin");
   if (origin) {
     try {
@@ -27,7 +28,7 @@ export async function POST(
       );
     }
   }
-  if (!UUID.test(params.id)) {
+  if (!UUID.test(id)) {
     return NextResponse.json(
       { ok: false, error: "معرّف التقييم غير صالح" },
       { status: 400 }
@@ -35,7 +36,7 @@ export async function POST(
   }
 
   try {
-    const count = await cloudReportReview(params.id);
+    const count = await cloudReportReview(id);
     if (count < 0) {
       return NextResponse.json(
         { ok: false, error: "التقييم غير موجود" },

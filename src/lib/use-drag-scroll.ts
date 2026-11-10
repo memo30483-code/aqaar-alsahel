@@ -150,7 +150,7 @@ export function animateScrollTo(
   animation.guard = window.setTimeout(finish, duration + 250);
 }
 
-export function useDragScroll<T extends HTMLElement>(ref: RefObject<T>) {
+export function useDragScroll<T extends HTMLElement>(ref: RefObject<T | null>) {
   const [dragging, setDragging] = useState(false);
   /** يمنع فتح الرابط بعد سحب انتهى فوق البطاقة */
   const suppressClick = useRef(false);

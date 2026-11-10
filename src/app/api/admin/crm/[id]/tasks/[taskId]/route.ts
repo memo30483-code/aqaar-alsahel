@@ -28,8 +28,9 @@ function fail(error: unknown) {
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string; taskId: string } }
+  { params }: { params: Promise<{ id: string; taskId: string }> }
 ) {
+  const { id, taskId } = await params;
   const session = await getAdminApiSession();
   if (!session) {
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 401 });
@@ -47,11 +48,11 @@ export async function PATCH(
     return NextResponse.json({ ok: false, error: "حالة المهمة غير صالحة" }, { status: 400 });
   }
   try {
-    const changed = await cloudToggleCrmTask(params.id, params.taskId, body.done);
+    const changed = await cloudToggleCrmTask(id, taskId, body.done);
     if (!changed) {
       return NextResponse.json({ ok: false, error: "المهمة غير موجودة" }, { status: 404 });
     }
-    const lead = await cloudGetCrmLead(params.id);
+    const lead = await cloudGetCrmLead(id);
     return NextResponse.json({ ok: true, lead }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     return fail(error);
@@ -60,8 +61,9 @@ export async function PATCH(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string; taskId: string } }
+  { params }: { params: Promise<{ id: string; taskId: string }> }
 ) {
+  const { id, taskId } = await params;
   const session = await getAdminApiSession();
   if (!session) {
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 401 });
@@ -70,11 +72,11 @@ export async function DELETE(
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 403 });
   }
   try {
-    const changed = await cloudDeleteCrmTask(params.id, params.taskId);
+    const changed = await cloudDeleteCrmTask(id, taskId);
     if (!changed) {
       return NextResponse.json({ ok: false, error: "المهمة غير موجودة" }, { status: 404 });
     }
-    const lead = await cloudGetCrmLead(params.id);
+    const lead = await cloudGetCrmLead(id);
     return NextResponse.json({ ok: true, lead }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     return fail(error);
