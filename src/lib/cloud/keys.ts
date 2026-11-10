@@ -45,6 +45,7 @@ export const CLOUD_KEYS: Record<string, CloudKeyMeta> = {
   "aqaar-audit-log": { public: false, label: "سجل التدقيق المركزي" },
   "aqaar-workflow-settings": { public: false, label: "سياسة المراجعة والموافقات" },
   "aqaar-review-state": { public: false, label: "حالة مراجعة الطلبات" },
+  "aqaar-otp-settings": { public: false, label: "إعدادات التحقق OTP" },
   "aqaar-listing-actions": { public: false, label: "قرارات مراجعة الإعلانات" },
   "aqaar-professional-requests": { public: false, label: "طلبات الانضمام" },
   "aqaar-crm-v1": { public: false, label: "العملاء والفرص (CRM)" },

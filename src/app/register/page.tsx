@@ -22,6 +22,11 @@ import {
   type ProfessionalDocument,
   type ProfessionalKind,
 } from "@/lib/professionals-store";
+import {
+  OTP_CHANNEL_LABEL,
+  type OtpChannel,
+  type PublicOtpOptions,
+} from "@/lib/otp";
 
 /* ============================ الأنواع ============================ */
 
@@ -678,10 +683,23 @@ function RegisterContent() {
 
   const [sending, setSending] = useState(false);
   const [registering, setRegistering] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [otp, setOtp] = useState("");
-  const [code, setCode] = useState("");
   const [otpError, setOtpError] = useState("");
   const [resent, setResent] = useState(false);
+  const [otpOptions, setOtpOptions] = useState<PublicOtpOptions>({
+    required: false,
+    allowUserChoice: false,
+    defaultChannel: null,
+    channels: [],
+    ttlMinutes: 5,
+    resendSeconds: 60,
+  });
+  const [otpChannel, setOtpChannel] = useState<OtpChannel>("email");
+  const [challengeId, setChallengeId] = useState("");
+  const [maskedTarget, setMaskedTarget] = useState("");
+  const [resendAfter, setResendAfter] = useState(0);
+  const [otpNow, setOtpNow] = useState(Date.now());
   const [verified, setVerified] = useState(false);
   const [pendingApproval, setPendingApproval] = useState(false);
 
@@ -710,6 +728,32 @@ function RegisterContent() {
     const timer = window.setTimeout(() => router.push(redirectTo), 1200);
     return () => window.clearTimeout(timer);
   }, [verified, pendingApproval, redirectTo, router]);
+
+  useEffect(() => {
+    let active = true;
+    void fetch("/api/auth/otp/options", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) return;
+        const data = (await response.json()) as {
+          options?: PublicOtpOptions;
+        };
+        if (!active || !data.options) return;
+        setOtpOptions(data.options);
+        if (data.options.defaultChannel) {
+          setOtpChannel(data.options.defaultChannel);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (step !== 2 || resendAfter <= Date.now()) return;
+    const timer = window.setInterval(() => setOtpNow(Date.now()), 1_000);
+    return () => window.clearInterval(timer);
+  }, [resendAfter, step]);
 
   const fields = TYPE_FIELDS[accountType];
 
@@ -786,36 +830,8 @@ function RegisterContent() {
   const removeDocument = (name: FileFieldName) =>
     setDocuments((prev) => ({ ...prev, [name]: "" }));
 
-  const sendOtp = () => {
-    setCode(String(Math.floor(100000 + Math.random() * 900000)));
-    setOtp("");
-    setOtpError("");
-    setResent(true);
-  };
-
-  const onSubmitDetails = (e: FormEvent) => {
-    e.preventDefault();
-    if (!complete || sending) return;
-    setSending(true);
-    // محاكاة إرسال الكود عبر SMS — لا يوجد ربط بمزود رسائل بعد
-    setTimeout(() => {
-      sendOtp();
-      setSending(false);
-      setStep(2);
-    }, 900);
-  };
-
-  const onSubmitOtp = async (e: FormEvent) => {
-    e.preventDefault();
+  const completeRegistration = async () => {
     if (registering) return;
-    if (otp.length !== 6) {
-      setOtpError(t("register.otp.error.length"));
-      return;
-    }
-    if (otp !== code) {
-      setOtpError(t("register.otp.error.wrong"));
-      return;
-    }
     setOtpError("");
 
     const trimmedEmail = details.email.trim();
@@ -914,8 +930,13 @@ function RegisterContent() {
       });
 
       if (response.status === 409) {
+        const conflict = (await response.json().catch(() => ({}))) as {
+          error?: string;
+        };
         setOtpError(
-          "هذا البريد مسجّل بالفعل. سجّل الدخول بكلمة المرور، أو تواصل مع الإدارة لاستعادة الحساب."
+          conflict.error === "otp_proof_used"
+            ? "تم استخدام إثبات التحقق من قبل. اطلب كودًا جديدًا وحاول مرة أخرى."
+            : "هذا البريد مسجّل بالفعل. سجّل الدخول بكلمة المرور، أو تواصل مع الإدارة لاستعادة الحساب."
         );
         setRegistering(false);
         return;
@@ -938,6 +959,8 @@ function RegisterContent() {
         setOtpError(
           denied.error === "registration_closed"
             ? "التسجيل متوقف مؤقتًا بقرار الإدارة. تواصل معنا للمساعدة."
+            : denied.error === "otp_required"
+              ? "يجب تأكيد كود التحقق أولًا قبل إنشاء الحساب."
             : "تعذّر إتمام التسجيل حاليًا."
         );
         setRegistering(false);
@@ -989,6 +1012,149 @@ function RegisterContent() {
       setRegistering(false);
     }
   };
+
+  const requestRealOtp = async (
+    channel: OtpChannel,
+    options: PublicOtpOptions = otpOptions,
+    isResend = false
+  ) => {
+    if (sending) return false;
+    setSending(true);
+    setOtpError("");
+    try {
+      const response = await fetch("/api/auth/otp/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channel,
+          email: details.email.trim(),
+          phone: details.phone.trim(),
+        }),
+      });
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        message?: string;
+        challenge?: {
+          challengeId?: string;
+          maskedTarget?: string;
+          expiresAt?: string;
+          resendAfter?: string;
+        };
+      };
+      if (!response.ok || !data.challenge?.challengeId) {
+        throw new Error(
+          data.message ||
+            (data.error === "provider_not_configured"
+              ? "وسيلة التحقق غير مربوطة بعد. تواصل مع الإدارة."
+              : data.error === "rate_limited" || data.error === "resend_wait"
+                ? "تم طلب أكواد كثيرة. انتظر قليلًا ثم حاول مجددًا."
+                : "تعذر إرسال كود التحقق حاليًا.")
+        );
+      }
+      setOtpOptions(options);
+      setOtpChannel(channel);
+      setChallengeId(data.challenge.challengeId);
+      setMaskedTarget(data.challenge.maskedTarget || "");
+      setResendAfter(
+        Date.parse(data.challenge.resendAfter || "") ||
+          Date.now() + options.resendSeconds * 1000
+      );
+      setOtpNow(Date.now());
+      setOtp("");
+      setResent(isResend);
+      setStep(2);
+      return true;
+    } catch (error) {
+      setOtpError(
+        error instanceof Error ? error.message : "تعذر إرسال كود التحقق"
+      );
+      return false;
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const onSubmitDetails = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!complete || sending || registering) return;
+    setSending(true);
+    setOtpError("");
+    try {
+      const response = await fetch("/api/auth/otp/options", {
+        cache: "no-store",
+      });
+      const data = (await response.json()) as {
+        options?: PublicOtpOptions;
+      };
+      if (!response.ok || !data.options) {
+        throw new Error("تعذر تحميل إعدادات التحقق. حاول مرة أخرى.");
+      }
+      const options = data.options;
+      setOtpOptions(options);
+      if (!options.required) {
+        setSending(false);
+        await completeRegistration();
+        return;
+      }
+      const selected = options.channels.includes(otpChannel)
+        ? otpChannel
+        : options.defaultChannel;
+      if (!selected) {
+        throw new Error(
+          "التسجيل يحتاج OTP لكن لا توجد وسيلة إرسال جاهزة. تواصل مع الإدارة."
+        );
+      }
+      setSending(false);
+      await requestRealOtp(selected, options);
+    } catch (error) {
+      setOtpError(
+        error instanceof Error ? error.message : "تعذر بدء التحقق"
+      );
+      setSending(false);
+    }
+  };
+
+  const onSubmitOtp = async (event: FormEvent) => {
+    event.preventDefault();
+    if (verifyingOtp || registering) return;
+    if (!challengeId || otp.length !== 6) {
+      setOtpError("اكتب كود التحقق المكوّن من 6 أرقام.");
+      return;
+    }
+    setVerifyingOtp(true);
+    setOtpError("");
+    try {
+      const response = await fetch("/api/auth/otp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          challengeId,
+          code: otp,
+          email: details.email.trim(),
+          phone: details.phone.trim(),
+        }),
+      });
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        message?: string;
+      };
+      if (!response.ok) {
+        throw new Error(data.message || "كود التحقق غير صحيح");
+      }
+      setVerifyingOtp(false);
+      await completeRegistration();
+    } catch (error) {
+      setOtpError(
+        error instanceof Error ? error.message : "تعذر تأكيد كود التحقق"
+      );
+      setVerifyingOtp(false);
+    }
+  };
+
+  const resendSecondsLeft = Math.max(
+    0,
+    Math.ceil((resendAfter - otpNow) / 1000)
+  );
 
   const uploadedCount = Object.values(documents).filter(Boolean).length;
 
@@ -1270,16 +1436,20 @@ function RegisterContent() {
                 <div className="border-t border-sand-200 pt-6">
                   <button
                     type="submit"
-                    disabled={!complete || sending}
+                    disabled={!complete || sending || registering}
                     className={`w-full rounded-2xl px-6 py-4 text-sm font-black transition ${
-                      complete && !sending
+                      complete && !sending && !registering
                         ? "bg-gradient-to-l from-gold-500 to-gold-400 text-ocean-950 shadow-[0_18px_38px_-24px_rgba(201,146,42,0.95)] hover:-translate-y-0.5"
                         : "cursor-not-allowed bg-sand-200 text-sand-500"
                     }`}
                   >
-                    {sending
-                      ? t("register.action.sendingOtp")
-                      : t("register.action.nextOtp")}
+                    {sending || registering
+                      ? otpOptions.required
+                        ? "جارٍ إرسال كود التحقق…"
+                        : "جارٍ إنشاء الحساب…"
+                      : otpOptions.required
+                        ? "إرسال كود التحقق"
+                        : "إنشاء الحساب"}
                   </button>
                   <p
                     className={`mt-2 text-center text-xs font-medium ${
@@ -1300,21 +1470,39 @@ function RegisterContent() {
               >
                 <div>
                   <h2 className="text-[15px] font-black text-ocean-900">
-                    {t("register.otp.heading")}
+                    تأكيد {OTP_CHANNEL_LABEL[otpChannel]}
                   </h2>
                   <p className="mt-1 text-[11.5px] leading-6 text-sand-600">
-                    {t("register.otp.sentPrefix")}{" "}
+                    أرسلنا كودًا من 6 أرقام إلى{" "}
                     <span className="font-bold text-ocean-900">
-                      {details.phone}
+                      {maskedTarget}
                     </span>
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-                  {t("register.otp.demoPrefix")}{" "}
-                  <span className="font-mono text-sm font-black tracking-widest">
-                    {code}
-                  </span>
+                {otpOptions.allowUserChoice && otpOptions.channels.length > 1 && (
+                  <div className="flex flex-wrap gap-2">
+                    {otpOptions.channels.map((channel) => (
+                      <button
+                        key={channel}
+                        type="button"
+                        disabled={sending || channel === otpChannel}
+                        onClick={() => void requestRealOtp(channel, otpOptions)}
+                        className={`rounded-full px-3 py-2 text-[11px] font-black ${
+                          channel === otpChannel
+                            ? "bg-ocean-950 text-white"
+                            : "border border-sand-200 bg-white text-sand-700"
+                        } disabled:opacity-60`}
+                      >
+                        {OTP_CHANNEL_LABEL[channel]}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-xs leading-6 text-emerald-800">
+                  الكود صالح لمدة {otpOptions.ttlMinutes} دقائق، يُستخدم مرة واحدة،
+                  ولا تطلبه منك إدارة عقار FAMILY عبر الهاتف.
                 </div>
 
                 <div>
@@ -1349,21 +1537,25 @@ function RegisterContent() {
                   )}
                   {resent && !otpError && (
                     <p className="mt-1.5 text-xs font-medium text-emerald-600">
-                      {t("register.otp.resent")}
+                      تم إرسال كود جديد عبر {OTP_CHANNEL_LABEL[otpChannel]}.
                     </p>
                   )}
                 </div>
 
                 <button
                   type="submit"
-                  disabled={otp.length !== 6 || registering}
+                  disabled={otp.length !== 6 || registering || verifyingOtp}
                   className={`w-full rounded-2xl px-6 py-4 text-sm font-black transition ${
-                    otp.length === 6 && !registering
+                    otp.length === 6 && !registering && !verifyingOtp
                       ? "bg-gradient-to-l from-gold-500 to-gold-400 text-ocean-950 shadow-[0_18px_38px_-24px_rgba(201,146,42,0.95)] hover:-translate-y-0.5"
                       : "cursor-not-allowed bg-sand-200 text-sand-500"
                   }`}
                 >
-                  {registering ? "جارٍ إنشاء الحساب…" : t("register.otp.confirm")}
+                  {verifyingOtp
+                    ? "جارٍ تأكيد الكود…"
+                    : registering
+                      ? "جارٍ إنشاء الحساب…"
+                      : "تأكيد الكود وإنشاء الحساب"}
                 </button>
 
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-sand-200 pt-4">
@@ -1379,10 +1571,22 @@ function RegisterContent() {
                   </button>
                   <button
                     type="button"
-                    onClick={sendOtp}
-                    className="text-[11.5px] font-bold text-sand-700 transition hover:text-gold-600"
+                    disabled={
+                      sending ||
+                      verifyingOtp ||
+                      registering ||
+                      resendSecondsLeft > 0
+                    }
+                    onClick={() =>
+                      void requestRealOtp(otpChannel, otpOptions, true)
+                    }
+                    className="text-[11.5px] font-bold text-sand-700 transition hover:text-gold-600 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {t("register.otp.resend")}
+                    {sending
+                      ? "جارٍ الإرسال…"
+                      : resendSecondsLeft > 0
+                        ? `إعادة الإرسال بعد ${resendSecondsLeft}ث`
+                        : "إعادة إرسال الكود"}
                   </button>
                 </div>
               </form>

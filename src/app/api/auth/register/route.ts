@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { randomUUID } from "node:crypto";
 import {
   ACCOUNTS_VERSION,
@@ -20,9 +21,16 @@ import {
   USER_SESSION_MAX_AGE,
   createUserToken,
 } from "@/lib/user-session";
-import { readWorkflowSettings } from "@/lib/workflow-server";
-import { initializeReviewRecord } from "@/lib/workflow-server";
+import { initializeReviewRecord, readWorkflowSettings } from "@/lib/workflow-server";
 import { cloudGetRows, cloudPutRow } from "@/lib/cloud/server";
+import {
+  consumeOtpRegistrationProof,
+  OTP_PROOF_COOKIE,
+  OtpError,
+  otpProofMatchesRegistration,
+  readOtpProofToken,
+  readOtpSettings,
+} from "@/lib/otp-server";
 
 /**
  * إنشاء حساب مستخدم حقيقي.
@@ -252,6 +260,24 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    const otpSettings = await readOtpSettings();
+    if (otpSettings.requiredForRegistration) {
+      const proof = readOtpProofToken(
+        cookies().get(OTP_PROOF_COOKIE)?.value
+      );
+      if (!proof || !otpProofMatchesRegistration(proof, { email, phone })) {
+        return NextResponse.json(
+          { ok: false, error: "otp_required" },
+          { status: 403 }
+        );
+      }
+      if (!(await consumeOtpRegistrationProof(proof))) {
+        return NextResponse.json(
+          { ok: false, error: "otp_proof_used" },
+          { status: 409 }
+        );
+      }
+    }
     const { salt, hash } = await hashPassword(password);
     const memberStatus = workflow.members.mode === "open" ? "approved" : "pending";
     const record: AccountRecord = {
@@ -301,6 +327,13 @@ export async function POST(request: Request) {
       requiresApproval: memberStatus === "pending",
       professionalId,
     });
+    response.cookies.set(OTP_PROOF_COOKIE, "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+    });
     try {
       if (memberStatus !== "approved") return response;
       const token = await createUserToken({
@@ -320,6 +353,12 @@ export async function POST(request: Request) {
     }
     return response;
   } catch (error) {
+    if (error instanceof OtpError) {
+      return NextResponse.json(
+        { ok: false, error: error.code, message: error.message },
+        { status: error.status }
+      );
+    }
     return NextResponse.json(
       {
         ok: false,

@@ -13,6 +13,7 @@ import {
   Handshake,
   Home,
   Landmark,
+  KeyRound,
   LayoutList,
   LayoutTemplate,
   ListChecks,
@@ -68,6 +69,7 @@ import AdminReviewsTab from "@/components/admin/AdminReviewsTab";
 import AdminPropertyRequestsTab from "@/components/admin/AdminPropertyRequestsTab";
 import AdminMembersTab from "@/components/admin/AdminMembersTab";
 import AdminWorkflowTab from "@/components/admin/AdminWorkflowTab";
+import AdminOtpSettingsTab from "@/components/admin/AdminOtpSettingsTab";
 import type { AuditEntry } from "@/lib/workflow-server";
 
 type TabKey =
@@ -89,6 +91,7 @@ type TabKey =
   | "users"
   | "members"
   | "workflow"
+  | "otp"
   | "permissions"
   | "professionals"
   | "projects"
@@ -128,6 +131,7 @@ const TABS: {
   { key: "users", label: "فريق الإدارة", Icon: Users, permission: "users.view" },
   { key: "members", label: "أعضاء الموقع", Icon: UserRoundCheck, permission: "members.view" },
   { key: "workflow", label: "المراجعة والموافقات", Icon: GitPullRequest, permission: "workflow.manage" },
+  { key: "otp", label: "التحقق OTP", Icon: KeyRound, permission: "otp.manage" },
   { key: "permissions", label: "الصلاحيات", Icon: ShieldCheck, permission: "users.roles" },
   { key: "professionals", label: "المهنيون", Icon: Building2, permission: "professionals.view" },
   { key: "projects", label: "المشاريع", Icon: Briefcase, permission: "professionals.view" },
@@ -191,6 +195,7 @@ export default function AdminDashboard() {
         "aqaar-staff-auth",
         "aqaar-review-state",
         "aqaar-audit-log",
+        "aqaar-otp-settings",
       ]) {
         window.localStorage.removeItem(secretKey);
       }
@@ -750,6 +755,10 @@ export default function AdminDashboard() {
 
         {tab === "workflow" && (
           <AdminWorkflowTab users={users} can={can} notify={notify} />
+        )}
+
+        {tab === "otp" && (
+          <AdminOtpSettingsTab can={can} notify={notify} />
         )}
 
         {tab === "permissions" && (

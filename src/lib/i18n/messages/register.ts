@@ -143,8 +143,8 @@ export const registerMessages = {
 
   /* ---------- التلميحات ---------- */
   "register.hint.otpPhone": {
-    ar: "يُرسل عليه كود التفعيل (OTP)",
-    en: "The activation code (OTP) is sent to it",
+    ar: "للتواصل، ويمكن استخدامه لـSMS أو واتساب إذا فعّلتهما الإدارة",
+    en: "For contact, and for SMS or WhatsApp OTP if enabled by management",
   },
   "register.hint.clearImage": {
     ar: "صورة واضحة JPG أو PNG",
@@ -235,8 +235,8 @@ export const registerMessages = {
     en: "Activation code (OTP)",
   },
   "register.step.otp.desc": {
-    ar: "تأكيد رقم الجوال وإتمام التسجيل",
-    en: "Confirm the mobile number and complete registration",
+    ar: "تأكيد وسيلة التواصل وإتمام التسجيل",
+    en: "Confirm the contact channel and complete registration",
   },
 
   /* ---------- الأقسام ---------- */
@@ -295,8 +295,8 @@ export const registerMessages = {
     en: "We sent a 6-digit code to the mobile number",
   },
   "register.otp.demoPrefix": {
-    ar: "بيئة تجريبية (بدون ربط مزود SMS): كود التفعيل الحالي هو",
-    en: "Demo environment (no SMS provider connected): the current activation code is",
+    ar: "تم إرسال الكود عبر وسيلة التحقق المختارة.",
+    en: "The code was sent through the selected verification channel.",
   },
   "register.otp.label": { ar: "كود التفعيل (OTP)", en: "Activation code (OTP)" },
   "register.otp.resent": {
@@ -323,12 +323,12 @@ export const registerMessages = {
 
   /* ---------- شاشة النجاح ---------- */
   "register.success.title": {
-    ar: "تم توثيق حسابك بنجاح",
-    en: "Your account has been verified successfully",
+    ar: "تم إنشاء حسابك بنجاح",
+    en: "Your account has been created successfully",
   },
   "register.success.desc": {
-    ar: "تم تأكيد رقم الجوال وأصبح حسابك موثقاً بالكامل على المنصة.",
-    en: "Your mobile number has been confirmed and your account is now fully verified on the platform.",
+    ar: "تم تأكيد وسيلة التواصل وإنشاء حسابك على المنصة.",
+    en: "Your contact channel was confirmed and your account was created.",
   },
   "register.success.accountType": { ar: "نوع الحساب", en: "Account type" },
   "register.success.name": { ar: "الاسم", en: "Name" },

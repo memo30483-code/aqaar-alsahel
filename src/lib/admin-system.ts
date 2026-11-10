@@ -298,6 +298,7 @@ export const ALL_PERMISSIONS: Permission[] = [
   { id: "p41", key: "propertyRequests.publish", labelAr: "الموافقة النهائية على طلبات العقار", labelEn: "Final Property Request Approval", category: "propertyRequests" },
   { id: "p42", key: "professionals.review", labelAr: "مراجعة مستندات المهنيين", labelEn: "Review Professional Documents", category: "professionals" },
   { id: "p43", key: "professionals.publish", labelAr: "الموافقة النهائية على المهنيين", labelEn: "Final Professional Approval", category: "professionals" },
+  { id: "p44", key: "otp.manage", labelAr: "إدارة وسائل التحقق OTP", labelEn: "Manage OTP Verification", category: "settings" },
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, string[]> = {

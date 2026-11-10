@@ -36,6 +36,7 @@ const SERVER_ONLY_KEYS = new Set([
   "aqaar-staff-auth",
   "aqaar-review-state",
   "aqaar-audit-log",
+  "aqaar-otp-settings",
 ]);
 
 const KEY_PERMISSION: Record<string, string> = {

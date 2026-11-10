@@ -28,6 +28,7 @@ import {
   cloudGetCrmSettings,
 } from "@/lib/crm-server";
 import { initializeReviewRecord } from "@/lib/workflow-server";
+import { getUserApiSession } from "@/lib/user-api";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -102,7 +103,7 @@ function allowSubmission(key: string): boolean {
 
 function sameOrigin(request: Request): boolean {
   const origin = request.headers.get("origin");
-  if (!origin) return true;
+  if (!origin) return process.env.NODE_ENV !== "production";
   try {
     return new URL(origin).host === new URL(request.url).host;
   } catch {
@@ -179,10 +180,17 @@ export async function POST(request: Request) {
   if (!sameOrigin(request)) {
     return NextResponse.json({ ok: false, error: "مصدر الطلب غير مسموح" }, { status: 403 });
   }
+  const session = await getUserApiSession();
+  if (!session) {
+    return NextResponse.json(
+      { ok: false, error: "يجب تسجيل الدخول بحساب معتمد لإضافة عقار" },
+      { status: 401 }
+    );
+  }
   if (!cloudEnabled()) {
     return NextResponse.json({ ok: false, error: "قاعدة البيانات غير متاحة" }, { status: 503 });
   }
-  if (!allowSubmission(clientKey(request))) {
+  if (!allowSubmission(`${session.sub}:${clientKey(request)}`)) {
     return NextResponse.json(
       { ok: false, error: "تم تجاوز عدد الطلبات المسموح مؤقتًا، حاول لاحقًا" },
       { status: 429 }
@@ -359,7 +367,7 @@ export async function POST(request: Request) {
       name: ownerName || title,
       phone: whatsapp || undefined,
       message: description,
-      payload: { property, submissionId },
+      payload: { property, submissionId, accountId: session.sub },
       status: "new",
     });
 
