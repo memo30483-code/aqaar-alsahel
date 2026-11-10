@@ -127,13 +127,11 @@ test("paths resolve to the right page, including dynamic templates", () => {
   assert.equal(pageIdForPath("/developers/eng-nile/extra"), undefined);
 });
 
-test("home keeps inline_ad while content pages expose the general library", () => {
-  assert.ok(addableTypesFor("home").includes("inline_ad"));
-  assert.ok(addableTypesFor("home").includes("hero"));
-  assert.ok(addableTypesFor("market-guide").includes("page_header"));
-  assert.ok(addableTypesFor("market-guide").includes("steps"));
-  assert.equal(addableTypesFor("market-guide").includes("inline_ad"), false);
-  assert.equal(addableTypesFor("market-guide").includes("featured_listings"), false);
+test("every page exposes the full builder library", () => {
+  for (const type of ["inline_ad", "hero", "page_header", "steps", "featured_listings"]) {
+    assert.ok(addableTypesFor("home").includes(type), `home:${type}`);
+    assert.ok(addableTypesFor("market-guide").includes(type), `market-guide:${type}`);
+  }
 });
 
 test("CRUD is isolated per page", () => {

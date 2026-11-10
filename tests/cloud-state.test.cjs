@@ -56,8 +56,11 @@ test("cloud keys: every key has a label and an access flag", () => {
 test("cloud keys: admin credentials are never public", () => {
   for (const key of [
     "aqaar-admin-users-v2",
+    "aqaar-staff-auth",
     "aqaar-admin-permissions",
-    "aqaar-admin-logs",
+    "aqaar-audit-log",
+    "aqaar-review-state",
+    "aqaar-otp-settings",
   ]) {
     assert.equal(keys.isCloudKey(key), true);
     assert.equal(keys.isPublicCloudKey(key), false, key);

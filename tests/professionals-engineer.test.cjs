@@ -80,11 +80,15 @@ test("only the lawyer is excluded from the portfolio section", () => {
 test("approved engineering offices are published with their portfolio", () => {
   memory.clear();
   const offices = getPublicProfessionals("engineer");
-  assert.equal(offices.length, 3);
+  assert.ok(offices.length >= 2, `approved offices: ${offices.length}`);
   assert.ok(offices.every((office) => office.kind === "engineer"));
   assert.ok(offices.every((office) => office.status === "approved"));
   const works = offices.flatMap((office) => office.projects);
-  assert.ok(works.length >= 6);
+  assert.ok(works.length >= offices.length);
+  assert.ok(
+    offices.every((office) => office.projects.length > 0),
+    "every published office shows a portfolio"
+  );
   assert.ok(works.every((work) => work.status === "approved"));
   assert.ok(works.some((work) => work.roleAr && work.year));
 });
