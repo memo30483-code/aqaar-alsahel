@@ -4,7 +4,7 @@ import { normalizeEmail, readAccounts } from "@/lib/auth/accounts";
 
 /** جلسة المستخدم الحالية داخل route handlers — تُقرأ من الكوكي الموقّع فقط */
 export async function getUserApiSession(): Promise<UserTokenPayload | null> {
-  const token = cookies().get(USER_COOKIE)?.value;
+  const token = (await cookies()).get(USER_COOKIE)?.value;
   const payload = await verifyUserToken(token);
   if (!payload) return null;
   try {

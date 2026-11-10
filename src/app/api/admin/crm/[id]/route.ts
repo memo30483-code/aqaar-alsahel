@@ -56,8 +56,9 @@ function errorResponse(error: unknown) {
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getAdminApiSession();
   if (!session) {
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 401 });
@@ -66,7 +67,7 @@ export async function GET(
     return NextResponse.json({ ok: false, error: "غير مصرّح ببيانات العملاء" }, { status: 403 });
   }
   try {
-    const lead = await cloudGetCrmLead(params.id);
+    const lead = await cloudGetCrmLead(id);
     if (!lead) {
       return NextResponse.json({ ok: false, error: "العميل غير موجود" }, { status: 404 });
     }
@@ -87,8 +88,9 @@ interface PatchBody {
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getAdminApiSession();
   if (!session) {
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 401 });
@@ -109,7 +111,7 @@ export async function PATCH(
         return NextResponse.json({ ok: false, error: "مرحلة غير صالحة" }, { status: 400 });
       }
       const changed = await cloudChangeCrmStage(
-        params.id,
+        id,
         body.stage as CrmStage,
         adminActor(session)
       );
@@ -118,7 +120,7 @@ export async function PATCH(
       }
     } else if (body.action === "assign") {
       const changed = await cloudAssignCrmLead(
-        params.id,
+        id,
         text(body.assignedTo, 120),
         text(body.assignedToName, 160),
         adminActor(session)
@@ -184,10 +186,10 @@ export async function PATCH(
       }
       const expectedVersion =
         typeof body.expectedVersion === "number" ? body.expectedVersion : undefined;
-      await cloudUpdateCrmLead(params.id, patch, expectedVersion);
+      await cloudUpdateCrmLead(id, patch, expectedVersion);
     }
 
-    const lead = await cloudGetCrmLead(params.id);
+    const lead = await cloudGetCrmLead(id);
     return NextResponse.json({ ok: true, lead }, { headers: NO_STORE });
   } catch (error) {
     return errorResponse(error);
@@ -197,8 +199,9 @@ export async function PATCH(
 /** الحذف من الواجهة = أرشفة آمنة؛ لا نمسح سجل التواصل نهائيًا. */
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getAdminApiSession();
   if (!session) {
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 401 });
@@ -207,7 +210,7 @@ export async function DELETE(
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 403 });
   }
   try {
-    const lead = await cloudUpdateCrmLead(params.id, { archived: true });
+    const lead = await cloudUpdateCrmLead(id, { archived: true });
     return NextResponse.json({ ok: true, lead }, { headers: NO_STORE });
   } catch (error) {
     return errorResponse(error);

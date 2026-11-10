@@ -12,7 +12,7 @@ import {
 
 /** مصدر الحقيقة الوحيد لحماية Route Handlers الإدارية. */
 export async function getAdminApiSession(): Promise<ServerStaffSession | null> {
-  const token = cookies().get(ADMIN_COOKIE)?.value;
+  const token = (await cookies()).get(ADMIN_COOKIE)?.value;
   const payload = await verifyAdminToken(token);
   if (!payload) return null;
   try {

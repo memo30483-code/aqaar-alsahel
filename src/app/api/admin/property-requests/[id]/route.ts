@@ -59,8 +59,9 @@ function errorResponse(error: unknown) {
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getAdminApiSession();
   if (!session) {
     return NextResponse.json(
@@ -74,7 +75,7 @@ export async function GET(
 
   try {
     const [item, properties] = await Promise.all([
-      getPropertyRequest(params.id),
+      getPropertyRequest(id),
       loadPublishedProperties(),
     ]);
     if (!item) {
@@ -128,8 +129,9 @@ interface PatchBody {
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getAdminApiSession();
   if (!session) {
     return NextResponse.json(
@@ -191,7 +193,7 @@ export async function PATCH(
       );
     }
     if (body.published === true && workflow.propertyRequests.enabled) {
-      const review = await getReviewRecord("propertyRequests", params.id);
+      const review = await getReviewRecord("propertyRequests", id);
       if (review.stage !== "approved") {
         return NextResponse.json(
           { ok: false, error: "يجب إتمام المراجعة والموافقة النهائية أولًا" },
@@ -211,7 +213,7 @@ export async function PATCH(
 
   try {
     const updated = await updatePropertyRequest(
-      params.id,
+      id,
       {
         status: isPropertyRequestStatus(body.status) ? body.status : undefined,
         priority: isPropertyRequestPriority(body.priority)
@@ -268,8 +270,9 @@ export async function PATCH(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getAdminApiSession();
   if (!session) {
     return NextResponse.json(
@@ -281,7 +284,7 @@ export async function DELETE(
     return NextResponse.json({ ok: false, error: "غير مصرّح" }, { status: 403, headers: NO_STORE });
   }
   try {
-    const deleted = await deletePropertyRequest(params.id);
+    const deleted = await deletePropertyRequest(id);
     if (!deleted) {
       return NextResponse.json(
         { ok: false, error: "الطلب غير موجود" },
