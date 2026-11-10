@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server";
 import { cloudEnabled, cloudUploadToBucket } from "@/lib/cloud/server";
 import { getUserApiSession } from "@/lib/user-api";
+import {
+  checkRateLimit,
+  clientIp,
+  hashRateKey,
+  rateLimitResponse,
+} from "@/lib/rate-limit-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
-const WINDOW_MS = 30 * 60 * 1000;
+const WINDOW_SECONDS = 30 * 60;
 const MAX_UPLOADS = 30;
-const attempts = new Map<string, { count: number; resetAt: number }>();
 
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const DOCUMENT_TYPES = new Set([
@@ -17,26 +22,6 @@ const DOCUMENT_TYPES = new Set([
   "image/png",
   "image/webp",
 ]);
-
-function clientKey(request: Request): string {
-  return (
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip") ||
-    "local"
-  );
-}
-
-function allowUpload(key: string): boolean {
-  const now = Date.now();
-  const current = attempts.get(key);
-  if (!current || current.resetAt <= now) {
-    attempts.set(key, { count: 1, resetAt: now + WINDOW_MS });
-    return true;
-  }
-  if (current.count >= MAX_UPLOADS) return false;
-  current.count += 1;
-  return true;
-}
 
 function sameOrigin(request: Request): boolean {
   const origin = request.headers.get("origin");
@@ -103,13 +88,16 @@ export async function POST(request: Request) {
   if (!cloudEnabled()) {
     return NextResponse.json({ ok: false, error: "التخزين السحابي غير مضبوط" }, { status: 503 });
   }
-  if (!allowUpload(`${session.sub}:${clientKey(request)}`)) {
-    return NextResponse.json(
-      { ok: false, error: "تم تجاوز عدد الرفعات المسموح مؤقتًا، حاول لاحقًا" },
-      { status: 429 }
+  const uploadLimit = await checkRateLimit(
+    hashRateKey("upload", `${session.sub}:${clientIp(request)}`),
+    { limit: MAX_UPLOADS, windowSeconds: WINDOW_SECONDS }
+  );
+  if (!uploadLimit.allowed) {
+    return rateLimitResponse(
+      uploadLimit,
+      "تم تجاوز عدد الرفعات المسموح مؤقتًا، حاول لاحقًا"
     );
   }
-
   try {
     const form = await request.formData();
     const file = form.get("file");

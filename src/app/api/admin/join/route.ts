@@ -9,13 +9,18 @@ import {
   inspectStaffInvite,
   isStaffRoleValue,
 } from "@/lib/staff-server";
-import { clientKey, isRateLimited, recordAttempt } from "@/lib/auth/rate-limit";
+import {
+  checkRateLimit,
+  clientIp,
+  hashRateKey,
+  rateLimitResponse,
+} from "@/lib/rate-limit-server";
 import { appendAudit } from "@/lib/workflow-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const RATE = { scope: "staff-join", max: 10, windowMs: 30 * 60 * 1000 };
+const RATE = { limit: 10, windowSeconds: 30 * 60 };
 const NO_STORE = { "Cache-Control": "no-store" };
 
 export async function GET(request: Request) {
@@ -35,12 +40,12 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const key = clientKey(request);
-  if (isRateLimited(key, RATE)) {
-    return NextResponse.json(
-      { ok: false, error: "rate_limited" },
-      { status: 429, headers: NO_STORE }
-    );
+  const limit = await checkRateLimit(
+    hashRateKey("staff-join", clientIp(request)),
+    RATE
+  );
+  if (!limit.allowed) {
+    return rateLimitResponse(limit, "محاولات كثيرة. حاول بعد قليل.");
   }
   let body: { code?: unknown; password?: unknown };
   try {
@@ -54,7 +59,6 @@ export async function POST(request: Request) {
   const code = typeof body.code === "string" ? body.code.trim() : "";
   const password = typeof body.password === "string" ? body.password : "";
   if (!code || password.length < 10) {
-    recordAttempt(key, RATE);
     return NextResponse.json(
       { ok: false, error: "invalid_input" },
       { status: 400, headers: NO_STORE }
@@ -100,7 +104,6 @@ export async function POST(request: Request) {
     });
     return response;
   } catch (error) {
-    recordAttempt(key, RATE);
     const codeValue = error instanceof Error ? error.message : "SERVER_ERROR";
     const status = codeValue === "INVITE_EXPIRED" ? 410 : codeValue === "INVALID_INVITE" ? 404 : 400;
     return NextResponse.json(

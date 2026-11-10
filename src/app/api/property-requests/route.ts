@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { clientKey, isRateLimited, recordAttempt } from "@/lib/auth/rate-limit";
+import {
+  checkRateLimit,
+  clientIp,
+  hashRateKey,
+  rateLimitResponse,
+} from "@/lib/rate-limit-server";
 import { cloudEnabled } from "@/lib/cloud/server";
 import { getUserApiSession } from "@/lib/user-api";
 import {
@@ -20,9 +25,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const RATE = {
-  scope: "property-request",
-  max: 6,
-  windowMs: 60 * 60 * 1000,
+  limit: 6,
+  windowSeconds: 60 * 60,
 };
 const NO_STORE = { "Cache-Control": "no-store" };
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -104,17 +108,18 @@ export async function POST(request: Request) {
     );
   }
 
-  const key = clientKey(request);
-  if (isRateLimited(key, RATE)) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "تم إرسال عدة طلبات مؤخرًا. حاول مرة أخرى بعد قليل.",
-      },
-      { status: 429, headers: NO_STORE }
+  const limit = await checkRateLimit(
+    hashRateKey("property-request", clientIp(request)),
+    RATE
+  );
+  if (!limit.allowed) {
+    const blocked = rateLimitResponse(
+      limit,
+      "تم إرسال عدة طلبات مؤخرًا. حاول مرة أخرى بعد قليل."
     );
+    blocked.headers.set("Cache-Control", "no-store");
+    return blocked;
   }
-  recordAttempt(key, RATE);
 
   const [settings, session] = await Promise.all([
     readPropertyRequestSettings(),

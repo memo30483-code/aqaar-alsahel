@@ -7,6 +7,12 @@ import {
 } from "@/lib/admin-session";
 import { authenticateStaff, isStaffRoleValue } from "@/lib/staff-server";
 import { appendAudit } from "@/lib/workflow-server";
+import {
+  checkRateLimit,
+  clientIp,
+  hashRateKey,
+  rateLimitResponse,
+} from "@/lib/rate-limit-server";
 
 /**
  * تسجيل دخول المدير العام أو أحد الموظفين — التحقق يتم على السيرفر فقط.
@@ -15,32 +21,9 @@ import { appendAudit } from "@/lib/workflow-server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** حد بسيط لمحاولات الدخول الفاشلة — 8 محاولات كل 10 دقائق لكل عنوان */
-const ATTEMPT_WINDOW_MS = 10 * 60 * 1000;
-const MAX_ATTEMPTS = 8;
-const attempts = new Map<string, { count: number; resetAt: number }>();
-
-function clientKey(request: Request): string {
-  const forwarded = request.headers.get("x-forwarded-for") ?? "";
-  const first = forwarded.split(",")[0]?.trim();
-  return first || request.headers.get("x-real-ip") || "local";
-}
-
-function isRateLimited(key: string): boolean {
-  const entry = attempts.get(key);
-  if (!entry || entry.resetAt <= Date.now()) return false;
-  return entry.count >= MAX_ATTEMPTS;
-}
-
-function recordFailure(key: string): void {
-  const now = Date.now();
-  const entry = attempts.get(key);
-  if (!entry || entry.resetAt <= now) {
-    attempts.set(key, { count: 1, resetAt: now + ATTEMPT_WINDOW_MS });
-    return;
-  }
-  entry.count += 1;
-}
+/** حدود موزّعة: 20 محاولة لكل عنوان و8 لكل بريد كل 10 دقائق */
+const IP_LIMIT = { limit: 20, windowSeconds: 600 };
+const EMAIL_LIMIT = { limit: 8, windowSeconds: 600 };
 
 /** مقارنة ثابتة الزمن لتقليل تسريب المعلومات عبر التوقيت */
 function safeEqual(left: string, right: string): boolean {
@@ -54,12 +37,14 @@ function safeEqual(left: string, right: string): boolean {
 }
 
 export async function POST(request: Request) {
-  const key = clientKey(request);
-
-  if (isRateLimited(key)) {
-    return NextResponse.json(
-      { ok: false, error: "rate_limited" },
-      { status: 429 }
+  const ipLimit = await checkRateLimit(
+    hashRateKey("admin-login-ip", clientIp(request)),
+    IP_LIMIT
+  );
+  if (!ipLimit.allowed) {
+    return rateLimitResponse(
+      ipLimit,
+      "محاولات دخول كثيرة من هذا العنوان. حاول بعد قليل."
     );
   }
 
@@ -73,11 +58,23 @@ export async function POST(request: Request) {
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   const password = typeof body.password === "string" ? body.password : "";
 
+  if (email) {
+    const emailLimit = await checkRateLimit(
+      hashRateKey("admin-login-email", email),
+      EMAIL_LIMIT
+    );
+    if (!emailLimit.allowed) {
+      return rateLimitResponse(
+        emailLimit,
+        "محاولات دخول كثيرة لهذا الحساب. حاول بعد قليل."
+      );
+    }
+  }
+
   const adminEmail = (process.env.ADMIN_EMAIL ?? "").trim().toLowerCase();
   const adminPassword = process.env.ADMIN_PASSWORD ?? "";
 
   if (!email || !password) {
-    recordFailure(key);
     return NextResponse.json({ ok: false, error: "invalid_credentials" }, { status: 401 });
   }
 
@@ -97,7 +94,6 @@ export async function POST(request: Request) {
     try {
       const staff = await authenticateStaff(email, password);
       if (!staff || !isStaffRoleValue(staff.role)) {
-        recordFailure(key);
         return NextResponse.json(
           { ok: false, error: "invalid_credentials" },
           { status: 401 }
@@ -113,8 +109,6 @@ export async function POST(request: Request) {
       );
     }
   }
-
-  attempts.delete(key);
 
   const token = await createAdminToken({
     sub: isRoot ? adminEmail : email,

@@ -12,10 +12,11 @@ import {
   type AccountRecord,
 } from "@/lib/auth/accounts";
 import {
-  clientKey,
-  isRateLimited,
-  recordAttempt,
-} from "@/lib/auth/rate-limit";
+  checkRateLimit,
+  clientIp,
+  hashRateKey,
+  rateLimitResponse,
+} from "@/lib/rate-limit-server";
 import {
   USER_COOKIE,
   USER_SESSION_MAX_AGE,
@@ -42,7 +43,7 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const RATE = { scope: "register", max: 6, windowMs: 60 * 60 * 1000 };
+const RATE = { limit: 6, windowSeconds: 60 * 60 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -174,12 +175,12 @@ async function saveProfessionalRegistration(input: {
 }
 
 export async function POST(request: Request) {
-  const key = clientKey(request);
-  if (isRateLimited(key, RATE)) {
-    return NextResponse.json(
-      { ok: false, error: "rate_limited" },
-      { status: 429 }
-    );
+  const limit = await checkRateLimit(
+    hashRateKey("register", clientIp(request)),
+    RATE
+  );
+  if (!limit.allowed) {
+    return rateLimitResponse(limit, "محاولات تسجيل كثيرة. حاول لاحقًا.");
   }
 
   let body: RegisterBody;
@@ -239,7 +240,6 @@ export async function POST(request: Request) {
 
     const normalized = normalizeEmail(email);
     if (store.file.accounts.some((item) => item.emailNormalized === normalized)) {
-      recordAttempt(key, RATE);
       return NextResponse.json(
         { ok: false, error: "email_exists" },
         { status: 409 }
