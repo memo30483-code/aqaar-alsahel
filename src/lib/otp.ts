@@ -58,8 +58,8 @@ export interface PublicOtpOptions {
 
 export const DEFAULT_OTP_SETTINGS: OtpSettings = {
   version: 1,
-  /* يبقى false حتى تُضبط مفاتيح Resend؛ لا نوقف التسجيل الحالي بلا مزود. */
-  requiredForRegistration: false,
+  /* التسجيل يفشل مغلقًا بلا إثبات بريد؛ يجب ضبط Resend قبل فتح التسجيل. */
+  requiredForRegistration: true,
   allowUserChoice: false,
   defaultChannel: "email",
   channels: {

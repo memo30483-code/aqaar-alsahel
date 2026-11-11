@@ -6,7 +6,13 @@ import {
   isCloudKey,
   isPublicCloudKey,
 } from "@/lib/cloud/keys";
-import { cloudEnabled, cloudGetRows, cloudPutRow } from "@/lib/cloud/server";
+import {
+  CloudConflictError,
+  cloudEnabled,
+  cloudGetRows,
+  cloudPutProfessionalsAdmin,
+  cloudPutRow,
+} from "@/lib/cloud/server";
 import { sanitizePublicCloudRows } from "@/lib/cloud/privacy";
 import {
   actorSummary,
@@ -16,6 +22,7 @@ import {
 } from "@/lib/workflow-server";
 import { reviewKey } from "@/lib/workflow";
 import type { ServerStaffSession } from "@/lib/staff-server";
+import { canonicalProfessionalsValue } from "@/lib/professionals-data";
 
 /**
  * بوابة الحالة المشتركة.
@@ -155,7 +162,7 @@ async function validateWorkflowStateWrite(
   const previousValue = storedRows.find((row) => row.key === key)?.value;
   const previous = key === "aqaar-professionals"
     ? new Map(
-        (Array.isArray(previousValue) ? previousValue : []).map((item) => {
+        canonicalProfessionalsValue(previousValue).map((item) => {
           const row = cleanObject(item);
           return [String(row.id ?? ""), row.status];
         })
@@ -164,7 +171,7 @@ async function validateWorkflowStateWrite(
         Object.entries(cleanObject(previousValue)).map(([id, item]) => [id, cleanObject(item).status])
       );
   const nextItems: Record<string, unknown>[] = key === "aqaar-professionals"
-    ? (Array.isArray(nextValue) ? nextValue : []).map((item) => cleanObject(item))
+    ? canonicalProfessionalsValue(nextValue).map((item) => cleanObject(item))
     : Object.entries(cleanObject(nextValue)).map(([id, item]) => ({ id, ...cleanObject(item) }));
   for (const item of nextItems) {
     const id = String(item.id ?? "");
@@ -362,6 +369,7 @@ export async function PUT(request: Request) {
 
   try {
     const saved: Record<string, string> = {};
+    const values: Record<string, unknown> = {};
     for (const entry of entries) {
       if (!(await validateWorkflowStateWrite(entry.key, entry.value))) {
         return NextResponse.json(
@@ -372,8 +380,19 @@ export async function PUT(request: Request) {
           { status: 409 }
         );
       }
-      const row = await cloudPutRow(entry.key, entry.value, session.sub);
+      const value =
+        entry.key === "aqaar-professionals"
+          ? canonicalProfessionalsValue(entry.value)
+          : entry.value;
+      const row =
+        entry.key === "aqaar-professionals"
+          ? await cloudPutProfessionalsAdmin(
+              value as Record<string, unknown>[],
+              session.sub
+            )
+          : await cloudPutRow(entry.key, value, session.sub);
       saved[entry.key] = row.updated_at;
+      if (entry.key === "aqaar-professionals") values[entry.key] = row.value;
     }
     await appendAudit({
       ...actorSummary(session),
@@ -391,10 +410,16 @@ export async function PUT(request: Request) {
     }
 
     return NextResponse.json(
-      { ok: true, saved },
+      { ok: true, saved, values },
       { headers: { "Cache-Control": "no-store" } }
     );
   } catch (error) {
+    if (error instanceof CloudConflictError) {
+      return NextResponse.json(
+        { ok: false, error: error.message, code: "cloud_conflict" },
+        { status: 409 }
+      );
+    }
     return NextResponse.json(
       {
         ok: false,

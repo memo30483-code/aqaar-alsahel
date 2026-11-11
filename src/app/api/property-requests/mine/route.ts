@@ -33,11 +33,10 @@ function errorResponse(error: unknown) {
 }
 
 function ownedBy(
-  item: { accountId?: string; email: string },
-  session: { sub: string; email: string }
+  item: { accountId?: string },
+  session: { sub: string }
 ): boolean {
-  if (item.accountId) return item.accountId === session.sub;
-  return item.email.trim().toLowerCase() === session.email.trim().toLowerCase();
+  return Boolean(item.accountId && item.accountId === session.sub);
 }
 
 export async function GET() {

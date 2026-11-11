@@ -163,6 +163,11 @@ export const commonMessages = {
   },
   "footer.newsletter.placeholder": { ar: "بريدك الإلكتروني", en: "Your email" },
   "footer.newsletter.cta": { ar: "اشترك", en: "Subscribe" },
+  "footer.newsletter.sending": { ar: "جارٍ الحفظ…", en: "Saving…" },
+  "footer.newsletter.error": {
+    ar: "تعذّر حفظ اشتراكك. حاول مرة أخرى.",
+    en: "We could not save your subscription. Please try again.",
+  },
   "footer.newsletter.success": {
     ar: "تم تسجيل بريدك — هنبعتلك أول الفرص.",
     en: "You're subscribed — we'll send you the best opportunities.",

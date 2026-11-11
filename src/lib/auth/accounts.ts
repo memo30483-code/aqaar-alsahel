@@ -15,7 +15,7 @@ import { cloudEnabled, cloudGetRows, cloudPutRow } from "@/lib/cloud/server";
 const scrypt = promisify(scryptCallback);
 
 export const ACCOUNTS_KEY = "aqaar-accounts";
-export const ACCOUNTS_VERSION = 1;
+export const ACCOUNTS_VERSION = 2;
 
 export const ACCOUNT_TYPES = [
   "individual",
@@ -44,6 +44,10 @@ export interface AccountRecord {
   salt: string;
   hash: string;
   createdAt: string;
+  /** وقت إثبات ملكية البريد عبر OTP. الحسابات القديمة تبقى غير موثقة حتى التحقق. */
+  emailVerifiedAt?: string;
+  /** زيادة الرقم تُبطل فورًا كل الكوكيز الموقعة القديمة للحساب. */
+  sessionVersion: number;
   status: MemberStatus;
   statusUpdatedAt?: string;
   statusUpdatedBy?: string;
@@ -63,6 +67,7 @@ export interface PublicAccount {
   accountType: AccountType;
   role: AccountRole;
   status: MemberStatus;
+  emailVerified: boolean;
   ownerToken?: string;
 }
 
@@ -109,6 +114,14 @@ function parseFile(value: unknown): AccountsFile {
       hash,
       createdAt:
         typeof item.createdAt === "string" ? item.createdAt : new Date().toISOString(),
+      emailVerifiedAt:
+        typeof item.emailVerifiedAt === "string" ? item.emailVerifiedAt : undefined,
+      sessionVersion:
+        typeof item.sessionVersion === "number" &&
+        Number.isSafeInteger(item.sessionVersion) &&
+        item.sessionVersion >= 1
+          ? item.sessionVersion
+          : 1,
       status:
         item.status === "pending" ||
         item.status === "rejected" ||
@@ -192,6 +205,7 @@ export function toPublicAccount(record: AccountRecord): PublicAccount {
     accountType: record.accountType,
     role: record.role,
     status: record.status,
+    emailVerified: Boolean(record.emailVerifiedAt),
     ...(record.ownerToken ? { ownerToken: record.ownerToken } : {}),
   };
 }
@@ -205,6 +219,8 @@ export interface AdminMemberAccount {
   accountType: AccountType;
   role: AccountRole;
   status: MemberStatus;
+  emailVerifiedAt?: string;
+  sessionVersion: number;
   createdAt: string;
   statusUpdatedAt?: string;
   statusUpdatedBy?: string;
@@ -220,9 +236,29 @@ export function toAdminMember(record: AccountRecord): AdminMemberAccount {
     accountType: record.accountType,
     role: record.role,
     status: record.status,
+    emailVerifiedAt: record.emailVerifiedAt,
+    sessionVersion: record.sessionVersion,
     createdAt: record.createdAt,
     statusUpdatedAt: record.statusUpdatedAt,
     statusUpdatedBy: record.statusUpdatedBy,
     statusNote: record.statusNote,
   };
+}
+
+/** إبطال كل جلسات الحساب الحالية. تُستخدم عند الخروج أو تغيير حالته. */
+export async function revokeAccountSessions(accountId: string): Promise<boolean> {
+  const store = await readAccounts();
+  if (!store.enabled) return false;
+  const index = store.file.accounts.findIndex((item) => item.id === accountId);
+  if (index < 0) return false;
+  const current = store.file.accounts[index];
+  store.file.accounts[index] = {
+    ...current,
+    sessionVersion: current.sessionVersion + 1,
+  };
+  await writeAccounts({
+    version: ACCOUNTS_VERSION,
+    accounts: store.file.accounts,
+  });
+  return true;
 }

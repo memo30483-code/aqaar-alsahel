@@ -27,11 +27,13 @@ declare global {
   interface Window {
     __AQAAR_CLOUD__?: CloudFlags;
     __AQAAR_PUSH_STATE__?: PushState;
+    __AQAAR_OWN_PROFESSIONAL_SYNC__?: boolean;
   }
 }
 
 const DEBOUNCE_MS = 700;
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
+const pendingValues = new Map<string, string>();
 let installed = false;
 let suppress = false;
 
@@ -59,17 +61,23 @@ async function send(key: string, raw: string) {
     const data = (await response.json()) as {
       ok?: boolean;
       saved?: Record<string, string>;
+      values?: Record<string, unknown>;
     };
     const stamp = data.saved?.[key];
     if (stamp) {
-      suppress = true;
-      try {
-        window.localStorage.setItem(cloudTsKey(key), String(Date.parse(stamp)));
-      } finally {
-        suppress = false;
+      if (Object.prototype.hasOwnProperty.call(data.values ?? {}, key)) {
+        applyRemoteValue(key, data.values?.[key], stamp);
+      } else {
+        suppress = true;
+        try {
+          window.localStorage.setItem(cloudTsKey(key), String(Date.parse(stamp)));
+        } finally {
+          suppress = false;
+        }
       }
     }
-    announce("saved");
+    if (pendingValues.get(key) === raw) pendingValues.delete(key);
+    announce(pendingValues.size ? "saving" : "saved");
   } catch {
     announce("error");
   }
@@ -78,6 +86,7 @@ async function send(key: string, raw: string) {
 function schedule(key: string, raw: string) {
   const existing = timers.get(key);
   if (existing) clearTimeout(existing);
+  pendingValues.set(key, raw);
   announce("saving");
   timers.set(
     key,
@@ -104,10 +113,31 @@ export function installCloudPush(): void {
     if (this !== window.localStorage) return;
     if (suppress) return;
     if (!isCloudKey(key)) return;
+    if (
+      key === "aqaar-professionals" &&
+      window.__AQAAR_OWN_PROFESSIONAL_SYNC__ === true
+    ) return;
     if (window.__AQAAR_CLOUD__?.enabled !== true) return;
 
     schedule(key, value);
   };
+
+  window.addEventListener("beforeunload", (event) => {
+    if (!pendingValues.size) return;
+    event.preventDefault();
+    event.returnValue = "";
+  });
+}
+
+/** إعادة إرسال كل القيم التي فشل حفظها أو ما زالت معلقة. */
+export function retryCloudPush(): void {
+  if (typeof window === "undefined" || !pendingValues.size) return;
+  for (const [key, raw] of pendingValues) {
+    const timer = timers.get(key);
+    if (timer) clearTimeout(timer);
+    timers.delete(key);
+    void send(key, raw);
+  }
 }
 
 /** تطبيق قيمة قادمة من السيرفر ثم إبلاغ المكوّنات */

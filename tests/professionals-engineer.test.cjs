@@ -46,6 +46,21 @@ const customRequire = (id) => {
       resolveProjectTypeId: () => undefined,
     };
   }
+  if (id === "@/lib/public-requests") {
+    return {
+      submitPublicRequest: async () => ({ ok: true, id: "inquiry-test" }),
+    };
+  }
+  if (id === "@/lib/professionals-data") {
+    return {
+      professionalItems: (value) =>
+        Array.isArray(value)
+          ? value
+          : value && Array.isArray(value.items)
+            ? value.items
+            : [],
+    };
+  }
   return require(id);
 };
 new Function("exports", "require", "module", js)(

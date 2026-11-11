@@ -46,7 +46,7 @@ const GROUPS: Group[] = [
       { ar: "دليل المسوقين", en: "Marketers directory", href: "/brokers", Icon: UserPlus },
       { ar: "دليل المحامين", en: "Lawyers directory", href: "/lawyers", Icon: Scale },
       { ar: "دليل المكاتب الهندسية", en: "Engineering offices", href: "/engineers", Icon: HardHat },
-      { ar: "انضم إلى الدليل", en: "Join the directory", href: "/login?redirect=%2Fjoin", Icon: ShieldCheck },
+      { ar: "انضم إلى الدليل", en: "Join the directory", href: "/register", Icon: ShieldCheck },
       { ar: "أضف عقارك", en: "List your property", href: "/add-property", Icon: FileText },
       { ar: "اطلب عقارك", en: "Request a property", href: "/request-property", Icon: SearchCheck },
       { ar: "عقارات مطلوبة", en: "Wanted properties", href: "/wanted-properties", Icon: SearchCheck },

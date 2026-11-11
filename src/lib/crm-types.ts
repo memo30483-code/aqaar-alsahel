@@ -450,12 +450,16 @@ export function inquiryLead(row: CrmInquiryRow): CrmLead | null {
       ? "طلب تواصل مهني"
       : row.kind === "app_interest"
         ? "اهتمام بتطبيق عقار FAMILY"
+        : row.kind === "newsletter_subscription"
+          ? "اشتراك في النشرة البريدية"
         : "استفسار من الموقع";
   const tags =
     row.kind === "professional_request"
       ? ["طلب مهني", ...(professionalName ? [professionalName] : [])]
       : row.kind === "app_interest"
         ? ["تطبيق"]
+        : row.kind === "newsletter_subscription"
+          ? ["نشرة بريدية"]
         : ["استفسار"];
   return {
     id: newCrmId("lead"),

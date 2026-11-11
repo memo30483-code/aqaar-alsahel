@@ -8,6 +8,9 @@
 
 # testing
 /coverage
+/playwright-report/
+/test-results/
+/supabase/.temp/
 
 # next.js
 /.next/

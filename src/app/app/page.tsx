@@ -248,7 +248,7 @@ export default function AppPage() {
             سجّل اهتمامك وهنبعتلك أول ما ينزل — وهتلاقي نفس العقارات الموثّقة
             اللي شوفتها على الموقع.
           </p>
-          <AppInterestForm app={app} />
+          <AppInterestForm app={app} sectionId="interest-secondary" />
           <div className="mt-1 flex items-center gap-1.5 text-[10.5px] font-semibold text-[#9aa6c3]">
             <Lock className="h-3 w-3" />
             بياناتك تُستخدم لإشعار الإطلاق فقط.

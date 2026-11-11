@@ -345,7 +345,7 @@ export default function Header() {
                     </span>
                   </span>
                 </Link>
-                <Link href="/login?redirect=%2Fjoin" className={MENU_ITEM} onClick={close}>
+                <Link href="/register" className={MENU_ITEM} onClick={close}>
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gold-50 text-gold-600">
                     <BadgeCheck className="h-4 w-4" />
                   </span>
@@ -646,7 +646,7 @@ export default function Header() {
               {t("companies.lawyers")}
             </Link>
             <Link
-              href="/login?redirect=%2Fjoin"
+              href="/register"
               className={NAV_LINK}
               onClick={closeMobile}
             >

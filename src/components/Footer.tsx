@@ -11,6 +11,7 @@ import BrandLogo from "@/components/BrandLogo";
 import StoreButtons from "@/components/app/StoreButtons";
 import { qrImageSrc, resolveAppSettings } from "@/lib/app-settings";
 import { telHref, useSiteSettings } from "@/lib/site-settings";
+import { submitPublicRequest } from "@/lib/public-requests";
 
 function XIcon({ className }: { className?: string }) {
   return (
@@ -72,7 +73,7 @@ const QUICK_LINKS: { key: MessageKey; href: string }[] = [
   { key: "companies.brokers", href: "/brokers" },
   { key: "companies.lawyers", href: "/lawyers" },
   { key: "companies.engineers", href: "/engineers" },
-  { key: "companies.join", href: "/login?redirect=%2Fjoin" },
+  { key: "companies.join", href: "/register" },
   { key: "nav.addProperty", href: "/add-property" },
   { key: "nav.requestProperty", href: "/request-property" },
   { key: "propertyRequests.wanted", href: "/wanted-properties" },
@@ -87,6 +88,8 @@ export default function Footer() {
   const company = usePrimaryCompany();
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const [subscribing, setSubscribing] = useState(false);
+  const [subscribeError, setSubscribeError] = useState("");
 
   const ar = locale === "ar";
   /* أولوية النص: ما كتبه الأدمن في «إعدادات الموقع» ثم بيانات الشركة ثم الافتراضي */
@@ -114,9 +117,23 @@ export default function Footer() {
     : [];
   const socialLinks = companySocial.length ? companySocial : SOCIAL_LINKS;
 
-  const handleSubscribe = (event: React.FormEvent) => {
+  const handleSubscribe = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!email.trim()) return;
+    if (!email.trim() || subscribing) return;
+    setSubscribing(true);
+    setSubscribed(false);
+    setSubscribeError("");
+    const result = await submitPublicRequest({
+      kind: "newsletter_subscription",
+      email: email.trim(),
+      message: "اشتراك في النشرة البريدية من تذييل الموقع",
+      payload: { source: "footer" },
+    });
+    setSubscribing(false);
+    if (!result.ok) {
+      setSubscribeError(t("footer.newsletter.error"));
+      return;
+    }
     setSubscribed(true);
     setEmail("");
   };
@@ -255,21 +272,36 @@ export default function Footer() {
                   type="email"
                   required
                   value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    setSubscribed(false);
+                    setSubscribeError("");
+                  }}
                   placeholder={t("footer.newsletter.placeholder")}
                   className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-xs text-white outline-none placeholder:text-[#7f89a2]"
                 />
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-1 bg-gold-500 px-3.5 text-[11px] font-extrabold text-white transition hover:bg-gold-600"
+                  disabled={subscribing}
+                  className="inline-flex items-center gap-1 bg-gold-500 px-3.5 text-[11px] font-extrabold text-white transition hover:bg-gold-600 disabled:cursor-wait disabled:opacity-65"
                 >
-                  {t("footer.newsletter.cta")}
+                  {subscribing
+                    ? t("footer.newsletter.sending")
+                    : t("footer.newsletter.cta")}
                 </button>
               </div>
               {subscribed && (
                 <p className="mt-2 flex items-center gap-1 text-[10px] font-bold text-emerald-300">
                   <Check className="h-3 w-3" />
                   {t("footer.newsletter.success")}
+                </p>
+              )}
+              {subscribeError && (
+                <p
+                  className="mt-2 text-[10px] font-bold text-rose-300"
+                  role="alert"
+                >
+                  {subscribeError}
                 </p>
               )}
             </form>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Clock3, Loader2, RefreshCcw, Search, ShieldOff, UserCheck, UserX } from "lucide-react";
+import { Check, Clock3, KeyRound, Loader2, RefreshCcw, Search, ShieldOff, UserCheck, UserX } from "lucide-react";
 import type { AdminMemberAccount, MemberStatus } from "@/lib/auth/accounts";
 import { INPUT, Panel } from "@/components/admin/shared";
 
@@ -87,6 +87,34 @@ export default function AdminMembersTab({ can, notify, onCountChange }: Props) {
     }
   };
 
+  const revokeSessions = async (member: AdminMemberAccount) => {
+    if (!can("members.approve") || savingId) return;
+    if (!window.confirm(`إبطال كل الجلسات النشطة للعضو «${member.name}»؟`)) return;
+    setSavingId(member.id);
+    try {
+      const response = await fetch("/api/admin/members", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: member.id, action: "revoke_sessions" }),
+      });
+      const data = (await response.json()) as {
+        member?: AdminMemberAccount;
+        error?: string;
+      };
+      if (!response.ok || !data.member) {
+        throw new Error(data.error || "تعذر إبطال الجلسات");
+      }
+      setMembers((current) =>
+        current.map((item) => (item.id === member.id ? data.member! : item))
+      );
+      notify("تم إبطال كل جلسات العضو بنجاح");
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "تعذر إبطال الجلسات");
+    } finally {
+      setSavingId("");
+    }
+  };
+
   return (
     <Panel
       title="أعضاء الموقع"
@@ -132,6 +160,9 @@ export default function AdminMembersTab({ can, notify, onCountChange }: Props) {
                     <p className="font-black text-ocean-950">{member.name}</p>
                     <p className="mt-1 text-xs text-sand-600" dir="ltr">{member.email}</p>
                     <p className="text-xs text-sand-500" dir="ltr">{member.phone}</p>
+                    <span className={`mt-2 inline-flex rounded-full px-2 py-1 text-[9px] font-black ${member.emailVerifiedAt ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                      {member.emailVerifiedAt ? "البريد موثّق" : "بريد غير موثّق (بيانات اختبار/قديمة)"}
+                    </span>
                   </td>
                   <td className="p-3 text-xs font-bold text-sand-700">{member.accountType}</td>
                   <td className="p-3 text-xs text-sand-600">{new Date(member.createdAt).toLocaleDateString("ar-EG")}</td>
@@ -161,6 +192,9 @@ export default function AdminMembersTab({ can, notify, onCountChange }: Props) {
                           <Clock3 className="h-3.5 w-3.5" /> إعادة للمراجعة
                         </button>
                       )}
+                      <button disabled={!can("members.approve") || savingId === member.id} onClick={() => void revokeSessions(member)} className="inline-flex items-center gap-1 rounded-lg bg-violet-50 px-2.5 py-1.5 text-[11px] font-black text-violet-700 disabled:opacity-50">
+                        <KeyRound className="h-3.5 w-3.5" /> إبطال الجلسات
+                      </button>
                       {savingId === member.id && <Loader2 className="h-4 w-4 animate-spin text-gold-600" />}
                     </div>
                   </td>

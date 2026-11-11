@@ -166,7 +166,7 @@ test("public inquiries import while property inquiries are skipped as duplicates
   assert.equal(lead.stage, "new");
 });
 
-test("professional and app requests map to automatic crm leads", () => {
+test("professional, app, and newsletter requests map to automatic crm leads", () => {
   const professional = crm.inquiryLead({
     id: "inq-3",
     kind: "professional_request",
@@ -190,6 +190,17 @@ test("professional and app requests map to automatic crm leads", () => {
   assert.equal(app.sourceRef, "inquiry:inq-4");
   assert.deepEqual(app.tags, ["تطبيق"]);
   assert.equal(app.email, "sara@example.com");
+
+  const newsletter = crm.inquiryLead({
+    id: "inq-5",
+    kind: "newsletter_subscription",
+    name: "sara@example.com",
+    email: "sara@example.com",
+    created_at: AT,
+  });
+  assert.equal(newsletter.sourceRef, "inquiry:inq-5");
+  assert.deepEqual(newsletter.tags, ["نشرة بريدية"]);
+  assert.equal(newsletter.email, "sara@example.com");
 });
 
 test("public request api stores the inquiry then creates a crm lead", () => {
@@ -201,6 +212,7 @@ test("public request api stores the inquiry then creates a crm lead", () => {
   assert.match(source, /cloudInsertInquiry\(/);
   assert.match(source, /cloudCreateCrmLead\(lead, "الموقع"\)/);
   assert.match(source, /MAX_REQUESTS/);
+  assert.match(source, /newsletter_subscription/);
 });
 
 test("user property identifiers with uuid suffixes are accepted", () => {

@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * استقبال طلبات الزوار غير العقارية (تواصل مع مهني، اهتمام بالتطبيق).
+ * استقبال طلبات الزوار غير العقارية (تواصل مع مهني، اهتمام بالتطبيق، النشرة).
  *
  * كل طلب يُحفظ في `inquiries` ثم تُنشأ له بطاقة CRM تلقائيًا في PostgreSQL،
  * حتى لا يعتمد وصول الطلب على المتصفح أو على ضغط زر «استيراد» في اللوحة.
@@ -18,7 +18,13 @@ export const dynamic = "force-dynamic";
 
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_REQUESTS = 12;
-const KINDS = new Set(["professional_request", "app_interest", "property_inquiry"]);
+const KINDS = new Set([
+  "professional_request",
+  "app_interest",
+  "newsletter_subscription",
+  "property_inquiry",
+]);
+const EMAIL_ONLY_KINDS = new Set(["app_interest", "newsletter_subscription"]);
 
 const requests = new Map<string, { count: number; resetAt: number }>();
 
@@ -109,10 +115,10 @@ export async function POST(request: Request) {
 
   const name = text(body.name, 160);
   const phoneValue = phone(body.phone);
-  const email = text(body.email, 240);
+  const email = text(body.email, 240).toLowerCase();
   const message = text(body.message, 2000);
 
-  if (kind === "app_interest") {
+  if (EMAIL_ONLY_KINDS.has(kind)) {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json(
         { ok: false, error: "بريد إلكتروني غير صالح" },
@@ -126,7 +132,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (kind !== "app_interest" && !name) {
+  if (!EMAIL_ONLY_KINDS.has(kind) && !name) {
     return NextResponse.json(
       { ok: false, error: "الاسم مطلوب" },
       { status: 400 }
@@ -178,11 +184,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true, id: inquiry.id });
   } catch (error) {
+    console.error("public request persistence failed", error);
     return NextResponse.json(
       {
         ok: false,
-        error:
-          error instanceof Error ? error.message : "تعذر حفظ الطلب، حاول لاحقًا",
+        error: "تعذر حفظ الطلب، حاول لاحقًا",
       },
       { status: 500 }
     );

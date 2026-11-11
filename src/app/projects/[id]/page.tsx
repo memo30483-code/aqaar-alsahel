@@ -3,7 +3,7 @@ import ProjectDetailClient from "@/components/projects/ProjectDetailClient";
 import PageStyleScope from "@/components/builder/PageStyleScope";
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export const metadata: Metadata = {
@@ -13,10 +13,11 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export default function ProjectPage({ params }: PageProps) {
+export default async function ProjectPage({ params }: PageProps) {
+  const { id } = await params;
   return (
     <PageStyleScope pageId="project">
-      <ProjectDetailClient id={params.id} />
+      <ProjectDetailClient id={id} />
     </PageStyleScope>
   );
 }

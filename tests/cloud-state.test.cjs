@@ -22,7 +22,11 @@ function loadTs(relativeFile, deps = {}) {
 }
 
 const keys = loadTs("src/lib/cloud/keys.ts");
-const privacy = loadTs("src/lib/cloud/privacy.ts", { "./keys": keys });
+const professionalsData = loadTs("src/lib/professionals-data.ts");
+const privacy = loadTs("src/lib/cloud/privacy.ts", {
+  "./keys": keys,
+  "@/lib/professionals-data": professionalsData,
+});
 const boot = loadTs("src/lib/cloud/boot.ts", {
   "./server": { cloudEnabled: () => false, cloudGetRows: async () => [] },
   "./keys": keys,
@@ -207,7 +211,7 @@ test("public professionals contain approved profiles only and no ownership secre
   const rows = privacy.sanitizePublicCloudRows([
     {
       key: "aqaar-professionals",
-      value: [
+      value: { items: [
         {
           id: "pro-1",
           status: "approved",
@@ -221,7 +225,7 @@ test("public professionals contain approved profiles only and no ownership secre
           ],
         },
         { id: "pro-2", status: "pending", ownerToken: "secret" },
-      ],
+      ], updatedAt: AT },
       is_public: true,
       updated_at: AT,
     },

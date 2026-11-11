@@ -8,14 +8,15 @@ export const metadata: Metadata = {
     "صفحة المكتب الهندسي المعتمد: بيانات المكتب، سابقة الأعمال المنشورة بعد اعتماد الإدارة، والفيديوهات التعريفية.",
 };
 
-export default function EngineerProfilePage({
+export default async function EngineerProfilePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   return (
     <PageStyleScope pageId="engineer">
-      <ProfessionalProfile kind="engineer" id={params.id} />
+      <ProfessionalProfile kind="engineer" id={id} />
     </PageStyleScope>
   );
 }

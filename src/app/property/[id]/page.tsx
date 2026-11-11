@@ -6,7 +6,7 @@ import PageStyleScope from "@/components/builder/PageStyleScope";
 import { DEFAULT_CURRENCY, formatConvertedPrice } from "@/lib/currency-data";
 
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 /** معرّف إعلان أضافه مستخدم — يُحلّ على العميل من التخزين المحلي */
@@ -16,8 +16,9 @@ export function generateStaticParams() {
   return mockProperties.map((p) => ({ id: p.id }));
 }
 
-export function generateMetadata({ params }: PageProps): Metadata {
-  const property = getPropertyById(params.id);
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  const property = getPropertyById(id);
   if (!property) {
     return { title: "تفاصيل العقار | عقار FAMILY" };
   }
@@ -33,15 +34,16 @@ export function generateMetadata({ params }: PageProps): Metadata {
   };
 }
 
-export default function PropertyPage({ params }: PageProps) {
-  const property = getPropertyById(params.id);
+export default async function PropertyPage({ params }: PageProps) {
+  const { id } = await params;
+  const property = getPropertyById(id);
   /* أي معرّف غير معروف وغير تابع لإعلانات المستخدمين = 404 حقيقي
      بدل صفحة 200 فارغة (soft-404) */
-  if (!property && !USER_PROPERTY_ID.test(params.id)) notFound();
+  if (!property && !USER_PROPERTY_ID.test(id)) notFound();
   return (
     <PageStyleScope pageId="property">
       <PropertyDetailClient
-        id={params.id}
+        id={id}
         /* لا تُمرَّر بيانات تواصل المالك للعميل — كل التواصل عبر إدارة الموقع */
         initialProperty={property ? { ...property, whatsapp: "" } : undefined}
       />

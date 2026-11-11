@@ -76,6 +76,13 @@ export class CloudRestError extends Error {
   }
 }
 
+export class CloudConflictError extends Error {
+  constructor(message = "تم تعديل البيانات من جهاز آخر. اجلب آخر نسخة ثم أعد المحاولة.") {
+    super(message);
+    this.name = "CloudConflictError";
+  }
+}
+
 /**
  * طلب داخلي عام إلى PostgREST. يبقى مفتاح service_role على السيرفر فقط.
  * يُستخدم للجداول العلاقية التي لا تمر عبر app_state، مثل جداول CRM.
@@ -201,6 +208,35 @@ export async function cloudPutRow(
 
   const rows = (await response.json()) as CloudRow[];
   return rows[0];
+}
+
+/** حفظ قائمة المهنيين بقفل ذري ونسخ تفاؤلية لكل سجل. */
+export async function cloudPutProfessionalsAdmin(
+  records: Record<string, unknown>[],
+  updatedBy: string
+): Promise<CloudRow> {
+  const result = await cloudRest<{
+    result: "updated" | "conflict" | "not_found";
+    records?: unknown[];
+    updated_at?: string;
+  }>("rpc/update_professionals_admin", {
+    method: "POST",
+    body: { p_records: records, p_updated_by: updatedBy },
+    timeoutMs: 12_000,
+  });
+  if (result.result === "conflict") throw new CloudConflictError();
+  if (result.result === "not_found") {
+    return cloudPutRow("aqaar-professionals", records, updatedBy);
+  }
+  if (result.result !== "updated" || !result.records || !result.updated_at) {
+    throw new Error("تعذر حفظ بيانات المهنيين");
+  }
+  return {
+    key: "aqaar-professionals",
+    value: result.records,
+    is_public: true,
+    updated_at: result.updated_at,
+  };
 }
 
 /** رابط عام لملف داخل bucket الصور */

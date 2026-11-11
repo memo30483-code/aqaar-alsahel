@@ -15,6 +15,8 @@ import {
   Briefcase,
   Building2,
   Check,
+  Cloud,
+  CloudOff,
   Eye,
   Film,
   ImagePlus,
@@ -35,6 +37,7 @@ import {
 } from "@/lib/projects-taxonomy";
 import { readCompressedImage } from "@/lib/image-upload";
 import { getSession, hasAdminAccess, type Session } from "@/lib/session";
+import { useProfessionalSync } from "@/lib/use-professional-sync";
 import {
   addProfessionalProject,
   addProfessionalReel,
@@ -95,6 +98,10 @@ export default function ProfessionalDashboard() {
   }, []);
 
   const isAdmin = hasAdminAccess(session);
+  const professionalSync = useProfessionalSync(
+    mounted && recordsReady && Boolean(session) && !isAdmin,
+    session?.email ?? ""
+  );
 
   const professional = useMemo(() => {
     if (!session) return null;
@@ -109,7 +116,7 @@ export default function ProfessionalDashboard() {
     return records.find((record) => professionalOwnedBySession(record, session)) ?? null;
   }, [records, session, isAdmin, adminSelectedId]);
 
-  if (!mounted || !recordsReady) {
+  if (!mounted || !recordsReady || professionalSync.loading) {
     return (
       <div className="grid min-h-[50vh] place-items-center bg-sand-50">
         <span className="h-8 w-8 animate-spin rounded-full border-2 border-gold-300 border-t-transparent" />
@@ -141,6 +148,11 @@ export default function ProfessionalDashboard() {
         title={t("prof.dash.notProfessionalTitle")}
         desc={t("prof.dash.notProfessionalDesc")}
       >
+        {professionalSync.state === "error" && (
+          <button type="button" onClick={professionalSync.retry} className={BTN_GHOST}>
+            إعادة تحميل الملف من السيرفر
+          </button>
+        )}
         <Link href="/join" className={BTN_PRIMARY}>
           {t("prof.dash.join")}
         </Link>
@@ -232,6 +244,39 @@ export default function ProfessionalDashboard() {
       </section>
 
       <div className="mx-auto w-full max-w-[1180px] px-4 py-6 sm:px-6">
+        {!isAdmin && (
+          <div
+            className={`mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-[11px] font-bold ${
+              professionalSync.state === "error" ||
+              professionalSync.state === "conflict"
+                ? "border-rose-200 bg-rose-50 text-rose-700"
+                : professionalSync.state === "saving"
+                  ? "border-amber-200 bg-amber-50 text-amber-800"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-700"
+            }`}
+            role="status"
+          >
+            <span className="flex items-center gap-2">
+              {professionalSync.state === "error" ||
+              professionalSync.state === "conflict" ? (
+                <CloudOff className="h-4 w-4" />
+              ) : (
+                <Cloud className="h-4 w-4" />
+              )}
+              {professionalSync.message}
+            </span>
+            {(professionalSync.state === "error" ||
+              professionalSync.state === "conflict") && (
+              <button
+                type="button"
+                onClick={professionalSync.retry}
+                className="rounded-lg border border-current/20 bg-white px-3 py-1.5 text-[10px] font-black"
+              >
+                إعادة المحاولة
+              </button>
+            )}
+          </div>
+        )}
         <div className="flex flex-wrap gap-1.5 rounded-2xl border border-sand-200 bg-white p-1.5">
           {(
             [

@@ -59,7 +59,7 @@ interface OtpVerifyRpcRow {
   verified_target_hash: string | null;
 }
 
-interface OtpProofPayload {
+export interface OtpProofPayload {
   challengeId: string;
   targetHash: string;
   channel: OtpChannel;
@@ -169,12 +169,29 @@ export function otpProviderStatuses(): OtpProviderStatuses {
   };
 }
 
+/** حسابات المنصة تعتمد على البريد؛ لذلك لا يُسمح بتعطيل إثباته عند التسجيل. */
+function registrationOtpPolicy(value: unknown): OtpSettings {
+  const settings = normalizeOtpSettings(value);
+  return {
+    ...settings,
+    requiredForRegistration: true,
+    allowUserChoice: false,
+    defaultChannel: "email",
+    channels: {
+      ...settings.channels,
+      email: { enabled: true },
+    },
+  };
+}
+
 export async function readOtpSettings(): Promise<OtpSettings> {
   try {
     const rows = await cloudGetRows({ keys: [OTP_SETTINGS_KEY], timeoutMs: 8_000 });
-    return normalizeOtpSettings(rows.find((row) => row.key === OTP_SETTINGS_KEY)?.value);
+    return registrationOtpPolicy(
+      rows.find((row) => row.key === OTP_SETTINGS_KEY)?.value
+    );
   } catch {
-    return normalizeOtpSettings(DEFAULT_OTP_SETTINGS);
+    return registrationOtpPolicy(DEFAULT_OTP_SETTINGS);
   }
 }
 
@@ -193,7 +210,7 @@ export async function writeOtpSettings(
   value: unknown,
   actor: string
 ): Promise<OtpSettings> {
-  const settings = normalizeOtpSettings(value);
+  const settings = registrationOtpPolicy(value);
   const providers = otpProviderStatuses();
   const enabled = OTP_CHANNELS.filter(
     (channel) => settings.channels[channel].enabled
@@ -227,13 +244,13 @@ export async function publicOtpOptions(): Promise<PublicOtpOptions> {
     readOtpSettings(),
     Promise.resolve(otpProviderStatuses()),
   ]);
-  const channels = OTP_CHANNELS.filter(
-    (channel) =>
-      settings.channels[channel].enabled && providers[channel].configured
-  );
+  const channels: OtpChannel[] =
+    settings.channels.email.enabled && providers.email.configured
+      ? ["email"]
+      : [];
   return {
     required: settings.requiredForRegistration,
-    allowUserChoice: settings.allowUserChoice,
+    allowUserChoice: false,
     defaultChannel: channels.includes(settings.defaultChannel)
       ? settings.defaultChannel
       : channels[0] ?? null,
@@ -591,7 +608,7 @@ export function otpProofMatchesRegistration(
   proof: OtpProofPayload,
   input: { email: string; phone: string }
 ): boolean {
-  if (proof.purpose !== "registration") return false;
+  if (proof.purpose !== "registration" || proof.channel !== "email") return false;
   try {
     return (
       targetHash(

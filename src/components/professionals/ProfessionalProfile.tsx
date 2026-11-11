@@ -615,9 +615,11 @@ function ContactCard({
   );
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
 
-  const submit = (event: FormEvent) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if (sending) return;
     if (!name.trim() || !phone.trim() || !message.trim()) {
       setError(t("join.error.required"));
       return;
@@ -626,7 +628,8 @@ function ContactCard({
       setError(t("join.error.phone"));
       return;
     }
-    const result = addProfessionalRequest({
+    setSending(true);
+    const result = await addProfessionalRequest({
       professionalId: record.id,
       professionalName: record.companyAr || record.nameAr,
       kind: record.kind,
@@ -635,6 +638,7 @@ function ContactCard({
       email,
       message,
     });
+    setSending(false);
     if (!result.ok) {
       setError(result.error ?? t("join.error.required"));
       return;
@@ -714,9 +718,10 @@ function ContactCard({
           </p>
           <button
             type="submit"
-            className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-l from-gold-500 to-gold-400 px-4 py-2.5 text-[11.5px] font-black text-ocean-950 transition hover:-translate-y-0.5"
+            disabled={sending}
+            className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-l from-gold-500 to-gold-400 px-4 py-2.5 text-[11.5px] font-black text-ocean-950 transition hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-65"
           >
-            {t("prof.contact.submit")}
+            {sending ? t("join.submitting") : t("prof.contact.submit")}
             <ArrowLeft className="h-3.5 w-3.5 rtl:rotate-180" />
           </button>
         </form>

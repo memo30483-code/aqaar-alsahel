@@ -8,14 +8,15 @@ export const metadata: Metadata = {
     "صفحة المحامي المعتمد: الصورة الشخصية، لوجو المكتب، التخصصات، والفيديوهات التعريفية بعد اعتماد الإدارة.",
 };
 
-export default function LawyerProfilePage({
+export default async function LawyerProfilePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   return (
     <PageStyleScope pageId="lawyer">
-      <ProfessionalProfile kind="lawyer" id={params.id} />
+      <ProfessionalProfile kind="lawyer" id={id} />
     </PageStyleScope>
   );
 }

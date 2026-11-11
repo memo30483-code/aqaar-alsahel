@@ -20,6 +20,8 @@ import {
   resolveProjectTypeId,
   type ProjectTypeId,
 } from "@/lib/projects-taxonomy";
+import { submitPublicRequest } from "@/lib/public-requests";
+import { professionalItems } from "@/lib/professionals-data";
 
 export type ProfessionalKind =
   | "developer"
@@ -204,6 +206,10 @@ export interface ProfessionalRecord {
    * لا يكفي البريد وحده (كان يسمح بالدخول على ملف أي مهني بكتابة بريده).
    */
   ownerToken?: string;
+  /** معرّف الحساب على السيرفر — لا يُعرض للعامة. */
+  accountId?: string;
+  /** نسخة تفاؤلية لمنع الكتابة فوق تعديل أحدث. */
+  version?: number;
   /**
    * سياسة نشر المشاريع: مراجعة الإدارة أو نشر مباشر.
    * "auto" تُمنح من الإدارة لحسابات موثوقة فقط.
@@ -553,6 +559,13 @@ function normalizeProfessional(
     reviewedAt: optional(raw.reviewedAt),
     reviewNote: optional(raw.reviewNote),
     ownerToken: optional(raw.ownerToken),
+    accountId: optional(raw.accountId),
+    version:
+      typeof raw.version === "number" &&
+      Number.isSafeInteger(raw.version) &&
+      raw.version >= 1
+        ? raw.version
+        : 1,
     publishPolicy: raw.publishPolicy === "auto" ? "auto" : "review",
     order: Number.isFinite(raw.order) ? Number(raw.order) : index + 1,
     createdAt: optional(raw.createdAt),
@@ -1080,16 +1093,7 @@ function readStored(): ProfessionalRecord[] | null {
   try {
     const raw = window.localStorage.getItem(PROFESSIONALS_KEY);
     if (!raw) return null;
-    const parsed: unknown = JSON.parse(raw);
-    if (Array.isArray(parsed)) return parsed as ProfessionalRecord[];
-    if (
-      parsed &&
-      typeof parsed === "object" &&
-      Array.isArray((parsed as { items?: unknown }).items)
-    ) {
-      return (parsed as { items: ProfessionalRecord[] }).items;
-    }
-    return [];
+    return professionalItems(JSON.parse(raw)) as ProfessionalRecord[];
   } catch {
     return null;
   }
@@ -1286,6 +1290,7 @@ export function addProfessional(
     requestedAt: now,
     reviewNote: optional(input.reviewNote),
     ownerToken: optional(input.ownerToken),
+    version: 1,
     order:
       records.filter((item) => item.kind === input.kind).length + 1,
     createdAt: now,
@@ -1826,7 +1831,7 @@ function writeRequests(requests: ProfessionalRequest[]): boolean {
   return true;
 }
 
-export function addProfessionalRequest(input: {
+export async function addProfessionalRequest(input: {
   professionalId: string;
   professionalName: string;
   kind: ProfessionalKind;
@@ -1834,59 +1839,23 @@ export function addProfessionalRequest(input: {
   phone: string;
   email?: string;
   message: string;
-}): { ok: boolean; error?: string } {
+}): Promise<{ ok: boolean; error?: string }> {
   if (!input.name.trim()) return { ok: false, error: "الاسم مطلوب" };
   if (!input.phone.trim()) return { ok: false, error: "رقم الهاتف مطلوب" };
   if (!input.message.trim()) return { ok: false, error: "اكتب رسالتك" };
-  const requests = readRequests();
-  const saved = writeRequests([
-    {
-      id: `req-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+  const result = await submitPublicRequest({
+    kind: "professional_request",
+    name: input.name.trim(),
+    phone: input.phone.trim(),
+    email: input.email?.trim() || undefined,
+    message: input.message.trim(),
+    payload: {
       professionalId: input.professionalId,
       professionalName: input.professionalName,
-      kind: input.kind,
-      name: input.name.trim(),
-      phone: input.phone.trim(),
-      email: optional(input.email),
-      message: input.message.trim(),
-      status: "new",
-      createdAt: new Date().toISOString(),
+      requestKind: input.kind,
     },
-    ...requests,
-  ]);
-  if (!saved) {
-    return {
-      ok: false,
-      error: "تعذّر إرسال الطلب — مساحة التخزين في المتصفح ممتلئة أو غير متاحة",
-    };
-  }
-  /*
-   * نسخة السيرفر: تُحفظ في inquiries وتُنشئ بطاقة CRM تلقائيًا، حتى لا
-   * يعتمد وصول الطلب للإدارة على متصفح الزائر أو على الاستيراد اليدوي.
-   */
-  try {
-    void fetch("/api/requests", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      keepalive: true,
-      body: JSON.stringify({
-        kind: "professional_request",
-        name: input.name.trim(),
-        phone: input.phone.trim(),
-        email: input.email?.trim() || undefined,
-        message: input.message.trim(),
-        payload: {
-          professionalId: input.professionalId,
-          professionalName: input.professionalName,
-          requestKind: input.kind,
-        },
-      }),
-    }).catch(() => {
-      /* الطلب محفوظ محليًا ويمكن استيراده لاحقًا */
-    });
-  } catch {
-    /* لا نُفشل إرسال الطلب بسبب الشبكة */
-  }
+  });
+  if (!result.ok) return { ok: false, error: result.error };
   return { ok: true };
 }
 

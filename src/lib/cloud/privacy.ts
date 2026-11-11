@@ -6,6 +6,7 @@
  */
 
 import { isPublicCloudKey } from "./keys";
+import { professionalItems } from "@/lib/professionals-data";
 
 export interface PublicCloudRow {
   key: string;
@@ -87,9 +88,7 @@ function sanitizeProperties(
 }
 
 function sanitizeProfessionals(value: unknown): unknown[] {
-  if (!Array.isArray(value)) return [];
-
-  return value
+  return professionalItems(value)
     .filter((raw) => objectValue(raw).status === "approved")
     .map((raw) => {
       const source = objectValue(raw);

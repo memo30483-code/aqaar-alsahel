@@ -101,6 +101,7 @@ export default function ProfessionalDirectory({ kind, hideIntro = false }: Props
   const [requestMessage, setRequestMessage] = useState("");
   const [requestError, setRequestError] = useState("");
   const [requestSent, setRequestSent] = useState(false);
+  const [requestSending, setRequestSending] = useState(false);
 
   const keys = KIND_KEYS[kind];
   const contactTarget = records.find((record) => record.id === contactId) ?? null;
@@ -155,12 +156,14 @@ export default function ProfessionalDirectory({ kind, hideIntro = false }: Props
   const closeAll = () => {
     setContactId(null);
     setRequestSent(false);
+    setRequestSending(false);
     setRequestError("");
   };
 
   const openContact = (record: ProfessionalRecord) => {
     setContactId(record.id);
     setRequestSent(false);
+    setRequestSending(false);
     setRequestError("");
     setRequestName("");
     setRequestPhone("");
@@ -172,9 +175,9 @@ export default function ProfessionalDirectory({ kind, hideIntro = false }: Props
     );
   };
 
-  const submitRequest = (event: FormEvent) => {
+  const submitRequest = async (event: FormEvent) => {
     event.preventDefault();
-    if (!contactTarget) return;
+    if (!contactTarget || requestSending) return;
     if (!requestName.trim() || !requestPhone.trim() || !requestMessage.trim()) {
       setRequestError(t("join.error.required"));
       return;
@@ -183,7 +186,8 @@ export default function ProfessionalDirectory({ kind, hideIntro = false }: Props
       setRequestError(t("join.error.phone"));
       return;
     }
-    const result = addProfessionalRequest({
+    setRequestSending(true);
+    const result = await addProfessionalRequest({
       professionalId: contactTarget.id,
       professionalName: contactTarget.companyAr || contactTarget.nameAr,
       kind: contactTarget.kind,
@@ -192,6 +196,7 @@ export default function ProfessionalDirectory({ kind, hideIntro = false }: Props
       email: requestEmail,
       message: requestMessage,
     });
+    setRequestSending(false);
     if (!result.ok) {
       setRequestError(result.error ?? t("join.error.required"));
       return;
@@ -609,9 +614,10 @@ export default function ProfessionalDirectory({ kind, hideIntro = false }: Props
                 </p>
                 <button
                   type="submit"
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-l from-gold-500 to-gold-400 px-5 py-2.5 text-[12px] font-black text-ocean-950 transition hover:-translate-y-0.5"
+                  disabled={requestSending}
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-l from-gold-500 to-gold-400 px-5 py-2.5 text-[12px] font-black text-ocean-950 transition hover:-translate-y-0.5 disabled:cursor-wait disabled:opacity-65"
                 >
-                  {t("prof.contact.submit")}
+                  {requestSending ? t("join.submitting") : t("prof.contact.submit")}
                   <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
                 </button>
               </form>

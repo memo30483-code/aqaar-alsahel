@@ -25,10 +25,11 @@ npm run dev
 | `npm start` | تشغيل نسخة الإنتاج بعد البناء |
 | `npm run lint` | فحص ESLint |
 | `node --test tests/*.test.cjs` | تشغيل اختبارات المنطق والأمان |
+| `npm run test:e2e` | تشغيل اختبارات المتصفح بعد بناء نسخة الإنتاج |
 
 ## التقنيات
 
-- Next.js 14 (App Router) + TypeScript
+- Next.js 16 (App Router) + React 19 + TypeScript
 - Tailwind CSS بهوية ocean / sand / gold وخط Cairo
 - Leaflet.js للخريطة التفاعلية
 - Web Crypto لتوقيع جلسة الأدمن (يعمل على Edge وNode)
@@ -48,7 +49,7 @@ tests/            اختبارات node:test
 
 ## دخول لوحة التحكم
 
-الوصول إلى `/admin` محمي على مستوى السيرفر عبر `src/middleware.ts`:
+الوصول إلى `/admin` محمي على مستوى السيرفر عبر `src/proxy.ts`:
 
 - التحقق من البريد وكلمة المرور يتم في `/api/admin/login` فقط (لا توجد أي بيانات
   دخول داخل حزمة المتصفح).
@@ -62,22 +63,44 @@ tests/            اختبارات node:test
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=كلمة-مرور-قوية
 ADMIN_SESSION_SECRET=سلسلة-عشوائية-64-حرفًا
+USER_SESSION_SECRET=سلسلة-مستقلة-عشوائية-64-حرفًا
 ADMIN_NAME=مدير النظام   # اختياري
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+OTP_SECRET=سلسلة-مستقلة-عشوائية-64-حرفًا
+RESEND_API_KEY=re_...
+OTP_EMAIL_FROM=verify@your-domain.com
 ```
+
+إنشاء الحسابات يفشل مغلقًا بدون Resend ومرسل بريد موثّق؛ لا تُعطّل المنصة
+التحقق من ملكية البريد في بيئة الإنتاج.
 
 لتغيير كلمة المرور: عدّل `ADMIN_PASSWORD` ثم أعد تشغيل السيرفر (أو أعد النشر)،
 ثم سجّل الخروج والدخول من جديد.
 
 ## البيانات الحالية
 
-البيانات (الإعلانات، المستخدمون، صلاحيات الإدارة، إعدادات الموقع، تخطيطات الصفحات)
-تُحفظ حاليًا في `localStorage` داخل المتصفح، أي أنها **لكل جهاز على حدة** ولا تظهر
-للزوار على أجهزة أخرى. الربط بقاعدة بيانات حقيقية (Supabase) هو خطوة لاحقة موثّقة
-في خطة التطوير، وبعدها تنتقل كل هذه المتاجر إلى الخادم تدريجيًا.
+المحتوى العام وإعدادات الإدارة تُزامَن مع جدول `app_state` في Supabase، بينما تستخدم
+أجزاء مثل CRM والتقييمات وOTP وحدود الطلبات جداول PostgreSQL مستقلة. ما زالت بعض
+واجهات الإدارة تستخدم `localStorage` ككاش محلي ثم تدفع التغييرات إلى السيرفر؛ لذلك
+يجب ضبط `SUPABASE_URL` و`SUPABASE_SERVICE_ROLE_KEY` في بيئة الإنتاج.
+
+قبل تشغيل نسخة جديدة، طبّق ملفات `supabase/migrations` بالترتيب. ملف
+`20261111_professional_ownership.sql` مطلوب لحفظ تعديلات المهنيين بصورة ذرية
+ولمنع جهاز قديم من الكتابة فوق تعديل أحدث.
 
 ## الاختبارات
 
-تُشغَّل عبر `node --test` ولا تحتاج متصفحًا:
+اختبارات المنطق تُشغَّل عبر `npm test` ولا تحتاج متصفحًا. واختبارات المسارات
+الديناميكية تعمل بمتصفح Chromium حقيقي بعد بناء نسخة الإنتاج:
+
+```bash
+npx playwright install chromium
+npm run build
+npm run test:e2e
+```
+
+تشمل الاختبارات الحالية:
 
 - `tests/page-builder-store.test.cjs` — محرك البلدر وسجل الصفحات والثيمات.
 - `tests/admin-session.test.cjs` — توقيع جلسة الأدمن ورفض التلاعب والانتهاء.

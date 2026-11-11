@@ -24,13 +24,15 @@ import {
 } from "@/lib/user-session";
 import { initializeReviewRecord, readWorkflowSettings } from "@/lib/workflow-server";
 import { cloudGetRows, cloudPutRow } from "@/lib/cloud/server";
+import { canonicalProfessionalsValue } from "@/lib/professionals-data";
 import {
   consumeOtpRegistrationProof,
   OTP_PROOF_COOKIE,
   OtpError,
   otpProofMatchesRegistration,
+  publicOtpOptions,
   readOtpProofToken,
-  readOtpSettings,
+  type OtpProofPayload,
 } from "@/lib/otp-server";
 
 /**
@@ -126,7 +128,7 @@ async function saveProfessionalRegistration(input: {
 }): Promise<string> {
   const rows = await cloudGetRows({ keys: [PROFESSIONALS_KEY], timeoutMs: 8_000 });
   const stored = rows.find((row) => row.key === PROFESSIONALS_KEY)?.value;
-  const records = Array.isArray(stored) ? stored : [];
+  const records = canonicalProfessionalsValue(stored);
   const normalizedEmail = normalizeEmail(input.email);
   const existing = records.find((raw) => {
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) return false;
@@ -163,6 +165,7 @@ async function saveProfessionalRegistration(input: {
     projects: [],
     ownerToken: input.ownerToken,
     accountId: input.accountId,
+    version: 1,
     publishPolicy: "review",
     requestedAt: now,
     createdAt: now,
@@ -260,25 +263,30 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    const otpSettings = await readOtpSettings();
-    if (otpSettings.requiredForRegistration) {
-      const proof = readOtpProofToken(
-        (await cookies()).get(OTP_PROOF_COOKIE)?.value
+    const otpOptions = await publicOtpOptions();
+    if (!otpOptions.channels.includes("email")) {
+      return NextResponse.json(
+        { ok: false, error: "otp_provider_unavailable" },
+        { status: 503 }
       );
-      if (!proof || !otpProofMatchesRegistration(proof, { email, phone })) {
-        return NextResponse.json(
-          { ok: false, error: "otp_required" },
-          { status: 403 }
-        );
-      }
-      if (!(await consumeOtpRegistrationProof(proof))) {
-        return NextResponse.json(
-          { ok: false, error: "otp_proof_used" },
-          { status: 409 }
-        );
-      }
+    }
+    const proof: OtpProofPayload | null = readOtpProofToken(
+      (await cookies()).get(OTP_PROOF_COOKIE)?.value
+    );
+    if (!proof || !otpProofMatchesRegistration(proof, { email, phone })) {
+      return NextResponse.json(
+        { ok: false, error: "otp_required" },
+        { status: 403 }
+      );
     }
     const { salt, hash } = await hashPassword(password);
+    if (!(await consumeOtpRegistrationProof(proof))) {
+      return NextResponse.json(
+        { ok: false, error: "otp_proof_used" },
+        { status: 409 }
+      );
+    }
+    const verifiedAt = new Date().toISOString();
     const memberStatus = workflow.members.mode === "open" ? "approved" : "pending";
     const record: AccountRecord = {
       id: randomUUID(),
@@ -294,9 +302,11 @@ export async function POST(request: Request) {
       ...(ownerToken ? { ownerToken } : {}),
       salt,
       hash,
-      createdAt: new Date().toISOString(),
+      createdAt: verifiedAt,
+      emailVerifiedAt: verifiedAt,
+      sessionVersion: 1,
       status: memberStatus,
-      statusUpdatedAt: new Date().toISOString(),
+      statusUpdatedAt: verifiedAt,
       statusUpdatedBy: memberStatus === "approved" ? "registration-policy" : "system",
     };
 
@@ -340,6 +350,7 @@ export async function POST(request: Request) {
         sub: record.id,
         email: record.email,
         name: record.name,
+        ver: record.sessionVersion,
       });
       response.cookies.set(USER_COOKIE, token, {
         httpOnly: true,

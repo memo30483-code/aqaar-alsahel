@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   CircleCheck,
   CircleX,
@@ -68,16 +68,11 @@ export default function AdminOtpSettingsTab({ can, notify }: Props) {
     void load();
   }, [load]);
 
-  const configuredEnabled = useMemo(
-    () =>
-      OTP_CHANNELS.filter(
-        (channel) =>
-          settings.channels[channel].enabled && providers?.[channel].configured
-      ),
-    [providers, settings.channels]
-  );
-
   const setChannel = (channel: OtpChannel, enabled: boolean) => {
+    if (channel === "email" && !enabled) {
+      notify("البريد قناة إلزامية لإثبات هوية الحساب ولا يمكن تعطيله");
+      return;
+    }
     if (enabled && !providers?.[channel].configured) {
       notify(`اربط مزود ${OTP_CHANNEL_LABEL[channel]} أولًا قبل التفعيل`);
       return;
@@ -139,7 +134,7 @@ export default function AdminOtpSettingsTab({ can, notify }: Props) {
     <div className="space-y-5">
       <Panel
         title="التحقق OTP"
-        desc="البريد هو القناة الموصى بها في البداية. SMS وواتساب جاهزان برمجيًا ولا ينفذان أي اتصال أو تكلفة وهما معطلان."
+        desc="البريد قناة إلزامية لإنشاء الحسابات. SMS وواتساب جاهزان برمجيًا لاستخدامات لاحقة ولا ينفذان أي اتصال أو تكلفة وهما معطلان."
         actions={
           <button
             onClick={() => void save()}
@@ -155,29 +150,15 @@ export default function AdminOtpSettingsTab({ can, notify }: Props) {
           </button>
         }
       >
-        <div
-          className={`mb-5 rounded-2xl border p-4 ${
-            settings.requiredForRegistration
-              ? "border-emerald-200 bg-emerald-50"
-              : "border-amber-200 bg-amber-50"
-          }`}
-        >
+        <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
           <div className="flex items-start gap-3">
-            <ShieldCheck
-              className={`mt-0.5 h-5 w-5 ${
-                settings.requiredForRegistration
-                  ? "text-emerald-600"
-                  : "text-amber-600"
-              }`}
-            />
+            <ShieldCheck className="mt-0.5 h-5 w-5 text-emerald-600" />
             <div className="flex-1">
               <p className="font-black text-ocean-950">
-                {settings.requiredForRegistration
-                  ? "OTP مفروض على التسجيل"
-                  : "OTP غير مفروض حاليًا"}
+                OTP بالبريد مفروض على التسجيل
               </p>
               <p className="mt-1 text-xs leading-6 text-sand-700">
-                لا تفعّل الفرض قبل ظهور قناة واحدة على الأقل بحالة «مربوطة وجاهزة».
+                سياسة أمان ثابتة: لن يُنشأ حساب جديد قبل إثبات ملكية البريد الإلكتروني.
               </p>
               <p
                 className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-black ${
@@ -194,18 +175,9 @@ export default function AdminOtpSettingsTab({ can, notify }: Props) {
                 <input
                   type="checkbox"
                   className="h-4 w-4 accent-emerald-600"
-                  checked={settings.requiredForRegistration}
-                  disabled={
-                    !can("otp.manage") ||
-                    (!settings.requiredForRegistration &&
-                      (configuredEnabled.length === 0 || !schemaReady))
-                  }
-                  onChange={(event) =>
-                    setSettings((current) => ({
-                      ...current,
-                      requiredForRegistration: event.target.checked,
-                    }))
-                  }
+                  checked
+                  disabled
+                  readOnly
                 />
                 فرض التحقق قبل إنشاء أي حساب
               </label>
@@ -269,6 +241,7 @@ export default function AdminOtpSettingsTab({ can, notify }: Props) {
                     onChange={(enabled) => setChannel(channel, enabled)}
                     disabled={
                       !can("otp.manage") ||
+                      channel === "email" ||
                       (!provider.configured &&
                         !settings.channels[channel].enabled)
                     }
@@ -298,29 +271,13 @@ export default function AdminOtpSettingsTab({ can, notify }: Props) {
         </div>
 
         <div className="mt-5 grid gap-4 rounded-2xl border border-sand-200 bg-sand-50 p-4 md:grid-cols-2 xl:grid-cols-4">
-          <Field label="القناة الافتراضية">
+          <Field label="قناة إثبات التسجيل">
             <select
-              value={settings.defaultChannel}
-              onChange={(event) =>
-                setSettings((current) => ({
-                  ...current,
-                  defaultChannel: event.target.value as OtpChannel,
-                }))
-              }
+              value="email"
+              disabled
               className={INPUT}
             >
-              {OTP_CHANNELS.map((channel) => (
-                <option
-                  key={channel}
-                  value={channel}
-                  disabled={
-                    !settings.channels[channel].enabled ||
-                    !providers[channel].configured
-                  }
-                >
-                  {OTP_CHANNEL_LABEL[channel]}
-                </option>
-              ))}
+              <option value="email">{OTP_CHANNEL_LABEL.email}</option>
             </select>
           </Field>
           <Field label="صلاحية الكود — دقائق">

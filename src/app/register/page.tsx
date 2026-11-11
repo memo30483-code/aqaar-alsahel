@@ -33,6 +33,17 @@ import {
 type AccountType = "individual" | "developer" | "marketer" | "lawyer" | "engineer";
 type IndividualRole = "seeker" | "owner";
 
+function accountTypeFromQuery(value: string | null): AccountType | null {
+  const normalized = value === "broker" ? "marketer" : value;
+  return normalized === "individual" ||
+    normalized === "developer" ||
+    normalized === "marketer" ||
+    normalized === "lawyer" ||
+    normalized === "engineer"
+    ? normalized
+    : null;
+}
+
 type TextFieldName =
   | "fullName"
   | "companyName"
@@ -713,9 +724,12 @@ function RegisterContent() {
     setTouched({});
   };
 
-  /** قراءة هدف التوجيه بعد إتمام التسجيل من ?redirect=/add-property */
+  /** قراءة نوع الحساب وهدف التوجيه من الرابط بعد توحيد /join و/register. */
   useEffect(() => {
-    const target = new URLSearchParams(window.location.search).get("redirect");
+    const params = new URLSearchParams(window.location.search);
+    const requestedType = accountTypeFromQuery(params.get("role"));
+    if (requestedType) setAccountType(requestedType);
+    const target = params.get("redirect");
     /* رفض //host حتى لا يُستخدم الرابط لإعادة توجيه خارجي */
     if (target && target.startsWith("/") && !target.startsWith("//")) {
       setRedirectTo(target);

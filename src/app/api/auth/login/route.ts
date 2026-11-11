@@ -27,7 +27,8 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const RATE = { limit: 20, windowSeconds: 10 * 60 };
+const IP_RATE = { limit: 20, windowSeconds: 10 * 60 };
+const EMAIL_RATE = { limit: 8, windowSeconds: 10 * 60 };
 
 interface LoginBody {
   email?: unknown;
@@ -37,7 +38,7 @@ interface LoginBody {
 export async function POST(request: Request) {
   const limit = await checkRateLimit(
     hashRateKey("user-login", clientIp(request)),
-    RATE
+    IP_RATE
   );
   if (!limit.allowed) {
     return rateLimitResponse(limit, "محاولات دخول كثيرة. حاول بعد قليل.");
@@ -57,6 +58,17 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { ok: false, error: "invalid_credentials" },
       { status: 401 }
+    );
+  }
+
+  const emailLimit = await checkRateLimit(
+    hashRateKey("user-login-email", normalizeEmail(email)),
+    EMAIL_RATE
+  );
+  if (!emailLimit.allowed) {
+    return rateLimitResponse(
+      emailLimit,
+      "محاولات دخول كثيرة لهذا الحساب. حاول بعد قليل."
     );
   }
 
@@ -106,34 +118,39 @@ export async function POST(request: Request) {
       );
     }
 
-    /* كوكي جلسة موقّع لربط طلبات العقار بالحساب على السيرفر */
+    /* لا نعلن نجاح الدخول إذا تعذّر إنشاء جلسة السيرفر. */
+    let token: string;
+    try {
+      token = await createUserToken({
+        sub: account.id,
+        email: account.email,
+        name: account.name,
+        ver: account.sessionVersion,
+      });
+    } catch {
+      return NextResponse.json(
+        { ok: false, error: "session_unavailable" },
+        { status: 503 }
+      );
+    }
     const response = NextResponse.json({
       ok: true,
       account: toPublicAccount(account),
     });
-    try {
-      const token = await createUserToken({
-        sub: account.id,
-        email: account.email,
-        name: account.name,
-      });
-      response.cookies.set(USER_COOKIE, token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: USER_SESSION_MAX_AGE,
-      });
-    } catch {
-      /* لا نُفشل الدخول إذا تعذّر إنشاء الكوكي — الجلسة المحلية تعمل */
-    }
+    response.cookies.set(USER_COOKIE, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: USER_SESSION_MAX_AGE,
+    });
     return response;
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       {
         ok: false,
         error: "server_error",
-        message: error instanceof Error ? error.message : "خطأ غير معروف",
+        message: "تعذر تسجيل الدخول حاليًا",
       },
       { status: 500 }
     );

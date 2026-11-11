@@ -18,6 +18,8 @@ export interface UserTokenPayload {
   email: string;
   name: string;
   kind: "user";
+  /** نسخة الجلسة الحالية في الحساب؛ اختلافها يُبطل التوكن فورًا. */
+  ver: number;
   /** تاريخ الانتهاء بالثواني (Unix) */
   exp: number;
 }
@@ -112,6 +114,11 @@ export async function verifyUserToken(
     if (!payload || payload.kind !== "user") return null;
     if (typeof payload.sub !== "string" || !payload.sub) return null;
     if (typeof payload.email !== "string" || !payload.email) return null;
+    if (
+      typeof payload.ver !== "number" ||
+      !Number.isSafeInteger(payload.ver) ||
+      payload.ver < 1
+    ) return null;
     if (typeof payload.exp !== "number") return null;
     if (payload.exp * 1000 <= Date.now()) return null;
 
@@ -120,6 +127,7 @@ export async function verifyUserToken(
       email: payload.email,
       name: typeof payload.name === "string" ? payload.name : "",
       kind: "user",
+      ver: payload.ver,
       exp: payload.exp,
     };
   } catch {

@@ -13,6 +13,7 @@ export async function getUserApiSession(): Promise<UserTokenPayload | null> {
     if (
       !account ||
       account.status !== "approved" ||
+      account.sessionVersion !== payload.ver ||
       normalizeEmail(account.email) !== normalizeEmail(payload.email)
     ) return null;
     return payload;

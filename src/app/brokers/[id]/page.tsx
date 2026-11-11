@@ -8,14 +8,15 @@ export const metadata: Metadata = {
     "صفحة المسوق أو الوسيط العقاري المعتمد: بيانات المكتب، العروض المنشورة بعد اعتماد الإدارة، والفيديوهات التعريفية.",
 };
 
-export default function BrokerProfilePage({
+export default async function BrokerProfilePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   return (
     <PageStyleScope pageId="broker">
-      <ProfessionalProfile kind="marketer" id={params.id} />
+      <ProfessionalProfile kind="marketer" id={id} />
     </PageStyleScope>
   );
 }
