@@ -2,13 +2,12 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { randomUUID } from "node:crypto";
 import {
-  ACCOUNTS_VERSION,
+  createAccountAtomic,
   hashPassword,
   isAccountType,
   normalizeEmail,
   readAccounts,
   toPublicAccount,
-  writeAccounts,
   type AccountRecord,
 } from "@/lib/auth/accounts";
 import {
@@ -23,8 +22,9 @@ import {
   createUserToken,
 } from "@/lib/user-session";
 import { initializeReviewRecord, readWorkflowSettings } from "@/lib/workflow-server";
-import { cloudGetRows, cloudPutRow } from "@/lib/cloud/server";
+import { cloudGetRows } from "@/lib/cloud/server";
 import { canonicalProfessionalsValue } from "@/lib/professionals-data";
+import { createProfessionalRecordAtomic } from "@/lib/professionals-server";
 import {
   consumeOtpRegistrationProof,
   OTP_PROOF_COOKIE,
@@ -45,7 +45,7 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const RATE = { limit: 6, windowSeconds: 60 * 60 };
+const RATE = { limit: 6, windowSeconds: 60 * 60, failClosed: true };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -172,9 +172,10 @@ async function saveProfessionalRegistration(input: {
     updatedAt: now,
     order,
   };
-  await cloudPutRow(PROFESSIONALS_KEY, [...records, record].slice(-5000), input.email);
-  await initializeReviewRecord("professionals", id, input.email).catch(() => undefined);
-  return id;
+  const saved = await createProfessionalRecordAtomic(record, input.email);
+  const savedId = String(saved.id ?? id);
+  await initializeReviewRecord("professionals", savedId, input.email).catch(() => undefined);
+  return savedId;
 }
 
 export async function POST(request: Request) {
@@ -310,10 +311,13 @@ export async function POST(request: Request) {
       statusUpdatedBy: memberStatus === "approved" ? "registration-policy" : "system",
     };
 
-    await writeAccounts({
-      version: ACCOUNTS_VERSION,
-      accounts: [...store.file.accounts, record],
-    });
+    const accountResult = await createAccountAtomic(record);
+    if (accountResult === "email_exists") {
+      return NextResponse.json(
+        { ok: false, error: "email_exists" },
+        { status: 409 }
+      );
+    }
 
     let professionalId: string | undefined;
     if (accountType !== "individual" && profile) {

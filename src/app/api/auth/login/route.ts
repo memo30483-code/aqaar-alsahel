@@ -27,8 +27,8 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const IP_RATE = { limit: 20, windowSeconds: 10 * 60 };
-const EMAIL_RATE = { limit: 8, windowSeconds: 10 * 60 };
+const IP_RATE = { limit: 20, windowSeconds: 10 * 60, failClosed: true };
+const EMAIL_RATE = { limit: 8, windowSeconds: 10 * 60, failClosed: true };
 
 interface LoginBody {
   email?: unknown;

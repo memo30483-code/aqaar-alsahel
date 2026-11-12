@@ -70,6 +70,7 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 OTP_SECRET=سلسلة-مستقلة-عشوائية-64-حرفًا
 RESEND_API_KEY=re_...
 OTP_EMAIL_FROM=verify@your-domain.com
+CRON_SECRET=سلسلة-عشوائية-طويلة-لمهام-الصيانة
 ```
 
 إنشاء الحسابات يفشل مغلقًا بدون Resend ومرسل بريد موثّق؛ لا تُعطّل المنصة
@@ -88,6 +89,8 @@ OTP_EMAIL_FROM=verify@your-domain.com
 قبل تشغيل نسخة جديدة، طبّق ملفات `supabase/migrations` بالترتيب. ملف
 `20261111_professional_ownership.sql` مطلوب لحفظ تعديلات المهنيين بصورة ذرية
 ولمنع جهاز قديم من الكتابة فوق تعديل أحدث.
+ملف `20261112_reliability.sql` يفعّل التسجيل الذري، Idempotency لطلبات العقار،
+وتتبّع الملفات المؤقتة التي تنظفها مهمة Vercel اليومية.
 
 ## الاختبارات
 

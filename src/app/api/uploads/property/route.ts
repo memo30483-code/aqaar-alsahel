@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { cloudEnabled, cloudUploadToBucket } from "@/lib/cloud/server";
+import {
+  cloudDeleteStorageObject,
+  cloudEnabled,
+  cloudTrackStagedUpload,
+  cloudUploadToBucket,
+} from "@/lib/cloud/server";
 import { getUserApiSession } from "@/lib/user-api";
 import {
   checkRateLimit,
@@ -142,6 +147,18 @@ export async function POST(request: Request) {
       bytes,
       file.type
     );
+    try {
+      await cloudTrackStagedUpload({
+        path: uploaded.path,
+        bucket,
+        accountId: session.sub,
+        submissionId,
+      });
+    } catch {
+      /* لا نترك ملفًا لا يمكن تتبعه وتنظيفه لاحقًا. */
+      await cloudDeleteStorageObject(bucket, uploaded.path).catch(() => undefined);
+      throw new Error("تعذر تسجيل الملف المؤقت، حاول رفعه مرة أخرى");
+    }
 
     return NextResponse.json({
       ok: true,
@@ -152,7 +169,10 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         ok: false,
-        error: error instanceof Error ? error.message : "تعذر رفع الملف",
+        error:
+          error instanceof Error && error.message.startsWith("تعذر تسجيل")
+            ? error.message
+            : "تعذر رفع الملف",
       },
       { status: 500 }
     );

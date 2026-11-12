@@ -20,7 +20,7 @@ import { appendAudit } from "@/lib/workflow-server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const RATE = { limit: 10, windowSeconds: 30 * 60 };
+const RATE = { limit: 10, windowSeconds: 30 * 60, failClosed: true };
 const NO_STORE = { "Cache-Control": "no-store" };
 
 export async function GET(request: Request) {

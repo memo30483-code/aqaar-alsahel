@@ -281,6 +281,91 @@ export async function cloudUploadToBucket(
   };
 }
 
+export async function cloudTrackStagedUpload(input: {
+  path: string;
+  bucket: "media" | "documents";
+  accountId: string;
+  submissionId: string;
+}): Promise<void> {
+  await cloudRest<unknown[]>("upload_staging?on_conflict=path", {
+    method: "POST",
+    body: {
+      path: input.path,
+      bucket: input.bucket,
+      account_id: input.accountId,
+      submission_id: input.submissionId,
+    },
+    prefer: "resolution=merge-duplicates,return=minimal",
+    timeoutMs: 8_000,
+  });
+}
+
+export async function cloudDeleteStorageObject(
+  bucket: "media" | "documents",
+  path: string
+): Promise<void> {
+  requireCloud();
+  const response = await fetch(`${supabaseUrl()}/storage/v1/object/${bucket}`, {
+    method: "DELETE",
+    headers: headers(),
+    body: JSON.stringify({ prefixes: [path] }),
+    cache: "no-store",
+    signal: timeoutSignal(10_000),
+  });
+  if (!response.ok && response.status !== 404) {
+    throw new Error(`تعذر حذف الملف المؤقت (${response.status})`);
+  }
+}
+
+export interface StagedUploadRow {
+  path: string;
+  bucket: "media" | "documents";
+  account_id: string;
+  submission_id: string;
+  claimed_at: string | null;
+  created_at: string;
+}
+
+export async function cloudGetOrphanUploads(
+  olderThanIso: string,
+  limit = 100
+): Promise<StagedUploadRow[]> {
+  const params = new URLSearchParams();
+  params.set("select", "path,bucket,account_id,submission_id,claimed_at,created_at");
+  params.set("claimed_at", "is.null");
+  params.set("created_at", `lt.${olderThanIso}`);
+  params.set("order", "created_at.asc");
+  params.set("limit", String(Math.min(Math.max(limit, 1), 500)));
+  return cloudRest<StagedUploadRow[]>(`upload_staging?${params.toString()}`, {
+    timeoutMs: 10_000,
+  });
+}
+
+export async function cloudDeleteUploadTracking(paths: string[]): Promise<void> {
+  if (!paths.length) return;
+  const safe = paths
+    .filter(Boolean)
+    .slice(0, 500)
+    .map((path) => `"${path.replace(/"/g, "")}"`)
+    .join(",");
+  if (!safe) return;
+  await cloudRest<void>(`upload_staging?path=in.(${encodeURIComponent(safe)})`, {
+    method: "DELETE",
+    timeoutMs: 10_000,
+  });
+}
+
+export async function cloudPurgeClaimedUploadTracking(
+  olderThanIso: string
+): Promise<void> {
+  const params = new URLSearchParams();
+  params.set("claimed_at", `lt.${olderThanIso}`);
+  await cloudRest<void>(`upload_staging?${params.toString()}`, {
+    method: "DELETE",
+    timeoutMs: 10_000,
+  });
+}
+
 /** رفع صورة عامة — دالة توافقية للاستخدامات القائمة */
 export async function cloudUpload(
   path: string,
@@ -353,6 +438,54 @@ export async function cloudInsertInquiry(
 
   const rows = (await response.json()) as { id: string; created_at: string }[];
   return rows[0];
+}
+
+export async function cloudCreatePropertySubmission(input: {
+  accountId: string;
+  submissionId: string;
+  property: Record<string, unknown>;
+  reference: string;
+  name: string;
+  phone?: string;
+  message: string;
+}): Promise<{
+  result: "created" | "duplicate";
+  inquiryId: string;
+  reference: string;
+  property: Record<string, unknown>;
+}> {
+  const result = await cloudRest<{
+    result?: "created" | "duplicate" | "invalid";
+    inquiryId?: string;
+    reference?: string;
+    property?: Record<string, unknown>;
+  }>("rpc/create_property_submission", {
+    method: "POST",
+    body: {
+      p_account_id: input.accountId,
+      p_submission_id: input.submissionId,
+      p_property: input.property,
+      p_reference: input.reference,
+      p_name: input.name,
+      p_phone: input.phone ?? "",
+      p_message: input.message,
+    },
+    timeoutMs: 15_000,
+  });
+  if (
+    (result.result === "created" || result.result === "duplicate") &&
+    result.inquiryId &&
+    result.reference &&
+    result.property
+  ) {
+    return {
+      result: result.result,
+      inquiryId: result.inquiryId,
+      reference: result.reference,
+      property: result.property,
+    };
+  }
+  throw new Error("تعذر حفظ طلب العقار");
 }
 
 export interface CloudInquiryRow {

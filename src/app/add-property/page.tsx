@@ -2,7 +2,7 @@
 
 import PageStyleScope from "@/components/builder/PageStyleScope";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -290,6 +290,8 @@ function AddPropertyContent() {
   const [documentFiles, setDocumentFiles] = useState<
     Partial<Record<DocKey, File>>
   >({});
+  /** يبقى ثابتًا عبر إعادة المحاولة حتى يعيد السيرفر نفس النتيجة ولا يكرر الطلب. */
+  const submissionIdRef = useRef("");
 
   /** Auth Guard + تحميل إعدادات الحقول التي حددها الأدمن */
   useEffect(() => {
@@ -462,6 +464,7 @@ function AddPropertyContent() {
     setError("");
     setSubmitted(null);
     setDocumentFiles({});
+    submissionIdRef.current = "";
     setSubmitting(false);
     setDocNonce((value) => value + 1);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -561,7 +564,9 @@ function AddPropertyContent() {
     setSubmitting(true);
 
     try {
-      const submissionId = crypto.randomUUID();
+      const submissionId =
+        submissionIdRef.current ||
+        (submissionIdRef.current = crypto.randomUUID());
 
       const upload = async (
         file: Blob,

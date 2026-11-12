@@ -211,7 +211,8 @@ test("public request api stores the inquiry then creates a crm lead", () => {
   assert.match(source, /sameOrigin\(request\)/);
   assert.match(source, /cloudInsertInquiry\(/);
   assert.match(source, /cloudCreateCrmLead\(lead, "الموقع"\)/);
-  assert.match(source, /MAX_REQUESTS/);
+  assert.match(source, /checkRateLimit\(/);
+  assert.match(source, /hashRateKey\("public-request"/);
   assert.match(source, /newsletter_subscription/);
 });
 
@@ -284,5 +285,6 @@ test("property submissions create relational crm leads server-side", () => {
     "utf8"
   );
   assert.match(source, /cloudCreateCrmLead\(lead, "الموقع"\)/);
+  assert.match(source, /cloudCreatePropertySubmission\(/);
   assert.doesNotMatch(source, /cloudPutRow\(\s*CRM_KEY/);
 });

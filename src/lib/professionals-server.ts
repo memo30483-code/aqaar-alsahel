@@ -280,6 +280,27 @@ export async function getOwnedProfessional(
   return record && row ? { record, updatedAt: row.updated_at } : null;
 }
 
+export async function createProfessionalRecordAtomic(
+  value: Record<string, unknown>,
+  updatedBy: string
+): Promise<Record<string, unknown>> {
+  const result = await cloudRest<{
+    result?: "created" | "existing" | "invalid";
+    record?: Record<string, unknown>;
+  }>("rpc/create_professional_record", {
+    method: "POST",
+    body: { p_record: value, p_updated_by: updatedBy },
+    timeoutMs: 12_000,
+  });
+  if (
+    (result.result === "created" || result.result === "existing") &&
+    result.record
+  ) {
+    return result.record;
+  }
+  throw new Error("تعذر إنشاء الملف المهني");
+}
+
 interface UpdateOwnedResult {
   result: "updated" | "conflict" | "not_found";
   record?: ProfessionalRecord;

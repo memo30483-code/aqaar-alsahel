@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 import { cloudReportReview, reviewSchemaMissing } from "@/lib/reviews-server";
+import {
+  checkRateLimit,
+  clientIp,
+  hashRateKey,
+  rateLimitResponse,
+} from "@/lib/rate-limit-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const UUID = /^[0-9a-f-]{36}$/i;
+const REPORT_RATE = { limit: 8, windowSeconds: 60 * 60 };
 
 /** إبلاغ عن تقييم مسيء — يزيد عدّاد البلاغات للمراجعة الإدارية */
 export async function POST(
@@ -33,6 +40,13 @@ export async function POST(
       { ok: false, error: "معرّف التقييم غير صالح" },
       { status: 400 }
     );
+  }
+  const limit = await checkRateLimit(
+    hashRateKey("review-report", `${id}:${clientIp(request)}`),
+    REPORT_RATE
+  );
+  if (!limit.allowed) {
+    return rateLimitResponse(limit, "تم تسجيل عدة بلاغات مؤخرًا. حاول لاحقًا.");
   }
 
   try {

@@ -20,6 +20,12 @@ import {
   type ReviewEntity,
 } from "@/lib/reviews";
 import { createReviewDevice, readReviewDevice } from "@/lib/review-device";
+import {
+  checkRateLimit,
+  clientIp,
+  hashRateKey,
+  rateLimitResponse,
+} from "@/lib/rate-limit-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,39 +36,11 @@ const ENTITIES = new Set<ReviewEntity>([
   "professional",
 ]);
 
-const WINDOW_MS = 10 * 60 * 1000;
-const MAX_POSTS = 12;
-const posts = new Map<string, { count: number; resetAt: number }>();
-
-function clientKey(request: Request): string {
-  return (
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip") ||
-    "local"
-  );
-}
-
-function allowPost(key: string): boolean {
-  const now = Date.now();
-  /* تنظيف بسيط للذاكرة: الحذف يتم عند تجاوز حجم معيّن بدل مسح كل شيء */
-  if (posts.size > 5000) {
-    posts.forEach((entry, entryKey) => {
-      if (entry.resetAt <= now) posts.delete(entryKey);
-    });
-  }
-  const current = posts.get(key);
-  if (!current || current.resetAt <= now) {
-    posts.set(key, { count: 1, resetAt: now + WINDOW_MS });
-    return true;
-  }
-  if (current.count >= MAX_POSTS) return false;
-  current.count += 1;
-  return true;
-}
+const POST_RATE = { limit: 12, windowSeconds: 10 * 60 };
 
 function sameOrigin(request: Request): boolean {
   const origin = request.headers.get("origin");
-  if (!origin) return true;
+  if (!origin) return process.env.NODE_ENV !== "production";
   try {
     return new URL(origin).host === new URL(request.url).host;
   } catch {
@@ -153,10 +131,14 @@ export async function POST(request: Request) {
       { status: 503 }
     );
   }
-  if (!allowPost(clientKey(request))) {
-    return NextResponse.json(
-      { ok: false, error: "عدد التقييمات المسموح مؤقتًا انتهى، حاول لاحقًا" },
-      { status: 429 }
+  const limit = await checkRateLimit(
+    hashRateKey("review-post", clientIp(request)),
+    POST_RATE
+  );
+  if (!limit.allowed) {
+    return rateLimitResponse(
+      limit,
+      "عدد التقييمات المسموح مؤقتًا انتهى، حاول لاحقًا"
     );
   }
 

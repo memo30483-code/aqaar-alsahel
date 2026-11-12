@@ -22,8 +22,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /** حدود موزّعة: 20 محاولة لكل عنوان و8 لكل بريد كل 10 دقائق */
-const IP_LIMIT = { limit: 20, windowSeconds: 600 };
-const EMAIL_LIMIT = { limit: 8, windowSeconds: 600 };
+const IP_LIMIT = { limit: 20, windowSeconds: 600, failClosed: true };
+const EMAIL_LIMIT = { limit: 8, windowSeconds: 600, failClosed: true };
 
 /** مقارنة ثابتة الزمن لتقليل تسريب المعلومات عبر التوقيت */
 function safeEqual(left: string, right: string): boolean {

@@ -5,6 +5,12 @@ import {
   cloudGetCrmSettings,
 } from "@/lib/crm-server";
 import { inquiryLead } from "@/lib/crm-types";
+import {
+  checkRateLimit,
+  clientIp,
+  hashRateKey,
+  rateLimitResponse,
+} from "@/lib/rate-limit-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,8 +22,7 @@ export const dynamic = "force-dynamic";
  * حتى لا يعتمد وصول الطلب على المتصفح أو على ضغط زر «استيراد» في اللوحة.
  */
 
-const WINDOW_MS = 10 * 60 * 1000;
-const MAX_REQUESTS = 12;
+const RATE = { limit: 12, windowSeconds: 10 * 60 };
 const KINDS = new Set([
   "professional_request",
   "app_interest",
@@ -26,31 +31,9 @@ const KINDS = new Set([
 ]);
 const EMAIL_ONLY_KINDS = new Set(["app_interest", "newsletter_subscription"]);
 
-const requests = new Map<string, { count: number; resetAt: number }>();
-
-function clientKey(request: Request): string {
-  return (
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip") ||
-    "local"
-  );
-}
-
-function allowRequest(key: string): boolean {
-  const now = Date.now();
-  const current = requests.get(key);
-  if (!current || current.resetAt <= now) {
-    requests.set(key, { count: 1, resetAt: now + WINDOW_MS });
-    return true;
-  }
-  if (current.count >= MAX_REQUESTS) return false;
-  current.count += 1;
-  return true;
-}
-
 function sameOrigin(request: Request): boolean {
   const origin = request.headers.get("origin");
-  if (!origin) return true;
+  if (!origin) return process.env.NODE_ENV !== "production";
   try {
     return new URL(origin).host === new URL(request.url).host;
   } catch {
@@ -88,10 +71,14 @@ export async function POST(request: Request) {
       { status: 503 }
     );
   }
-  if (!allowRequest(clientKey(request))) {
-    return NextResponse.json(
-      { ok: false, error: "تم تجاوز عدد الطلبات المسموح مؤقتًا، حاول لاحقًا" },
-      { status: 429 }
+  const limit = await checkRateLimit(
+    hashRateKey("public-request", clientIp(request)),
+    RATE
+  );
+  if (!limit.allowed) {
+    return rateLimitResponse(
+      limit,
+      "تم تجاوز عدد الطلبات المسموح مؤقتًا، حاول لاحقًا"
     );
   }
 

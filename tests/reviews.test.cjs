@@ -118,7 +118,8 @@ test("public review api applies policy, moderation and rate limits", () => {
     "utf8"
   );
   assert.match(source, /sameOrigin\(request\)/);
-  assert.match(source, /MAX_POSTS/);
+  assert.match(source, /checkRateLimit\(/);
+  assert.match(source, /hashRateKey\("review-post"/);
   assert.match(source, /verified_only/);
   assert.match(source, /moderation: settings\.moderation/);
   assert.match(source, /publicReviewSettings/);
@@ -208,4 +209,3 @@ test("property and professional cards show a rating badge linking to reviews", (
   assert.match(directory, /<RatingBadge[\s\S]*kind === "developer" \? "developer" : "professional"/);
   assert.match(section, /id="reviews"/);
 });
-

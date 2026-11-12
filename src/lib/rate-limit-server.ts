@@ -13,12 +13,15 @@ export interface RateLimitOptions {
   limit: number;
   /** طول النافذة بالثواني */
   windowSeconds: number;
+  /** مسارات الدخول الحساسة تُرفض إذا تعطل العداد المشترك. */
+  failClosed?: boolean;
 }
 
 export interface RateLimitResult {
   allowed: boolean;
   /** ثوانٍ حتى تُصفَّر النافذة — تُستخدم في ترويسة Retry-After */
   retryAfterSeconds: number;
+  unavailable?: boolean;
 }
 
 const memory = new Map<string, { count: number; resetAt: number }>();
@@ -80,7 +83,14 @@ export async function checkRateLimit(
         retryAfterSeconds: options.windowSeconds,
       };
     } catch {
-      /* قاعدة البيانات غير متاحة: نكمل بالحد المحلي بدل تعطيل الخدمة */
+      if (options.failClosed) {
+        return {
+          allowed: false,
+          unavailable: true,
+          retryAfterSeconds: Math.min(options.windowSeconds, 60),
+        };
+      }
+      /* الطلبات العامة تستمر بحد محلي عند انقطاع عابر. */
     }
   }
 
@@ -89,8 +99,15 @@ export async function checkRateLimit(
 
 /** يبني رد 429 موحّدًا مع ترويسة إعادة المحاولة */
 export function rateLimitResponse(result: RateLimitResult, message: string) {
-  return new Response(JSON.stringify({ ok: false, error: "rate_limited", message }), {
-    status: 429,
+  const unavailable = result.unavailable === true;
+  return new Response(JSON.stringify({
+    ok: false,
+    error: unavailable ? "rate_limit_unavailable" : "rate_limited",
+    message: unavailable
+      ? "خدمة الحماية غير متاحة مؤقتًا. حاول بعد قليل."
+      : message,
+  }), {
+    status: unavailable ? 503 : 429,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "Retry-After": String(result.retryAfterSeconds),

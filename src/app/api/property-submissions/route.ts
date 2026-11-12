@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { USER_PROPERTIES_KEY } from "@/data/properties";
 import type {
   Property,
   PropertyDocument,
@@ -18,9 +17,8 @@ import {
 } from "@/lib/add-property-fields";
 import {
   cloudEnabled,
+  cloudCreatePropertySubmission,
   cloudGetRows,
-  cloudInsertInquiry,
-  cloudPutRow,
 } from "@/lib/cloud/server";
 import { propertyLead } from "@/lib/crm-types";
 import {
@@ -29,13 +27,17 @@ import {
 } from "@/lib/crm-server";
 import { initializeReviewRecord } from "@/lib/workflow-server";
 import { getUserApiSession } from "@/lib/user-api";
+import {
+  checkRateLimit,
+  clientIp,
+  hashRateKey,
+  rateLimitResponse,
+} from "@/lib/rate-limit-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const WINDOW_MS = 10 * 60 * 1000;
-const MAX_SUBMISSIONS = 8;
-const submissions = new Map<string, { count: number; resetAt: number }>();
+const SUBMISSION_RATE = { limit: 8, windowSeconds: 10 * 60 };
 
 const PROPERTY_TYPES = new Set([
   "أرض",
@@ -79,26 +81,6 @@ interface SubmissionBody {
   lat?: unknown;
   lng?: unknown;
   documents?: unknown;
-}
-
-function clientKey(request: Request): string {
-  return (
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip") ||
-    "local"
-  );
-}
-
-function allowSubmission(key: string): boolean {
-  const now = Date.now();
-  const current = submissions.get(key);
-  if (!current || current.resetAt <= now) {
-    submissions.set(key, { count: 1, resetAt: now + WINDOW_MS });
-    return true;
-  }
-  if (current.count >= MAX_SUBMISSIONS) return false;
-  current.count += 1;
-  return true;
 }
 
 function sameOrigin(request: Request): boolean {
@@ -171,8 +153,8 @@ function uploadedDocuments(value: unknown, submissionId: string): UploadedDocume
   });
 }
 
-function referenceNumber(): string {
-  const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`.slice(-7);
+function referenceNumber(submissionId: string): string {
+  const suffix = submissionId.replace(/-/g, "").slice(0, 10).toUpperCase();
   return `AQF-${new Date().getFullYear()}-${suffix}`;
 }
 
@@ -190,10 +172,14 @@ export async function POST(request: Request) {
   if (!cloudEnabled()) {
     return NextResponse.json({ ok: false, error: "قاعدة البيانات غير متاحة" }, { status: 503 });
   }
-  if (!allowSubmission(`${session.sub}:${clientKey(request)}`)) {
-    return NextResponse.json(
-      { ok: false, error: "تم تجاوز عدد الطلبات المسموح مؤقتًا، حاول لاحقًا" },
-      { status: 429 }
+  const limit = await checkRateLimit(
+    hashRateKey("property-submission", `${session.sub}:${clientIp(request)}`),
+    SUBMISSION_RATE
+  );
+  if (!limit.allowed) {
+    return rateLimitResponse(
+      limit,
+      "تم تجاوز عدد الطلبات المسموح مؤقتًا، حاول لاحقًا"
     );
   }
 
@@ -298,8 +284,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "الحقول الرقمية المطلوبة غير مكتملة" }, { status: 400 });
   }
 
-  const id = `user-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
-  const reference = referenceNumber();
+  const id = `user-${submissionId}`;
+  const reference = referenceNumber(submissionId);
   const image = mediaUrl(body.image, submissionId) || `https://picsum.photos/seed/${id}/800/600`;
   const documents = uploadedDocuments(body.documents, submissionId);
   if (needs("image") && !mediaUrl(body.image, submissionId)) {
@@ -361,34 +347,25 @@ export async function POST(request: Request) {
   };
 
   try {
-    /* inquiries هو سجل المصدر غير القابل للعرض العام */
-    await cloudInsertInquiry({
-      kind: "property_submission",
+    /* معاملة PostgreSQL واحدة: inquiry + app_state + idempotency + اعتماد الرفعات. */
+    const persisted = await cloudCreatePropertySubmission({
+      accountId: session.sub,
+      submissionId,
+      property: property as unknown as Record<string, unknown>,
+      reference,
       name: ownerName || title,
       phone: whatsapp || undefined,
       message: description,
-      payload: { property, submissionId, accountId: session.sub },
-      status: "new",
     });
-
-    /* app_state هو نموذج القراءة الحالي للوحة الإدارة */
-    const rows = await cloudGetRows({ keys: [USER_PROPERTIES_KEY] });
-    const existing = Array.isArray(rows[0]?.value)
-      ? (rows[0].value as Property[])
-      : [];
-    await cloudPutRow(
-      USER_PROPERTIES_KEY,
-      [...existing.filter((item) => item.id !== id), property].slice(-5000),
-      "public-property-form"
-    );
-    await initializeReviewRecord("listings", id, "public-property-form").catch(() => undefined);
+    const savedProperty = persisted.property as unknown as Property;
+    await initializeReviewRecord("listings", savedProperty.id, "public-property-form").catch(() => undefined);
 
     /*
      * إنشاء بطاقة عميل تلقائيًا حتى يجد فريق المبيعات الطلب في الـCRM
      * بمجرد وصوله، بدون انتظار فتح اللوحة أو ضغط «استيراد».
      */
     try {
-      const lead = propertyLead(property);
+      const lead = propertyLead(savedProperty);
       const crmSettings = await cloudGetCrmSettings();
       if (crmSettings.autoAssign && crmSettings.defaultAssigneeId) {
         lead.assignedTo = crmSettings.defaultAssigneeId;
@@ -410,14 +387,20 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ok: true,
-      reference,
-      property: { id, title, city, status: "pending" },
+      duplicate: persisted.result === "duplicate",
+      reference: persisted.reference,
+      property: {
+        id: savedProperty.id,
+        title: savedProperty.title,
+        city: savedProperty.city,
+        status: "pending",
+      },
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       {
         ok: false,
-        error: error instanceof Error ? error.message : "تعذر حفظ الطلب",
+        error: "تعذر حفظ الطلب، حاول مرة أخرى",
       },
       { status: 500 }
     );

@@ -10,7 +10,7 @@
 
 import { randomBytes, randomUUID, scrypt as scryptCallback, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
-import { cloudEnabled, cloudGetRows, cloudPutRow } from "@/lib/cloud/server";
+import { cloudEnabled, cloudGetRows, cloudPutRow, cloudRest } from "@/lib/cloud/server";
 
 const scrypt = promisify(scryptCallback);
 
@@ -157,6 +157,22 @@ export async function readAccounts(): Promise<AccountStore> {
 
 export async function writeAccounts(file: AccountsFile): Promise<void> {
   await cloudPutRow(ACCOUNTS_KEY, file, null);
+}
+
+/** إنشاء حساب بقفل ذري وUnique منطقي للبريد داخل صف app_state. */
+export async function createAccountAtomic(
+  record: AccountRecord
+): Promise<"created" | "email_exists"> {
+  const result = await cloudRest<{
+    result?: "created" | "email_exists" | "invalid";
+  }>("rpc/register_user_account", {
+    method: "POST",
+    body: { p_account: record },
+    timeoutMs: 12_000,
+  });
+  if (result.result === "created") return "created";
+  if (result.result === "email_exists") return "email_exists";
+  throw new Error("تعذر إنشاء الحساب");
 }
 
 /** إنشاء ملح + بصمة scrypt لكلمة المرور */
