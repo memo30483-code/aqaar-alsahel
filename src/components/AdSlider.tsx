@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { ArrowLeft, Building2, MapPin, Megaphone } from "lucide-react";
 import { useI18n, type MessageKey } from "@/lib/i18n";
@@ -66,11 +67,11 @@ function AdCard({
       className="flex w-[286px] shrink-0 items-center gap-3 rounded-2xl border border-sand-200 bg-white p-2.5 shadow-[0_16px_36px_-32px_rgba(20,26,51,0.6)] transition duration-200 group-hover:-translate-y-0.5 group-hover:border-gold-300"
     >
       <span className="relative h-[74px] w-[92px] shrink-0 overflow-hidden rounded-xl bg-sand-100">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={ad.image}
           alt={ad.name}
-          loading="lazy"
+          fill
+          sizes="92px"
           className="hb-media h-full w-full object-cover transition duration-300 group-hover:scale-105"
         />
         <span className="absolute start-1.5 top-1.5 rounded bg-white/92 px-1.5 py-0.5 text-[8px] font-black text-sand-700">
@@ -101,7 +102,7 @@ function AdCard({
   if (ghost) return inner;
 
   return (
-    <Link href={ad.link || "/#projects"} aria-label={ad.name} className="group block">
+    <Link href={ad.link || "/#projects"} className="group block">
       {inner}
     </Link>
   );

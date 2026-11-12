@@ -105,7 +105,7 @@ export default function BrandLogo({
           {rest && (
             <>
               {" "}
-              <span className="ms-1 text-[0.62em] font-black tracking-[0.16em] text-gold-500 sm:text-[0.6em]">
+              <span className={`ms-1 text-[0.62em] font-black tracking-[0.16em] sm:text-[0.6em] ${tone === "dark" ? "text-gold-300" : "text-gold-700"}`}>
                 {rest}
               </span>
             </>

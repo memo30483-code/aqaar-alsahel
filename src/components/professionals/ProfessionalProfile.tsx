@@ -294,7 +294,7 @@ function ProfileContent({
 
       {/* ====================== BODY ====================== */}
       <div className="mx-auto grid w-full max-w-[1180px] gap-5 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <main className="space-y-5">
+        <div className="space-y-5">
           {(record.bioAr || record.titleAr) && (
             <section className="rounded-3xl border border-sand-200 bg-white p-5 shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)]">
               <h2 className="text-[14px] font-black text-ocean-900">
@@ -435,7 +435,7 @@ function ProfileContent({
             entityId={record.id}
             entityName={displayName}
           />
-        </main>
+        </div>
 
         <aside className="space-y-4">
           <ContactCard record={record} ar={ar} t={t} />

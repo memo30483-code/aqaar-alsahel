@@ -129,10 +129,16 @@ export default function AssistantWidget() {
   const posRef = useRef(pos);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const launcherRef = useRef<HTMLButtonElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef(0);
 
   posRef.current = pos;
+
+  const closePanel = useCallback(() => {
+    setOpen(false);
+    window.requestAnimationFrame(() => launcherRef.current?.focus());
+  }, []);
 
   const startHop = useCallback(() => {
     setHopping(true);
@@ -270,7 +276,26 @@ export default function AssistantWidget() {
     if (!open) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        closePanel();
+        return;
+      }
+      if (event.key !== "Tab" || !panelRef.current) return;
+      const focusable = Array.from(
+        panelRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
+        )
+      );
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener("keydown", onKeyDown);
 
@@ -279,7 +304,7 @@ export default function AssistantWidget() {
       if (!target) return;
       if (panelRef.current?.contains(target)) return;
       if (rootRef.current?.contains(target)) return;
-      setOpen(false);
+      closePanel();
     };
     const timer = window.setTimeout(
       () => window.addEventListener("mousedown", onPointerDown),
@@ -291,6 +316,16 @@ export default function AssistantWidget() {
       window.removeEventListener("mousedown", onPointerDown);
       window.clearTimeout(timer);
     };
+  }, [closePanel, open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const timer = window.setTimeout(() => {
+      panelRef.current
+        ?.querySelector<HTMLElement>("[data-dialog-close]")
+        ?.focus();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [open]);
 
   /* تمرير تلقائي لآخر رسالة */
@@ -394,6 +429,7 @@ export default function AssistantWidget() {
           )}
 
           <button
+            ref={launcherRef}
             type="button"
             id="ai-launcher"
             aria-expanded={open}
@@ -401,7 +437,8 @@ export default function AssistantWidget() {
             aria-label={t("home.ai.mascotAria")}
             title={t("home.ai.mascotHint")}
             onClick={() => {
-              setOpen((value) => !value);
+              if (open) closePanel();
+              else setOpen(true);
               startHop();
             }}
             onMouseEnter={() => setHovering(true)}
@@ -526,7 +563,7 @@ export default function AssistantWidget() {
           onClick={dismiss}
           aria-label={t("home.ai.close")}
           title={t("home.ai.close")}
-          className="absolute -start-1 -top-1 z-20 grid h-5 w-5 place-items-center rounded-full border border-sand-300 bg-white/95 text-ocean-700 shadow-[0_4px_10px_-4px_rgba(20,26,51,0.55)] transition hover:scale-110 hover:border-gold-300 hover:bg-gold-50 hover:text-ocean-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 focus-visible:ring-offset-1"
+          className="absolute -start-3 -top-3 z-20 grid h-11 w-11 place-items-center rounded-full border border-sand-300 bg-white/95 text-ocean-700 shadow-[0_4px_10px_-4px_rgba(20,26,51,0.55)] transition hover:scale-105 hover:border-gold-300 hover:bg-gold-50 hover:text-ocean-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400 focus-visible:ring-offset-1"
         >
           <X className="h-3 w-3" strokeWidth={2.6} />
         </button>
@@ -537,8 +574,10 @@ export default function AssistantWidget() {
         ref={panelRef}
         id="ai-panel"
         role="dialog"
+        aria-modal="true"
         aria-label={t("home.ai.launcherShort")}
         aria-hidden={!open}
+        inert={!open}
         className={`fixed z-[72] flex flex-col overflow-hidden rounded-3xl border border-sand-200 bg-white shadow-[0_40px_90px_-28px_rgba(20,26,51,0.55)] transition duration-200 ease-out ${
           open
             ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
@@ -565,9 +604,10 @@ export default function AssistantWidget() {
             </div>
             <button
               type="button"
-              onClick={() => setOpen(false)}
+              data-dialog-close
+              onClick={closePanel}
               aria-label={t("ads.close")}
-              className="ms-auto rounded-lg p-1.5 text-white/60 transition hover:bg-white/10 hover:text-white"
+              className="ms-auto grid h-10 w-10 place-items-center rounded-xl text-white/70 transition hover:bg-white/10 hover:text-white"
             >
               <X className="h-4 w-4" />
             </button>
@@ -639,7 +679,7 @@ export default function AssistantWidget() {
           <button
             type="submit"
             aria-label={t("home.ai.send")}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-l from-gold-500 to-gold-400 text-ocean-950 transition hover:-translate-y-0.5"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-l from-gold-500 to-gold-400 text-ocean-950 transition hover:-translate-y-0.5"
           >
             <Send className="h-4 w-4 rtl:-scale-x-100" />
           </button>

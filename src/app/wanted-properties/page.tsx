@@ -198,7 +198,7 @@ export default function WantedPropertiesPage() {
         </div>
       </section>
 
-      <main className="mx-auto max-w-[1180px] px-4 py-8 sm:px-6 sm:py-10">
+      <div className="mx-auto max-w-[1180px] px-4 py-8 sm:px-6 sm:py-10">
         {!pageSettings.directoryEnabled ? (
           <div className="rounded-3xl border border-sand-200 bg-white p-10 text-center">
             <FileSearch className="mx-auto h-12 w-12 text-sand-300" />
@@ -297,7 +297,7 @@ export default function WantedPropertiesPage() {
             )}
           </>
         )}
-      </main>
+      </div>
     </div>
   );
 }

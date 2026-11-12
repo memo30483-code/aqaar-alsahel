@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, Headset, MapPin, ShieldCheck } from "lucide-react";
 import { Property } from "@/types/property";
 import { useI18n } from "@/lib/i18n";
@@ -39,11 +40,11 @@ export default function PropertyCard({ property, compact = false }: Props) {
           compact ? "h-40" : "h-52"
         }`}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={property.image}
           alt={property.title}
-          loading="lazy"
+          fill
+          sizes={compact ? "(max-width: 640px) 100vw, 280px" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"}
           className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
         />
         <span

@@ -8,6 +8,12 @@ const NO_STORE = { "Cache-Control": "no-store" };
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET?.trim();
   const authorization = request.headers.get("authorization") ?? "";
+  if (!authorization.startsWith("Bearer ")) {
+    return NextResponse.json(
+      { ok: false, error: "unauthorized" },
+      { status: 401, headers: NO_STORE }
+    );
+  }
   if (!secret) {
     return NextResponse.json(
       { ok: false, error: "cron_not_configured" },

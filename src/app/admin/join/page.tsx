@@ -77,7 +77,7 @@ export default function StaffJoinPage() {
   };
 
   return (
-    <main dir="rtl" className="flex min-h-screen items-center justify-center bg-sand-50 px-4 py-12">
+    <div dir="rtl" className="flex min-h-screen items-center justify-center bg-sand-50 px-4 py-12">
       <section className="w-full max-w-lg overflow-hidden rounded-[2rem] border border-sand-200 bg-white shadow-2xl">
         <div className="bg-ocean-950 px-7 py-8 text-white">
           <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gold-400 text-ocean-950">
@@ -151,6 +151,6 @@ export default function StaffJoinPage() {
           )}
         </div>
       </section>
-    </main>
+    </div>
   );
 }

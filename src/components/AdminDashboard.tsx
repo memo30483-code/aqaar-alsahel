@@ -477,15 +477,15 @@ export default function AdminDashboard() {
 
   if (!ready) {
     return (
-      <main className="grid min-h-[60vh] place-items-center bg-sand-50">
+      <div className="grid min-h-[60vh] place-items-center bg-sand-50">
         <div className="h-10 w-10 animate-spin rounded-full border-2 border-sand-300 border-t-gold-500" />
-      </main>
+      </div>
     );
   }
 
   if (!hasAccess) {
     return (
-      <main className="min-h-[70vh] bg-sand-50">
+      <div className="min-h-[70vh] bg-sand-50">
         <div className="mx-auto flex max-w-xl flex-col items-center px-4 py-16 text-center">
           <div className="w-full overflow-hidden rounded-3xl border border-sand-200 bg-white p-6 shadow-[0_30px_80px_-70px_rgba(20,26,51,0.6)] sm:p-8">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
@@ -506,12 +506,12 @@ export default function AdminDashboard() {
             </Link>
           </div>
         </div>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-sand-50">
+    <div className="min-h-screen bg-sand-50">
       <div className="mx-auto w-full max-w-[1240px] px-4 py-6 sm:px-6 sm:py-8">
         <header className="overflow-hidden rounded-3xl border border-sand-200 bg-white shadow-[0_26px_70px_-65px_rgba(20,26,51,0.5)]">
           <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
@@ -787,6 +787,6 @@ export default function AdminDashboard() {
 
         {tab === "logs" && <AdminLogsTab logs={logs} />}
       </div>
-    </main>
+    </div>
   );
 }

@@ -444,11 +444,16 @@ export async function readPropertyRequestSettings(): Promise<PropertyRequestsSet
  * الإعلانات المنشورة فعلياً — نفس سياسة النشر التي يراها الزائر.
  * لا نستخدم getListings لأنها تعتمد على localStorage وتفشل على السيرفر.
  */
-export async function loadPublishedProperties(): Promise<Property[]> {
+export async function loadPublishedProperties(options: {
+  revalidate?: number;
+} = {}): Promise<Property[]> {
   try {
     const rows = await cloudGetRows({
       keys: [USER_PROPERTIES_KEY, LISTING_OVERRIDE_KEY],
       timeoutMs: 8_000,
+      ...(typeof options.revalidate === "number"
+        ? { revalidate: options.revalidate }
+        : {}),
     });
     const safeRows = sanitizePublicCloudRows(rows);
     const userRow = safeRows.find((row) => row.key === USER_PROPERTIES_KEY);

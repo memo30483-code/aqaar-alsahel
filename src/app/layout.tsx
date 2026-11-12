@@ -10,6 +10,8 @@ import SeasonRibbon from "@/components/SeasonRibbon";
 import CloudBridge from "@/components/CloudBridge";
 import TextStyleInjector from "@/components/TextStyleInjector";
 import PageAddonBlocks from "@/components/builder/PageAddonBlocks";
+import JsonLd from "@/components/JsonLd";
+import { SITE_URL, absoluteUrl } from "@/lib/site-url";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme-season";
 import { BRANDING_BOOT_SCRIPT } from "@/lib/branding";
 import { cloudBootScript, loadCloudBoot } from "@/lib/cloud/boot";
@@ -34,6 +36,7 @@ const tajawal = Tajawal({
   weight: ["400", "500", "700", "800", "900"],
   variable: "--font-tajawal",
   display: "swap",
+  preload: false,
 });
 
 const amiri = Amiri({
@@ -41,18 +44,70 @@ const amiri = Amiri({
   weight: ["400", "700"],
   variable: "--font-amiri",
   display: "swap",
+  preload: false,
 });
 
 const readex = Readex_Pro({
   subsets: ["arabic", "latin"],
   variable: "--font-readex",
   display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  applicationName: "عقار FAMILY",
   title: "عقار FAMILY | عقار أحلامك بثقة موثّقة",
   description:
     "سوق عقاري موثّق في رأس البر، دمياط، دمياط الجديدة، فارسكور، جمصة والمنصورة الجديدة — شقق، فلل، شاليهات، محلات وأراضي بعد التحقق من المستندات والسلامة القانونية.",
+  alternates: { canonical: "/" },
+  manifest: "/manifest.webmanifest",
+  openGraph: {
+    type: "website",
+    locale: "ar_EG",
+    url: "/",
+    siteName: "عقار FAMILY",
+    title: "عقار FAMILY | عقار أحلامك بثقة موثّقة",
+    description:
+      "عقارات موثّقة في مدن الساحل بعد مراجعة المستندات والسلامة القانونية والهندسية.",
+    images: [
+      {
+        url: "/images/hero-property-handover.jpg",
+        width: 1600,
+        height: 900,
+        alt: "عقار FAMILY — عقار أحلامك بثقة موثّقة",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "عقار FAMILY | عقار أحلامك",
+    description: "منصة عقارية موثّقة لمدن الساحل.",
+    images: ["/images/hero-property-handover.jpg"],
+  },
+  category: "real estate",
+};
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: "عقار FAMILY",
+      alternateName: "Aqaar FAMILY",
+      url: SITE_URL,
+      logo: absoluteUrl("/favicon.ico"),
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      name: "عقار FAMILY",
+      url: SITE_URL,
+      inLanguage: ["ar", "en"],
+      publisher: { "@id": `${SITE_URL}/#organization` },
+    },
+  ],
 };
 
 export default async function RootLayout({
@@ -85,6 +140,7 @@ export default async function RootLayout({
       <body
         className={`${cairo.variable} ${tajawal.variable} ${amiri.variable} ${readex.variable} font-sans antialiased min-h-screen flex flex-col`}
       >
+        <JsonLd data={organizationJsonLd} />
         <AppProviders>
           <ThemeProvider>
           <Header />
