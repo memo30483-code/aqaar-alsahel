@@ -21,3 +21,21 @@ test("سياسة التسجيل تفرض OTP عبر البريد فقط", async 
     expect(data.options.defaultChannel).toBe("email");
   }
 });
+
+test("فحص الصحة يؤكد جاهزية مكونات Supabase", async ({ request }) => {
+  const response = await request.get("/api/health");
+  const data = (await response.json()) as {
+    ok?: boolean;
+    status?: string;
+    components?: Record<string, boolean>;
+  };
+  expect(response.status()).toBe(200);
+  expect(data.ok).toBe(true);
+  expect(data.status).toBe("healthy");
+  expect(Object.values(data.components ?? {}).every(Boolean)).toBe(true);
+});
+
+test("مهمة تنظيف الملفات ترفض الطلب غير الموقّع", async ({ request }) => {
+  const response = await request.get("/api/cron/cleanup-uploads");
+  expect(response.status()).toBe(401);
+});
