@@ -70,12 +70,14 @@ function Dropdown({
   triggerClassName = TRIGGER,
   panelClassName = PANEL,
   ariaLabel,
+  className = "",
   children,
 }: {
   trigger: ReactNode;
   triggerClassName?: string;
   panelClassName?: string;
   ariaLabel?: string;
+  className?: string;
   children: (close: () => void) => ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -102,7 +104,7 @@ function Dropdown({
   return (
     <div
       ref={ref}
-      className={`relative ${open ? "z-[100]" : "z-10"}`}
+      className={`relative ${open ? "z-[100]" : "z-10"} ${className}`}
     >
       <button
         type="button"
@@ -274,7 +276,8 @@ export default function Header() {
           <BrandLogo markClassName="h-10 w-10 transition duration-200 group-hover:scale-105" />
         </Link>
 
-        <nav className="hidden items-center gap-0.5 xl:flex">
+        {/* القائمة الكاملة تظهر فقط عندما يتوفّر لها عرض كافٍ، وإلا تُطوى في زر القائمة */}
+        <nav className="hidden min-w-0 items-center gap-0.5 xl:flex">
           {/* قائمة المدن */}
           <Dropdown
             ariaLabel={t("nav.cities")}
@@ -366,7 +369,7 @@ export default function Header() {
             <LayoutGrid className="h-4 w-4 text-ocean-500" />
             {t("nav.projects")}
           </Link>
-          <Link href="/market-guide" className={`${NAV_LINK} max-[1799px]:hidden`}>
+          <Link href="/market-guide" className={`${NAV_LINK} max-[1899px]:hidden`}>
             <Compass className="h-4 w-4 text-ocean-500" />
             {t("nav.compass")}
           </Link>
@@ -387,6 +390,7 @@ export default function Header() {
           {/* مبدّل اللغة */}
           <Dropdown
             ariaLabel={t("pref.language")}
+            className="max-[1659px]:hidden"
             triggerClassName={PREF_TRIGGER}
             panelClassName={`${PANEL} w-[210px]`}
             trigger={
@@ -430,6 +434,7 @@ export default function Header() {
           {/* مبدّل الدولة والعملة */}
           <Dropdown
             ariaLabel={t("pref.currency")}
+            className="max-[1659px]:hidden"
             triggerClassName={PREF_TRIGGER}
             panelClassName={`${PANEL} w-[280px]`}
             trigger={
@@ -496,6 +501,7 @@ export default function Header() {
           {session ? (
             <Dropdown
               ariaLabel={t("nav.account")}
+              className="max-[1659px]:hidden"
               trigger={
                 <>
                   <User className="h-4 w-4 text-ocean-500" />
@@ -557,7 +563,7 @@ export default function Header() {
               )}
             </Dropdown>
           ) : (
-            <Link href="/login" className={NAV_LINK}>
+            <Link href="/login" className={`${NAV_LINK} max-[1659px]:hidden`}>
               <User className="h-4 w-4 text-ocean-500" />
               {t("nav.login")}
             </Link>
@@ -567,10 +573,10 @@ export default function Header() {
             <Link
               href="/app"
               title={locale === "ar" ? "تطبيق عقار FAMILY" : "Aqaar FAMILY App"}
-              className="ms-1 grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-gold-300 bg-gold-50 text-gold-800 transition duration-200 hover:border-gold-400 hover:bg-gold-100 min-[1800px]:flex min-[1800px]:w-auto min-[1800px]:items-center min-[1800px]:gap-1.5 min-[1800px]:px-3 min-[1800px]:py-2.5"
+              className="ms-1 grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-gold-300 bg-gold-50 text-gold-800 transition duration-200 hover:border-gold-400 hover:bg-gold-100 max-[1659px]:hidden min-[2050px]:flex min-[2050px]:w-auto min-[2050px]:items-center min-[2050px]:gap-1.5 min-[2050px]:px-3 min-[2050px]:py-2.5"
             >
               <Smartphone className="h-4 w-4" />
-              <span className="hidden text-sm font-black min-[1800px]:inline">
+              <span className="hidden text-sm font-black min-[2050px]:inline">
                 {locale === "ar" ? "التطبيق" : "App"}
               </span>
             </Link>
@@ -579,7 +585,7 @@ export default function Header() {
           {siteSettings.propertyRequests?.enabled !== false && (
             <Link
               href="/request-property"
-              className="flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-gold-400 bg-gold-50 px-4 py-2.5 text-sm font-black text-gold-900 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-gold-100"
+              className="flex items-center gap-1.5 whitespace-nowrap rounded-xl border border-gold-400 bg-gold-50 px-4 py-2.5 text-sm font-black text-gold-900 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-gold-100 max-[1659px]:hidden"
             >
               <SearchCheck className="h-4 w-4 text-gold-700" />
               {t("nav.requestProperty")}
@@ -598,7 +604,7 @@ export default function Header() {
 
         <button
           type="button"
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-ocean-200/80 bg-white/70 text-ocean-800 transition hover:bg-ocean-50 xl:hidden"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-ocean-200/80 bg-white/70 text-ocean-800 transition hover:bg-ocean-50 min-[1660px]:hidden"
           onClick={() => setOpen((v) => !v)}
           aria-label={t("nav.menu")}
           aria-expanded={open}
@@ -609,7 +615,7 @@ export default function Header() {
 
       {/* القائمة الجانبية للموبايل والتابلت */}
       {open && (
-        <div className="max-h-[calc(100vh-72px)] overflow-y-auto border-t border-white/60 bg-white/95 px-4 py-3 backdrop-blur-xl xl:hidden">
+        <div className="max-h-[calc(100vh-72px)] overflow-y-auto border-t border-white/60 bg-white/95 px-4 py-3 backdrop-blur-xl min-[1660px]:hidden">
           <div className="flex flex-col gap-1">
             <p className="px-3 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wide text-ocean-400">
               {t("nav.sectionCities")}
