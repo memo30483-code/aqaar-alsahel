@@ -877,7 +877,7 @@ export default function AdminHomeBuilderTab({ can, notify, reloadLogs }: Props) 
 
                       {mediaTypes.includes(editor.type) && (
                         <>
-                          <Field label="رابط الصورة">
+                          <Field label="رابط الصورة" hint="اتركه فارغًا لاستخدام الصورة الافتراضية للقسم">
                             <input
                               value={editor.imageUrl}
                               onChange={(event) =>

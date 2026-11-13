@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  Check,
   ChevronLeft,
   ChevronRight,
+  Copy,
   Palette,
   RotateCcw,
   Save,
@@ -51,12 +53,71 @@ function cleanStyle(style: TextStyleOverride): TextStyleOverride {
   return out;
 }
 
+/** سطر يعرض النص الافتراضي تحت كل حقل مع إمكانية نسخه أو اعتماده */
+function DefaultLine({
+  label,
+  text,
+  onApply,
+}: {
+  label: string;
+  text: string;
+  onApply: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* تجاهل — بعض المتصفحات تمنع clipboard بدون HTTPS */
+    }
+  };
+
+  return (
+    <div className="mt-1 flex items-start gap-1.5 rounded-lg border border-sand-100 bg-sand-50/70 px-2 py-1">
+      <span className="shrink-0 pt-0.5 text-[9.5px] font-black leading-4 text-sand-500">
+        الافتراضي{label}:
+      </span>
+      <span
+        dir={label === " (إنجليزي)" ? "ltr" : "rtl"}
+        className="min-w-0 flex-1 whitespace-pre-wrap break-words text-[10.5px] leading-5 text-sand-700"
+      >
+        {text}
+      </span>
+      <button
+        type="button"
+        onClick={copy}
+        title="نسخ النص الافتراضي"
+        aria-label="نسخ النص الافتراضي"
+        className="shrink-0 rounded-md border border-sand-200 bg-white p-1 text-sand-600 transition hover:border-gold-300 hover:text-gold-700"
+      >
+        {copied ? (
+          <Check className="h-3 w-3 text-emerald-600" />
+        ) : (
+          <Copy className="h-3 w-3" />
+        )}
+      </button>
+      <button
+        type="button"
+        onClick={onApply}
+        title="اعتماد الافتراضي (مسح التعديل)"
+        className="shrink-0 rounded-md border border-sand-200 bg-white px-1.5 py-1 text-[9px] font-black text-sand-600 transition hover:border-gold-300 hover:text-gold-700"
+      >
+        اعتماد
+      </button>
+    </div>
+  );
+}
+
 export default function AdminTextStudioTab({ can, notify, reloadLogs }: Props) {
   const editable = can("settings.full") || can("site.settings");
   const [overrides, setOverrides] = useState<TextOverrides>({});
   const [styles, setStyles] = useState<TextStyles>({});
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState<GroupFilter>("all");
+  const [onlyModified, setOnlyModified] = useState(false);
   const [page, setPage] = useState(0);
   const [loaded, setLoaded] = useState(false);
 
@@ -68,12 +129,13 @@ export default function AdminTextStudioTab({ can, notify, reloadLogs }: Props) {
 
   useEffect(() => {
     setPage(0);
-  }, [query, group]);
+  }, [query, group, onlyModified]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return TEXT_CATALOG.filter((entry) => {
       if (group !== "all" && entry.group !== group) return false;
+      if (onlyModified && !overrides[entry.key] && !styles[entry.key]) return false;
       if (!q) return true;
       const custom = overrides[entry.key];
       return (
@@ -84,7 +146,7 @@ export default function AdminTextStudioTab({ can, notify, reloadLogs }: Props) {
         (custom?.en ?? "").toLowerCase().includes(q)
       );
     });
-  }, [query, group, overrides]);
+  }, [query, group, onlyModified, overrides, styles]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount - 1);
@@ -153,7 +215,7 @@ export default function AdminTextStudioTab({ can, notify, reloadLogs }: Props) {
     <div className="space-y-5">
       <Panel
         title="استوديو النصوص — تحكم كامل في كل كلمة على المنصة"
-        desc="عدّل نص الهيدر والفوتر والرئيسية وكل الصفحات، واختر لكل نص نوع الخط وحجمه ولونه ووزنه ومحاذاته. التغييرات تُطبّق فور الحفظ على كل الزوار."
+        desc="عدّل نص الهيدر والفوتر والرئيسية وكل الصفحات، واختر لكل نص نوع الخط وحجمه ولونه ووزنه ومحاذاته. النص الافتراضي ظاهر تحت كل حقل — اضغط «اعتماد» للرجوع إليه. التغييرات تُطبّق فور الحفظ على كل الزوار."
         actions={
           <button type="button" onClick={persist} className={BTN_PRIMARY} disabled={!editable}>
             <Save className="h-4 w-4" /> حفظ كل التغييرات
@@ -215,6 +277,19 @@ export default function AdminTextStudioTab({ can, notify, reloadLogs }: Props) {
               );
             })}
           </select>
+          <button
+            type="button"
+            onClick={() => setOnlyModified((value) => !value)}
+            aria-pressed={onlyModified}
+            className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-2 text-[11px] font-black transition ${
+              onlyModified
+                ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                : "border-sand-200 bg-white text-sand-700 hover:border-gold-300 hover:text-gold-700"
+            }`}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            المعدّلة فقط ({new Set([...Object.keys(overrides), ...Object.keys(styles)]).size})
+          </button>
         </div>
 
         <p className="mt-2 text-[10.5px] font-bold text-sand-600">
@@ -274,14 +349,10 @@ export default function AdminTextStudioTab({ can, notify, reloadLogs }: Props) {
                 </div>
 
                 <div className="mt-3 grid gap-3 lg:grid-cols-2">
-                  <Field
-                    label="النص العربي"
-                    hint={
-                      hasPlaceholders(entry.ar)
-                        ? `حافظ على المتغيّرات: ${entry.ar.match(/\{[a-zA-Z0-9_]+\}/g)?.join(" ")}`
-                        : undefined
-                    }
-                  >
+                  <div className="block">
+                    <span className="mb-1 block text-[11px] font-extrabold text-sand-700">
+                      النص العربي
+                    </span>
                     <textarea
                       value={custom?.ar ?? ""}
                       onChange={(event) => updateText(entry.key, "ar", event.target.value)}
@@ -290,8 +361,21 @@ export default function AdminTextStudioTab({ can, notify, reloadLogs }: Props) {
                       className={INPUT}
                       disabled={!editable}
                     />
-                  </Field>
-                  <Field label="English text">
+                    {hasPlaceholders(entry.ar) && (
+                      <span className="mt-1 block text-[10.5px] text-sand-500">
+                        حافظ على المتغيّرات: {entry.ar.match(/\{[a-zA-Z0-9_]+\}/g)?.join(" ")}
+                      </span>
+                    )}
+                    <DefaultLine
+                      label=""
+                      text={entry.ar}
+                      onApply={() => updateText(entry.key, "ar", "")}
+                    />
+                  </div>
+                  <div className="block">
+                    <span className="mb-1 block text-[11px] font-extrabold text-sand-700">
+                      English text
+                    </span>
                     <textarea
                       value={custom?.en ?? ""}
                       onChange={(event) => updateText(entry.key, "en", event.target.value)}
@@ -301,7 +385,12 @@ export default function AdminTextStudioTab({ can, notify, reloadLogs }: Props) {
                       className={INPUT}
                       disabled={!editable}
                     />
-                  </Field>
+                    <DefaultLine
+                      label=" (إنجليزي)"
+                      text={entry.en}
+                      onApply={() => updateText(entry.key, "en", "")}
+                    />
+                  </div>
                 </div>
 
                 <details className="mt-3 rounded-2xl border border-ocean-100 bg-ocean-50/30 p-3">

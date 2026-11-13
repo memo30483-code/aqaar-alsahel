@@ -153,35 +153,35 @@ export default function AdminBrandTab({ settings, can, onChange, notify, reloadL
         <div className="grid gap-4 md:grid-cols-2">
           <ImageField
             label="الشعار الرئيسي"
-            hint="يُستخدم في كل مكان إن لم تحدد شعاراً فاتحاً أو مظلماً."
+            hint="يُستخدم في كل مكان إن لم تحدد شعاراً فاتحاً أو مظلماً. اتركه فارغًا للرجوع للشعار المدمج الافتراضي."
             value={brand.logoMain ?? ""}
             onChange={(logoMain) => update({ logoMain })}
             disabled={!editable}
           />
           <ImageField
             label="الشعار على الخلفية الفاتحة (الهيدر)"
-            hint="الشعار الأفقي أو المربّع فوق الأبيض/الرملي."
+            hint="الشعار الأفقي أو المربّع فوق الأبيض/الرملي. اتركه فارغًا لاستخدام الشعار الرئيسي/المدمج الافتراضي."
             value={brand.logoLight ?? ""}
             onChange={(logoLight) => update({ logoLight })}
             disabled={!editable}
           />
           <ImageField
             label="الشعار على الخلفية الداكنة (الفوتر)"
-            hint="نسخة فاتحة/ذهبية من الشعار."
+            hint="نسخة فاتحة/ذهبية من الشعار. اتركه فارغًا لاستخدام الشعار الرئيسي/المدمج الافتراضي."
             value={brand.logoDark ?? ""}
             onChange={(logoDark) => update({ logoDark })}
             disabled={!editable}
           />
           <ImageField
             label="أيقونة تطبيق الموبايل"
-            hint="تظهر داخل شاشات التطبيق وفي بانر الموبايل."
+            hint="تظهر داخل شاشات التطبيق وفي بانر الموبايل. اتركه فارغًا للأيقونة الافتراضية."
             value={brand.appIcon ?? ""}
             onChange={(appIcon) => update({ appIcon })}
             disabled={!editable}
           />
           <ImageField
             label="أيقونة المتصفح (Favicon)"
-            hint="مربّعة ٥١٢×٥١٢ أو ٣٢×٣٢ PNG/ICO."
+            hint="مربّعة ٥١٢×٥١٢ أو ٣٢×٣٢ PNG/ICO. اتركه فارغًا للأيقونة الافتراضية في التصميم."
             value={brand.favicon ?? ""}
             onChange={(favicon) => update({ favicon })}
             disabled={!editable}
@@ -206,7 +206,9 @@ export default function AdminBrandTab({ settings, can, onChange, notify, reloadL
                   عقار FAMILY
                 </span>
                 <span className="block text-[10px] font-semibold text-sand-600">
-                  المعاينة تتحدث أثناء التعديل
+                  {brand.logoLight || brand.logoMain
+                    ? "معاينة حيّة تتحدث أثناء التعديل"
+                    : "الافتراضي الحالي: الشعار المدمج «عقار FAMILY»"}
                 </span>
               </span>
             </div>
