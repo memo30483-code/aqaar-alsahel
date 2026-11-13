@@ -557,9 +557,14 @@ export default function Header() {
               )}
             </Dropdown>
           ) : (
-            <Link href="/login" className={NAV_LINK}>
+            <Link
+              href="/login"
+              className={NAV_LINK}
+              aria-label={t("nav.login")}
+              title={t("nav.login")}
+            >
               <User className="h-4 w-4 text-ocean-500" />
-              {t("nav.login")}
+              {t("nav.loginShort")}
             </Link>
           )}
 
